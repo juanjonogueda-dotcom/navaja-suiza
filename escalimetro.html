@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escalímetro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:             #F4F2EE;
+    --surface:        #EDEAE4;
+    --border:         rgba(0,0,0,0.10);
+    --border-strong:  rgba(0,0,0,0.18);
+    --text-primary:   #1A1814;
+    --text-secondary: #6B6760;
+    --text-tertiary:  #A09D98;
+    --result-bg:      #A09D98;
+    --result-text:    #F4F2EE;
+    --result-muted:   rgba(255,255,255,0.60);
+    --tag-bg:         #E0DDD7;
+    --tag-text:       #6B6760;
+  }
+
+  body[data-theme="dark"] {
+    --bg:             #141210;
+    --surface:        #1C1A17;
+    --border:         rgba(255,255,255,0.07);
+    --border-strong:  rgba(255,255,255,0.14);
+    --text-primary:   #EAE6DF;
+    --text-secondary: #8A8680;
+    --text-tertiary:  #504D49;
+    --result-bg:      #252220;
+    --result-text:    #EAE6DF;
+    --result-muted:   rgba(255,255,255,0.35);
+    --tag-bg:         #1C1A17;
+    --tag-text:       #605D58;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  .card { width: 100%; max-width: 400px; }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+  .header-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .header-version {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .theme-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s, background 0.25s;
+  }
+  .theme-btn:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+  .icon-sun  { display: block; }
+  .icon-moon { display: none; }
+  body[data-theme="dark"] .icon-sun  { display: none; }
+  body[data-theme="dark"] .icon-moon { display: block; }
+
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .mode-btn {
+    padding: 9px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn.active {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .formula-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--tag-text);
+    background: var(--tag-bg);
+    border-radius: 6px;
+    padding: 5px 10px;
+    margin-bottom: 1.75rem;
+    letter-spacing: 0.02em;
+    transition: background 0.25s, color 0.25s;
+  }
+  .formula-tag .op { color: var(--text-tertiary); font-style: italic; }
+
+  .field { margin-bottom: 1.25rem; }
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+  .field-row { display: flex; gap: 8px; }
+
+  input[type="number"] {
+    width: 100%;
+    padding: 11px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    color: var(--text-primary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.15s, background 0.25s, color 0.25s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { display: none; }
+  input[type="number"]:focus { border-color: var(--border-strong); }
+
+  select {
+    padding: 11px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    min-width: 72px;
+    text-align: center;
+    transition: border-color 0.15s, background 0.25s, color 0.25s;
+  }
+  select:focus { border-color: var(--border-strong); }
+
+  .scale-inner { position: relative; }
+  .scale-prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+  .scale-inner input { padding-left: 36px; }
+
+  .presets { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+  .preset-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .preset-btn:hover { color: var(--text-secondary); border-color: var(--border-strong); }
+  .preset-btn.active {
+    background: var(--text-primary);
+    color: var(--bg);
+    border-color: var(--text-primary);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.75rem 0;
+    transition: background 0.25s;
+  }
+
+  .result-block {
+    background: var(--result-bg);
+    border-radius: 14px;
+    padding: 1.5rem;
+    transition: background 0.25s;
+  }
+  .result-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .result-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--result-muted);
+  }
+  select.result-unit-select {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--result-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    min-width: auto;
+    text-align: center;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  select.result-unit-select:hover,
+  select.result-unit-select:focus {
+    border-color: rgba(255,255,255,0.30);
+    color: rgba(255,255,255,0.75);
+  }
+
+  .copy-trigger {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .copy-trigger:active { opacity: 0.7; }
+  .result-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 44px;
+    font-weight: 300;
+    color: var(--result-text);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .result-bottom-row { display: flex; align-items: center; gap: 8px; }
+  .result-unit-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--result-muted);
+    letter-spacing: 0.04em;
+  }
+  .copy-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--result-muted);
+    transition: all 0.15s;
+  }
+  .copy-trigger:hover .copy-icon {
+    border-color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.65);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--text-primary);
+    color: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    border-radius: 100px;
+    opacity: 0;
+    transition: all 0.22s ease;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="header">
+    <span class="header-title">Escalímetro</span>
+    <div class="header-right">
+      <span class="header-version">v2.0</span>
+      <button class="theme-btn" id="themeBtn">
+        <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btn-to-paper" onclick="setMode('to-paper')">Real → Papel</button>
+    <button class="mode-btn" id="btn-to-real" onclick="setMode('to-real')">Papel → Real</button>
+  </div>
+
+  <div class="formula-tag" id="formulaTag">
+    <span>real</span><span class="op">÷</span><span>escala</span><span class="op">=</span><span>papel</span>
+  </div>
+
+  <div class="field">
+    <div class="field-label" id="inputLabel">Medida real</div>
+    <div class="field-row">
+      <input type="number" id="inputValue" value="0.90" step="any" placeholder="0">
+      <select id="inputUnit">
+        <option value="km">km</option>
+        <option value="m" selected>m</option>
+        <option value="cm">cm</option>
+        <option value="mm">mm</option>
+        <option value="in">in</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="field-label">Escala</div>
+    <div class="scale-inner">
+      <span class="scale-prefix">1 :</span>
+      <input type="number" id="scaleFactor" value="250" placeholder="250">
+    </div>
+    <div class="presets">
+      <button class="preset-btn" onclick="setPreset(20,this)">1:20</button>
+      <button class="preset-btn" onclick="setPreset(50,this)">1:50</button>
+      <button class="preset-btn" onclick="setPreset(100,this)">1:100</button>
+      <button class="preset-btn active" onclick="setPreset(250,this)">1:250</button>
+      <button class="preset-btn" onclick="setPreset(500,this)">1:500</button>
+      <button class="preset-btn" onclick="setPreset(1000,this)">1:1000</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="result-block">
+    <div class="result-top">
+      <span class="result-label" id="outputLabel">En papel</span>
+      <select class="result-unit-select" id="outputUnit">
+        <option value="km">km</option>
+        <option value="m">m</option>
+        <option value="cm">cm</option>
+        <option value="mm" selected>mm</option>
+        <option value="in">in</option>
+      </select>
+    </div>
+    <div class="copy-trigger" id="copyTrigger">
+      <div class="result-number" id="resultValue">3.6000</div>
+      <div class="result-bottom-row">
+        <span class="result-unit-display" id="resultUnitDisplay">mm</span>
+        <div class="copy-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">copiado</div>
+
+<script>
+  const toM   = { km:1000, m:1, cm:0.01, mm:0.001, in:0.0254 };
+  const fromM = { km:0.001, m:1, cm:100, mm:1000, in:39.3701 };
+  let mode = 'to-paper';
+
+  function calc() {
+    const v  = parseFloat(document.getElementById('inputValue').value) || 0;
+    const iu = document.getElementById('inputUnit').value;
+    const s  = parseFloat(document.getElementById('scaleFactor').value) || 1;
+    const ou = document.getElementById('outputUnit').value;
+    if (s <= 0) return;
+    const inM = v * toM[iu];
+    const result = (mode === 'to-paper' ? inM / s : inM * s) * fromM[ou];
+    document.getElementById('resultValue').textContent = result.toFixed(4);
+    document.getElementById('resultUnitDisplay').textContent = ou;
+  }
+
+  function setMode(m) {
+    mode = m;
+    const toPaper = m === 'to-paper';
+    document.getElementById('btn-to-paper').classList.toggle('active', toPaper);
+    document.getElementById('btn-to-real').classList.toggle('active', !toPaper);
+    document.getElementById('inputLabel').textContent  = toPaper ? 'Medida real'     : 'Medida en dibujo';
+    document.getElementById('outputLabel').textContent = toPaper ? 'En papel'        : 'Medida real';
+    document.getElementById('formulaTag').innerHTML = toPaper
+      ? '<span>real</span><span class="op">÷</span><span>escala</span><span class="op">=</span><span>papel</span>'
+      : '<span>papel</span><span class="op">×</span><span>escala</span><span class="op">=</span><span>real</span>';
+    calc();
+  }
+
+  function setPreset(v, btn) {
+    document.getElementById('scaleFactor').value = v;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    calc();
+  }
+
+  document.getElementById('scaleFactor').addEventListener('input', () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    calc();
+  });
+  document.getElementById('inputValue').addEventListener('input', calc);
+  document.getElementById('inputUnit').addEventListener('change', calc);
+  document.getElementById('outputUnit').addEventListener('change', calc);
+
+  document.getElementById('copyTrigger').addEventListener('click', () => {
+    const txt = document.getElementById('resultValue').textContent;
+    navigator.clipboard.writeText(txt).catch(() => {
+      const ta = Object.assign(document.createElement('textarea'), { value: txt, style: 'position:fixed;left:-9999px' });
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    });
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1400);
+  });
+
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const isDark = document.body.getAttribute('data-theme') === 'dark';
+    document.body.setAttribute('data-theme', isDark ? '' : 'dark');
+  });
+
+  calc();
+</script>
+</body>
+</html>
