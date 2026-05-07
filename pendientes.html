@@ -165,6 +165,8 @@
     margin-right: 10px;
     font-weight: 600;
   }
+  /* Replaces inline style="margin-top:36px" */
+  .input-stack + .section-head { margin-top: 36px; }
 
   /* === INPUT FIELDS === */
   .input-stack { display: flex; flex-direction: column; gap: 28px; margin-bottom: 32px; }
@@ -198,7 +200,7 @@
     margin-top: 2px;
   }
 
-  /* === TOGGLES — ALIGNED === */
+  /* === TOGGLES === */
   .toggles { display: flex; flex-direction: column; gap: 22px; }
   .toggle-block {
     display: flex;
@@ -211,12 +213,20 @@
     font-size: 12px;
     color: var(--ink-soft);
   }
+  .toggle-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
   .seg-control {
     display: grid;
     border: 1px solid var(--rule);
     width: 100%;
   }
+  .seg-control + .seg-control { border-top: none; }
   .seg-control.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .seg-control.cols-4 { grid-template-columns: repeat(4, 1fr); }
   .seg-control.cols-2 { grid-template-columns: repeat(2, 1fr); }
   .seg-control button {
     background: none;
@@ -346,6 +356,16 @@
   }
 
   /* === HINT === */
+  .hint-block { margin-bottom: 48px; }
+  .hint-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
   .hint {
     font-family: 'Fraunces', serif;
     font-style: italic;
@@ -354,7 +374,6 @@
     line-height: 1.6;
     padding: 18px 0 18px 24px;
     border-left: 1px solid var(--rule);
-    margin-bottom: 48px;
     max-width: 680px;
   }
   .hint b {
@@ -366,9 +385,7 @@
   }
 
   /* === DIAGRAMS === */
-  .diagram-block {
-    margin-bottom: 56px;
-  }
+  .diagram-block { margin-bottom: 56px; }
   .diagram-head {
     display: flex;
     justify-content: space-between;
@@ -429,6 +446,13 @@
     grid-template-columns: 220px 1fr;
     gap: 48px;
   }
+  .norm-desc {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
   .norm-table {
     display: grid;
     grid-template-columns: auto 1fr 1fr 1fr;
@@ -441,6 +465,7 @@
     font-family: 'Inter', sans-serif;
     font-size: 12px;
     color: var(--ink-soft);
+    transition: color 0.15s;
   }
   .norm-table .head {
     font-family: 'Inter', sans-serif;
@@ -457,8 +482,15 @@
     color: var(--ink);
     font-style: italic;
   }
-  .norm-table .row.active > div { color: var(--ink); }
-  .norm-table .row.active .pct { color: var(--ink); font-weight: 500; }
+  /* Fix: active class on individual cells instead of display:contents wrapper */
+  .norm-table .cell-active { color: var(--ink) !important; }
+  .norm-table .pct.cell-active { font-weight: 500; }
+  .norm-table .norm-row-label {
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
 
   /* === FOOTER === */
   footer {
@@ -474,7 +506,7 @@
     letter-spacing: 0.1em;
   }
 
-  /* Toast feedback de export */
+  /* === TOAST === */
   .toast {
     position: fixed;
     bottom: 32px;
@@ -522,7 +554,7 @@
       <div class="meta">Pendientes peatonales · RCDF · Cablebús</div>
     </div>
     <div class="header-right">
-      <button class="theme-btn" onclick="toggleTheme()" aria-label="Cambiar tema">
+      <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
@@ -542,7 +574,7 @@
       <div class="input-stack">
         <div class="field">
           <span class="field-label">Longitud disponible</span>
-          <input type="number" class="field-input" id="inp-L" value="22.09" step="0.01" min="1" oninput="calc()">
+          <input type="number" class="field-input" id="inp-L" value="22.09" step="0.01" min="0" oninput="calc()">
           <span class="field-unit">metros</span>
         </div>
         <div class="field">
@@ -552,17 +584,23 @@
         </div>
       </div>
 
-      <div class="section-head" style="margin-top:36px"><span class="num-mark">02</span>Configuración</div>
+      <div class="section-head"><span class="num-mark">02</span>Configuración</div>
 
       <div class="toggles">
         <div class="toggle-block">
           <span class="toggle-label">Tramos</span>
-          <div class="seg-control cols-5" id="tramos-control">
+          <div class="seg-control cols-5" id="tramos-top">
             <button class="active" data-val="auto">auto</button>
             <button data-val="1">1</button>
             <button data-val="2">2</button>
             <button data-val="3">3</button>
             <button data-val="4">4</button>
+          </div>
+          <div class="seg-control cols-4" id="tramos-bot">
+            <button data-val="5">5</button>
+            <button data-val="6">6</button>
+            <button data-val="7">7</button>
+            <button data-val="8">8</button>
           </div>
         </div>
         <div class="toggle-block">
@@ -571,6 +609,7 @@
             <button class="active" data-val="nuevo">Nuevo</button>
             <button data-val="existente">Existente</button>
           </div>
+          <span class="toggle-note">Existente: +2 pp de tolerancia en pendiente máx.</span>
         </div>
         <div class="toggle-block">
           <span class="toggle-label">Aplicación</span>
@@ -584,22 +623,21 @@
 
     <div class="col-main">
       <div class="section-head"><span class="num-mark">03</span>Resultado</div>
-      <div id="result-zone"></div>
+      <div id="result-zone" aria-live="polite"></div>
     </div>
   </div>
 
   <!-- HINT -->
   <div id="hint-zone"></div>
 
-  <!-- DIAGRAMAS -->
-  <div class="section-head"><span class="num-mark">04</span>Representación gráfica</div>
+  <!-- DIAGRAMAS (section head incluido dinámicamente) -->
   <div id="diagrams-zone"></div>
 
   <!-- TABLA NORMATIVA -->
   <div class="norm-ref">
     <div>
       <div class="section-head"><span class="num-mark">05</span>Norma aplicada</div>
-      <p style="font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--ink-soft);line-height:1.6">
+      <p class="norm-desc">
         Categorías de pendiente longitudinal según rango de tramo entre descansos.
       </p>
     </div>
@@ -615,92 +653,140 @@
 <div class="toast" id="toast"></div>
 
 <script>
+const MAX_TRAMOS = 10;
 let modo = 'auto';
 let tipo = 'nuevo';
 let app = 'general';
 let theme = 'light';
 let estado = null;
 
-document.querySelectorAll('#tramos-control button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const v = btn.dataset.val;
-    modo = v === 'auto' ? 'auto' : parseInt(v);
-    document.querySelectorAll('#tramos-control button').forEach(b => b.classList.toggle('active', b === btn));
-    calc();
+/* ── Controles segmentados ─────────────────────────────────────────────── */
+function initSegControl(selector, onChange) {
+  const btns = document.querySelectorAll(selector);
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(btn.dataset.val);
+      saveState();
+    });
   });
+}
+
+initSegControl('#tramos-top button, #tramos-bot button', v => {
+  modo = v === 'auto' ? 'auto' : parseInt(v);
+  calc();
 });
-document.querySelectorAll('#tipo-control button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    tipo = btn.dataset.val;
-    document.querySelectorAll('#tipo-control button').forEach(b => b.classList.toggle('active', b === btn));
-    calc();
-  });
-});
-document.querySelectorAll('#app-control button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    app = btn.dataset.val;
-    document.querySelectorAll('#app-control button').forEach(b => b.classList.toggle('active', b === btn));
-    calc();
-  });
-});
+initSegControl('#tipo-control button', v => { tipo = v; calc(); });
+initSegControl('#app-control button', v => { app = v; calc(); });
+
+/* ── Tema ──────────────────────────────────────────────────────────────── */
+document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 
 function toggleTheme() {
   theme = theme === 'light' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', theme);
   document.getElementById('footer-mode').textContent = 'Modo · ' + (theme === 'light' ? 'Claro' : 'Oscuro');
+  saveState();
   if (estado) renderDiagrams(estado);
 }
 
+/* ── Persistencia ──────────────────────────────────────────────────────── */
+function saveState() {
+  try {
+    localStorage.setItem('pendientes_L',     document.getElementById('inp-L').value);
+    localStorage.setItem('pendientes_dh',    document.getElementById('inp-dh').value);
+    localStorage.setItem('pendientes_modo',  String(modo));
+    localStorage.setItem('pendientes_tipo',  tipo);
+    localStorage.setItem('pendientes_app',   app);
+    localStorage.setItem('pendientes_theme', theme);
+  } catch (e) {}
+}
+
+function loadState() {
+  try {
+    const sL     = localStorage.getItem('pendientes_L');
+    const sDh    = localStorage.getItem('pendientes_dh');
+    const sModo  = localStorage.getItem('pendientes_modo');
+    const sTipo  = localStorage.getItem('pendientes_tipo');
+    const sApp   = localStorage.getItem('pendientes_app');
+    const sTheme = localStorage.getItem('pendientes_theme');
+
+    if (sL)  document.getElementById('inp-L').value  = sL;
+    if (sDh) document.getElementById('inp-dh').value = sDh;
+
+    if (sModo) {
+      modo = sModo === 'auto' ? 'auto' : parseInt(sModo);
+      document.querySelectorAll('#tramos-top button, #tramos-bot button').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === sModo));
+    }
+    if (sTipo) {
+      tipo = sTipo;
+      document.querySelectorAll('#tipo-control button').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === sTipo));
+    }
+    if (sApp) {
+      app = sApp;
+      document.querySelectorAll('#app-control button').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === sApp));
+    }
+    if (sTheme) {
+      theme = sTheme;
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('footer-mode').textContent =
+        'Modo · ' + (theme === 'light' ? 'Claro' : 'Oscuro');
+    }
+  } catch (e) {}
+}
+
+/* ── Constantes y lógica ───────────────────────────────────────────────── */
 function getConstantes() {
   return {
-    descansoMin: 1.20,
-    anchoMin: app === 'cablebus' ? 1.50 : 1.00,
-    maxLong6pct: app === 'cablebus' ? 8.00 : 10.00,
-    maxLong8pct: app === 'cablebus' ? 6.00 : 5.99,
-    minLong6pct: 6.00,
-    minLong8pct: 3.00
+    descansoMin:  1.20,
+    anchoMin:     app === 'cablebus' ? 1.50 : 1.00,
+    maxLong6pct:  app === 'cablebus' ? 8.00 : 10.00,
+    maxLong8pct:  app === 'cablebus' ? 6.00 : 5.99,
+    minLong6pct:  6.00,
+    minLong8pct:  3.00
   };
 }
 
-function categoriaTramo(lTramo) {
-  const k = getConstantes();
+function categoriaTramo(lTramo, k) {
   const extra = tipo === 'existente' ? 2 : 0;
-  if (lTramo >= k.minLong6pct && lTramo <= k.maxLong6pct + 0.001) {
-    return { categoria: '6%', limite: 6 + extra, rangoMin: k.minLong6pct, rangoMax: k.maxLong6pct, rangoTexto: `${k.minLong6pct.toFixed(2)}–${k.maxLong6pct.toFixed(2)} m` };
-  }
-  if (lTramo >= k.minLong8pct && lTramo <= k.maxLong8pct + 0.001) {
-    return { categoria: '8%', limite: 8 + extra, rangoMin: k.minLong8pct, rangoMax: k.maxLong8pct, rangoTexto: `${k.minLong8pct.toFixed(2)}–${k.maxLong8pct.toFixed(2)} m` };
-  }
+  if (lTramo >= k.minLong6pct && lTramo <= k.maxLong6pct + 0.001)
+    return { categoria: '6%', limite: 6 + extra, rangoTexto: `${k.minLong6pct.toFixed(2)}–${k.maxLong6pct.toFixed(2)} m` };
+  if (lTramo >= k.minLong8pct && lTramo <= k.maxLong8pct + 0.001)
+    return { categoria: '8%', limite: 8 + extra, rangoTexto: `${k.minLong8pct.toFixed(2)}–${k.maxLong8pct.toFixed(2)} m` };
   return null;
 }
 
-function calcularConfig(L, dh, n) {
-  const k = getConstantes();
+function calcularConfig(L, dh, n, k) {
   const nDescansos = Math.max(0, n - 1);
   const lUtil = L - nDescansos * k.descansoMin;
   if (lUtil <= 0) return { error: 'no-cabe', n };
   const lTramo = lUtil / n;
-  const cat = categoriaTramo(lTramo);
+  const cat = categoriaTramo(lTramo, k);
   if (!cat) {
-    if (lTramo < k.minLong8pct) return { error: 'tramo-corto', n, lTramo, min: k.minLong8pct };
-    if (lTramo > k.maxLong6pct) return { error: 'tramo-largo', n, lTramo, max: k.maxLong6pct };
+    if (lTramo < k.minLong8pct)  return { error: 'tramo-corto', n, lTramo, min: k.minLong8pct };
+    if (lTramo > k.maxLong6pct)  return { error: 'tramo-largo', n, lTramo, max: k.maxLong6pct };
     if (lTramo > k.maxLong8pct && lTramo < k.minLong6pct) return { error: 'zona-muerta', n, lTramo };
     return { error: 'sin-categoria', n, lTramo };
   }
   const pendiente = dh > 0 ? (dh / lUtil) * 100 : 0;
   const cumple = pendiente <= cat.limite + 0.001;
-  const dhTramo = dh / n;
-  return { n, nDescansos, lUtil, lTramo, pendiente, limite: cat.limite, categoria: cat.categoria, rangoTexto: cat.rangoTexto, cumple, dhTramo, descansoMin: k.descansoMin, anchoMin: k.anchoMin };
+  return { n, nDescansos, lUtil, lTramo, pendiente, limite: cat.limite,
+    categoria: cat.categoria, rangoTexto: cat.rangoTexto, cumple,
+    dhTramo: dh / n, descansoMin: k.descansoMin, anchoMin: k.anchoMin };
 }
 
-function buscarAuto(L, dh) {
-  for (let n = 1; n <= 10; n++) {
-    const c = calcularConfig(L, dh, n);
+function buscarAuto(L, dh, k) {
+  for (let n = 1; n <= MAX_TRAMOS; n++) {
+    const c = calcularConfig(L, dh, n, k);
     if (!c.error && c.cumple) return c;
   }
   let mejor = null;
-  for (let n = 1; n <= 10; n++) {
-    const c = calcularConfig(L, dh, n);
+  for (let n = 1; n <= MAX_TRAMOS; n++) {
+    const c = calcularConfig(L, dh, n, k);
     if (!c.error) {
       const exceso = c.pendiente - c.limite;
       if (!mejor || exceso < mejor._exceso) mejor = { ...c, _exceso: exceso };
@@ -709,75 +795,89 @@ function buscarAuto(L, dh) {
   return mejor || { error: 'imposible' };
 }
 
-function longitudMinima(dh) {
-  const k = getConstantes();
+function longitudMinima(dh, k) {
   const extra = tipo === 'existente' ? 2 : 0;
   let mejor = null;
-  for (let n = 1; n <= 10; n++) {
+  for (let n = 1; n <= MAX_TRAMOS; n++) {
     const nDesc = n - 1;
-    const candidatos = [
+    for (const cand of [
       { lim: 6 + extra, minL: k.minLong6pct, maxL: k.maxLong6pct, cat: '6%' },
       { lim: 8 + extra, minL: k.minLong8pct, maxL: k.maxLong8pct, cat: '8%' }
-    ];
-    for (const cand of candidatos) {
+    ]) {
       const lUtilMin = dh / (cand.lim / 100);
       const lTramo = lUtilMin / n;
       if (lTramo < cand.minL || lTramo > cand.maxL + 0.001) continue;
       const lTotal = lUtilMin + nDesc * k.descansoMin;
-      if (!mejor || lTotal < mejor.lTotal) mejor = { n, lTotal, lUtilMin, lTramo, limite: cand.lim, categoria: cand.cat };
+      if (!mejor || lTotal < mejor.lTotal)
+        mejor = { n, lTotal, lUtilMin, lTramo, limite: cand.lim, categoria: cand.cat };
     }
   }
   return mejor;
 }
 
 function calc() {
-  const L = parseFloat(document.getElementById('inp-L').value) || 0;
+  const L  = parseFloat(document.getElementById('inp-L').value)  || 0;
   const dh = parseFloat(document.getElementById('inp-dh').value) || 0;
   if (!L || dh < 0) return;
+
+  if (dh > L) {
+    document.getElementById('result-zone').innerHTML = `<div class="result-display fail">
+      <div class="result-tag">Error de entrada</div>
+      <div class="result-pendiente"><span style="font-family:'Fraunces',serif;font-style:italic;font-size:48px">—</span></div>
+      <div class="result-line"><em>Valores inválidos.</em> El desnivel no puede ser mayor que la longitud disponible.</div>
+    </div>`;
+    document.getElementById('hint-zone').innerHTML = '';
+    document.getElementById('diagrams-zone').innerHTML = '';
+    estado = null;
+    return;
+  }
+
+  const k = getConstantes();
   let config;
-  if (modo === 'auto') config = buscarAuto(L, dh);
-  else config = calcularConfig(L, dh, modo);
-  const minNecesaria = longitudMinima(dh);
+  if (modo === 'auto') config = buscarAuto(L, dh, k);
+  else config = calcularConfig(L, dh, modo, k);
+  const minNecesaria = longitudMinima(dh, k);
   estado = { L, dh, config, minNecesaria };
   renderResult(estado);
   renderHint(estado);
   renderDiagrams(estado);
-  renderNormTable(estado);
+  renderNormTable(estado, k);
+  saveState();
 }
 
+/* ── Render ────────────────────────────────────────────────────────────── */
 function renderResult(st) {
   const c = st.config;
   const zone = document.getElementById('result-zone');
   if (c.error) {
-    let msg = '';
-    if (c.error === 'no-cabe') msg = `Con ${c.n} tramos los descansos exceden la longitud disponible.`;
-    else if (c.error === 'tramo-corto') msg = `Tramos de ${c.lTramo.toFixed(2)} m son menores al mínimo normativo (${c.min.toFixed(2)} m).`;
-    else if (c.error === 'tramo-largo') msg = `Tramos de ${c.lTramo.toFixed(2)} m exceden el máximo normativo (${c.max.toFixed(2)} m).`;
-    else if (c.error === 'zona-muerta') msg = `Tramos de ${c.lTramo.toFixed(2)} m caen entre las categorías 6% y 8%.`;
-    else msg = 'Configuración fuera de norma.';
+    const msgs = {
+      'no-cabe':      `Con ${c.n} tramos los descansos exceden la longitud disponible.`,
+      'tramo-corto':  `Tramos de ${c.lTramo.toFixed(2)} m son menores al mínimo normativo (${c.min.toFixed(2)} m).`,
+      'tramo-largo':  `Tramos de ${c.lTramo.toFixed(2)} m exceden el máximo normativo (${c.max.toFixed(2)} m).`,
+      'zona-muerta':  `Tramos de ${c.lTramo.toFixed(2)} m caen entre las categorías 6% y 8%.`,
+    };
     zone.innerHTML = `<div class="result-display fail">
       <div class="result-tag">No aplica</div>
       <div class="result-pendiente"><span style="font-family:'Fraunces',serif;font-style:italic;font-size:48px">—</span></div>
-      <div class="result-line"><em>Configuración inválida.</em> ${msg}</div>
+      <div class="result-line"><em>Configuración inválida.</em> ${msgs[c.error] || 'Configuración fuera de norma.'}</div>
     </div>`;
     return;
   }
 
   const ok = c.cumple;
-  const tag = ok ? 'Cumple normativa' : 'No cumple';
-  const compare = `${ok ? '≤' : '>'} ${c.limite}%`;
   document.getElementById('ed-num').textContent = String(c.n).padStart(2, '0');
 
-  let lineHtml;
-  if (c.n === 1) lineHtml = `Tramo único de <em>${c.lTramo.toFixed(2)} m</em>, sin descansos.`;
-  else lineHtml = `<em>${c.n} tramos</em> de <em>${c.lTramo.toFixed(2)} m</em> con <em>${c.nDescansos} descanso${c.nDescansos>1?'s':''}</em> de <em>${c.descansoMin.toFixed(2)} m</em>.`;
-  const excesoHtml = !ok ? `<br/><span style="color:var(--warn)">Excede ${(c.pendiente-c.limite).toFixed(2)} puntos porcentuales.</span>` : '';
+  const lineHtml = c.n === 1
+    ? `Tramo único de <em>${c.lTramo.toFixed(2)} m</em>, sin descansos.`
+    : `<em>${c.n} tramos</em> de <em>${c.lTramo.toFixed(2)} m</em> con <em>${c.nDescansos} descanso${c.nDescansos > 1 ? 's' : ''}</em> de <em>${c.descansoMin.toFixed(2)} m</em>.`;
+  const excesoHtml = !ok
+    ? `<br/><span style="color:var(--warn)">Excede ${(c.pendiente - c.limite).toFixed(2)} puntos porcentuales.</span>` : '';
 
-  zone.innerHTML = `<div class="result-display ${ok?'ok':'fail'}">
-    <div class="result-tag">${tag}</div>
+  zone.innerHTML = `<div class="result-display ${ok ? 'ok' : 'fail'}">
+    <div class="result-tag">${ok ? 'Cumple normativa' : 'No cumple'}</div>
     <div class="result-pendiente">
       <span class="num">${c.pendiente.toFixed(2)}</span><span class="pct">%</span>
-      <span class="compare">${compare}</span>
+      <span class="compare">${ok ? '≤' : '>'} ${c.limite}%</span>
     </div>
     <div class="result-line">${lineHtml}${excesoHtml}</div>
     <div class="result-cat">Categoría <b>${c.categoria}</b> · tramos válidos <b>${c.rangoTexto}</b></div>
@@ -805,56 +905,54 @@ function renderHint(st) {
   const c = st.config;
   const min = st.minNecesaria;
   const zone = document.getElementById('hint-zone');
+  let hintText = '';
+
   if (c.error || !c.cumple) {
     if (min) {
       const dif = min.lTotal - st.L;
-      if (dif > 0.01) {
-        zone.innerHTML = `<div class="hint">Para cumplir normativa estricta necesitarías al menos <b>${min.lTotal.toFixed(2)} m</b> de longitud — ${min.n} tramo${min.n>1?'s':''} al ${min.limite}% en categoría ${min.categoria}. Faltan <b>${dif.toFixed(2)} m</b>.</div>`;
-      } else { zone.innerHTML = ''; }
-    } else { zone.innerHTML = `<div class="hint">No es posible cumplir normativa con configuraciones convencionales.</div>`; }
-  } else {
-    if (min && min.lTotal < st.L - 0.01) {
-      const margen = st.L - min.lTotal;
-      zone.innerHTML = `<div class="hint">Tienes <b>${margen.toFixed(2)} m</b> de margen físico — la longitud mínima necesaria sería <b>${min.lTotal.toFixed(2)} m</b>.</div>`;
-    } else { zone.innerHTML = ''; }
+      if (dif > 0.01)
+        hintText = `Para cumplir normativa estricta necesitarías al menos <b>${min.lTotal.toFixed(2)} m</b> de longitud — ${min.n} tramo${min.n > 1 ? 's' : ''} al ${min.limite}% en categoría ${min.categoria}. Faltan <b>${dif.toFixed(2)} m</b>.`;
+    } else {
+      hintText = 'No es posible cumplir normativa con configuraciones convencionales.';
+    }
+  } else if (min && min.lTotal < st.L - 0.01) {
+    const margen = st.L - min.lTotal;
+    hintText = `Tienes <b>${margen.toFixed(2)} m</b> de margen físico — la longitud mínima necesaria sería <b>${min.lTotal.toFixed(2)} m</b>.`;
   }
+
+  zone.innerHTML = hintText
+    ? `<div class="hint-block"><div class="hint-label">Observación</div><div class="hint">${hintText}</div></div>`
+    : '';
 }
 
-function renderNormTable(st) {
-  const k = getConstantes();
+function renderNormTable(st, k) {
   const c = st.config;
   const extra = tipo === 'existente' ? 2 : 0;
+  const a = (active) => active ? 'cell-active' : '';
   const cat6 = c.categoria === '6%';
   const cat8 = c.categoria === '8%';
+  const appLabel = app === 'cablebus' ? 'Cablebús' : 'General';
   document.getElementById('norm-table').innerHTML = `
     <div class="head">Cat.</div>
     <div class="head">Pendiente máx.</div>
     <div class="head">Long. tramo</div>
     <div class="head">Aplicación</div>
-    <div class="row ${cat6 ? 'active' : ''}" style="display:contents">
-      <div class="pct">A</div>
-      <div class="pct">${6 + extra}%</div>
-      <div>${k.minLong6pct.toFixed(2)} – ${k.maxLong6pct.toFixed(2)} m</div>
-      <div>${app === 'cablebus' ? 'Cablebús' : 'General'}</div>
-    </div>
-    <div class="row ${cat8 ? 'active' : ''}" style="display:contents">
-      <div class="pct">B</div>
-      <div class="pct">${8 + extra}%</div>
-      <div>${k.minLong8pct.toFixed(2)} – ${k.maxLong8pct.toFixed(2)} m</div>
-      <div>${app === 'cablebus' ? 'Cablebús' : 'General'}</div>
-    </div>
-    <div style="display:contents">
-      <div></div>
-      <div style="font-style:italic;font-family:'Fraunces',serif">Descanso</div>
-      <div>${k.descansoMin.toFixed(2)} m mínimo</div>
-      <div>—</div>
-    </div>
-    <div style="display:contents">
-      <div></div>
-      <div style="font-style:italic;font-family:'Fraunces',serif">Ancho libre</div>
-      <div>${k.anchoMin.toFixed(2)} m mínimo</div>
-      <div>${app === 'cablebus' ? 'Transporte' : 'General'}</div>
-    </div>
+    <div class="pct ${a(cat6)}">A</div>
+    <div class="pct ${a(cat6)}">${6 + extra}%</div>
+    <div class="${a(cat6)}">${k.minLong6pct.toFixed(2)} – ${k.maxLong6pct.toFixed(2)} m</div>
+    <div class="${a(cat6)}">${appLabel}</div>
+    <div class="pct ${a(cat8)}">B</div>
+    <div class="pct ${a(cat8)}">${8 + extra}%</div>
+    <div class="${a(cat8)}">${k.minLong8pct.toFixed(2)} – ${k.maxLong8pct.toFixed(2)} m</div>
+    <div class="${a(cat8)}">${appLabel}</div>
+    <div></div>
+    <div class="norm-row-label">Descanso</div>
+    <div>${k.descansoMin.toFixed(2)} m mínimo</div>
+    <div>—</div>
+    <div></div>
+    <div class="norm-row-label">Ancho libre</div>
+    <div>${k.anchoMin.toFixed(2)} m mínimo</div>
+    <div>${app === 'cablebus' ? 'Transporte' : 'General'}</div>
   `;
 }
 
@@ -863,6 +961,7 @@ function renderDiagrams(st) {
   const zone = document.getElementById('diagrams-zone');
   if (c.error) { zone.innerHTML = ''; return; }
   zone.innerHTML = `
+    <div class="section-head"><span class="num-mark">04</span>Representación gráfica</div>
     <div class="diagram-block">
       <div class="diagram-head">
         <div class="diagram-title">Perfil <em>en corte</em></div>
@@ -892,15 +991,16 @@ function renderDiagrams(st) {
   `;
 }
 
+/* ── SVG helpers ───────────────────────────────────────────────────────── */
 function getColors() {
   const cs = getComputedStyle(document.documentElement);
   return {
     paper: cs.getPropertyValue('--paper').trim(),
-    ink: cs.getPropertyValue('--ink').trim(),
-    soft: cs.getPropertyValue('--ink-soft').trim(),
+    ink:   cs.getPropertyValue('--ink').trim(),
+    soft:  cs.getPropertyValue('--ink-soft').trim(),
     faint: cs.getPropertyValue('--ink-faint').trim(),
-    rule: cs.getPropertyValue('--rule').trim(),
-    warn: cs.getPropertyValue('--warn').trim()
+    rule:  cs.getPropertyValue('--rule').trim(),
+    warn:  cs.getPropertyValue('--warn').trim()
   };
 }
 
@@ -909,8 +1009,7 @@ function svgCorte(st) {
   const col = getColors();
   const stroke = c.cumple ? col.ink : col.warn;
 
-  const W = 920;
-  const padL = 100, padR = 100;
+  const W = 920, padL = 100, padR = 100;
   const drawW = W - padL - padR;
   const pxPerM_H = drawW / st.L;
   const pxPerM_V = pxPerM_H * 5;
@@ -918,9 +1017,7 @@ function svgCorte(st) {
   const tramoPx = c.lTramo * pxPerM_H;
   const descansoPx = c.descansoMin * pxPerM_H;
   const dhTramoPx = c.dhTramo * pxPerM_V;
-  const yTop = 70;
-  const yBase = yTop + dhPx;
-  const totalH = yBase + 100;
+  const yTop = 70, yBase = yTop + dhPx, totalH = yBase + 100;
 
   const segs = [];
   let x = padL, y = yTop;
@@ -941,12 +1038,10 @@ function svgCorte(st) {
   segs.forEach(s => {
     if (s.type === 'tramo') {
       parts.push(`<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="${stroke}" stroke-width="0.8" stroke-linecap="round"/>`);
-      const mx = (s.x1 + s.x2) / 2;
-      const my = (s.y1 + s.y2) / 2 - 10;
+      const mx = (s.x1 + s.x2) / 2, my = (s.y1 + s.y2) / 2 - 10;
       parts.push(`<text x="${mx}" y="${my}" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="400" fill="${stroke}">${c.pendiente.toFixed(2)}%</text>`);
-      if (s.idx < c.n) {
+      if (s.idx < c.n)
         parts.push(`<line x1="${s.x2}" y1="${s.y2-3}" x2="${s.x2}" y2="${s.y2+3}" stroke="${stroke}" stroke-width="0.6"/>`);
-      }
     } else {
       parts.push(`<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="${stroke}" stroke-width="1.4" stroke-linecap="round"/>`);
       parts.push(`<line x1="${s.x1}" y1="${s.y1-3}" x2="${s.x1}" y2="${s.y1+3}" stroke="${stroke}" stroke-width="0.6"/>`);
@@ -955,15 +1050,22 @@ function svgCorte(st) {
     }
   });
 
-  parts.push(`<line x1="${padL-30}" y1="${yTop}" x2="${padL-30}" y2="${yBase}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#a)" marker-start="url(#a)"/>`);
+  /* Cota vertical */
+  parts.push(`<line x1="${padL-30}" y1="${yTop}" x2="${padL-30}" y2="${yBase}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#arr-corte)" marker-start="url(#arr-corte)"/>`);
   parts.push(`<text x="${padL-36}" y="${(yTop+yBase)/2+4}" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${st.dh.toFixed(3)} m</text>`);
+  /* Indicador de escala vertical exagerada */
+  parts.push(`<text x="${padL-36}" y="${yTop-6}" text-anchor="end" font-family="Inter,sans-serif" font-size="8" fill="${col.faint}" letter-spacing="0.06em">V 5×</text>`);
+  parts.push(`<line x1="${padL-44}" y1="${yTop+2}" x2="${padL-44}" y2="${yTop+10}" stroke="${col.faint}" stroke-width="0.6"/>`);
+  parts.push(`<line x1="${padL-44}" y1="${yTop+6}" x2="${padL-40}" y2="${yTop+3}" stroke="${col.faint}" stroke-width="0.6"/>`);
+  parts.push(`<line x1="${padL-44}" y1="${yTop+6}" x2="${padL-48}" y2="${yTop+3}" stroke="${col.faint}" stroke-width="0.6"/>`);
+
   parts.push(`<text x="${padL}" y="${yTop-32}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="13" fill="${col.ink}">llegada</text>`);
   parts.push(`<text x="${padL}" y="${yTop-18}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">COTA ALTA</text>`);
   parts.push(`<text x="${W-padR}" y="${yBase+22}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="13" fill="${col.ink}">salida</text>`);
   parts.push(`<text x="${W-padR}" y="${yBase+36}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">COTA BAJA</text>`);
 
   const yCota = yBase + 70;
-  parts.push(`<line x1="${padL}" y1="${yCota}" x2="${W-padR}" y2="${yCota}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#a)" marker-start="url(#a)"/>`);
+  parts.push(`<line x1="${padL}" y1="${yCota}" x2="${W-padR}" y2="${yCota}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#arr-corte)" marker-start="url(#arr-corte)"/>`);
   parts.push(`<text x="${W/2}" y="${yCota+15}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${st.L.toFixed(2)} m</text>`);
 
   segs.filter(s => s.type === 'tramo').forEach(s => {
@@ -973,7 +1075,7 @@ function svgCorte(st) {
 
   return `<svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
     <defs>
-      <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <marker id="arr-corte" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
         <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
       </marker>
     </defs>
@@ -992,9 +1094,7 @@ function svgPlanta(st) {
   const tramoPx = c.lTramo * pxPerM;
   const descansoPx = c.descansoMin * pxPerM;
   const ancho = c.anchoMin * pxPerM;
-  const yTop = 60, yBot = yTop + ancho;
-  const yMid = yTop + ancho / 2;
-  const totalH = yBot + 90;
+  const yTop = 60, yBot = yTop + ancho, yMid = yTop + ancho / 2, totalH = yBot + 90;
 
   let parts = [];
   parts.push(`<rect x="${padL}" y="${yTop}" width="${drawW}" height="${ancho}" fill="none" stroke="${stroke}" stroke-width="0.8"/>`);
@@ -1010,23 +1110,21 @@ function svgPlanta(st) {
     const fontSize = ancho < 40 ? 11 : 13;
     parts.push(`<text x="${(x+xEnd)/2}" y="${yMid-2}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="${fontSize}" fill="${stroke}">T${i+1}</text>`);
     parts.push(`<text x="${(x+xEnd)/2}" y="${yMid+12}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${c.lTramo.toFixed(2)} m</text>`);
-
     x = xEnd;
     parts.push(`<line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBot}" stroke="${stroke}" stroke-width="0.6"/>`);
 
     if (i < c.n - 1) {
       const xDEnd = x + descansoPx;
       const hatchSpacing = 4;
-      for (let xh = x; xh < xDEnd; xh += hatchSpacing) {
+      for (let xh = x; xh < xDEnd; xh += hatchSpacing)
         parts.push(`<line x1="${xh}" y1="${yTop}" x2="${Math.min(xh + ancho, xDEnd)}" y2="${Math.min(yBot, yTop + (xDEnd - xh))}" stroke="${stroke}" stroke-width="0.3" stroke-opacity="0.3"/>`);
-      }
       parts.push(`<text x="${(x+xDEnd)/2}" y="${yMid+4}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="${fontSize-1}" fill="${stroke}">D${i+1}</text>`);
       x = xDEnd;
       parts.push(`<line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBot}" stroke="${stroke}" stroke-width="0.6"/>`);
     }
   }
 
-  parts.push(`<line x1="${padL-22}" y1="${yTop}" x2="${padL-22}" y2="${yBot}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#b)" marker-start="url(#b)"/>`);
+  parts.push(`<line x1="${padL-22}" y1="${yTop}" x2="${padL-22}" y2="${yBot}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#arr-planta)" marker-start="url(#arr-planta)"/>`);
   parts.push(`<text x="${padL-28}" y="${yMid+4}" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${c.anchoMin.toFixed(2)} m</text>`);
   parts.push(`<text x="${padL}" y="${yTop-22}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="13" fill="${col.ink}">llegada</text>`);
   parts.push(`<text x="${padL}" y="${yTop-9}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">←</text>`);
@@ -1034,12 +1132,12 @@ function svgPlanta(st) {
   parts.push(`<text x="${W-padR}" y="${yTop-9}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">→</text>`);
 
   const yCota = yBot + 38;
-  parts.push(`<line x1="${padL}" y1="${yCota}" x2="${W-padR}" y2="${yCota}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#b)" marker-start="url(#b)"/>`);
+  parts.push(`<line x1="${padL}" y1="${yCota}" x2="${W-padR}" y2="${yCota}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#arr-planta)" marker-start="url(#arr-planta)"/>`);
   parts.push(`<text x="${W/2}" y="${yCota+15}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${st.L.toFixed(2)} m</text>`);
 
   return `<svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
     <defs>
-      <marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <marker id="arr-planta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
         <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
       </marker>
     </defs>
@@ -1047,6 +1145,7 @@ function svgPlanta(st) {
   </svg>`;
 }
 
+/* ── Export PNG ────────────────────────────────────────────────────────── */
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1060,14 +1159,10 @@ function exportSVG(containerId, filename) {
   if (!svg) { showToast('No hay diagrama para exportar'); return; }
 
   const col = getColors();
-  const bgColor = col.paper;
-  const scale = 3; // alta resolución
-
-  // Clonar el SVG y embeber estilos inline
+  const scale = 3;
   const clone = svg.cloneNode(true);
   const vb = svg.viewBox.baseVal;
-  const w = vb.width;
-  const h = vb.height;
+  const w = vb.width, h = vb.height;
   clone.setAttribute('width', w);
   clone.setAttribute('height', h);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -1076,37 +1171,37 @@ function exportSVG(containerId, filename) {
   const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(svgBlob);
 
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = w * scale;
-    canvas.height = h * scale;
-    const ctx = canvas.getContext('2d');
-    // Fondo crema/oscuro
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.scale(scale, scale);
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
-
-    canvas.toBlob(blob => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `${filename}-${new Date().toISOString().slice(0,10)}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-      showToast('Imagen exportada');
-    }, 'image/png');
-  };
-  img.onerror = () => {
-    URL.revokeObjectURL(url);
-    showToast('Error al exportar');
-  };
-  img.src = url;
+  /* Esperar a que las fuentes estén cargadas antes de renderizar en canvas */
+  document.fonts.ready.then(() => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w * scale;
+      canvas.height = h * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = col.paper;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        showToast('Imagen exportada');
+      }, 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); showToast('Error al exportar'); };
+    img.src = url;
+  });
 }
 
+/* ── Init ──────────────────────────────────────────────────────────────── */
+loadState();
 calc();
 </script>
 </body>
