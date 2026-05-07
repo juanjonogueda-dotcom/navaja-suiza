@@ -41,9 +41,9 @@
   }
 
   .container {
-    max-width: 860px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 56px 64px 96px;
+    padding: clamp(32px, 4vw, 56px) clamp(24px, 5vw, 64px) clamp(48px, 7vw, 96px);
     border-left: 1px solid var(--rule);
     border-right: 1px solid var(--rule);
     background: var(--paper);
@@ -120,14 +120,30 @@
   /* === GRID === */
   .grid {
     display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 48px;
+    grid-template-columns: clamp(180px, 20%, 240px) 1fr;
+    gap: clamp(32px, 4vw, 48px);
   }
   .col-side {
     border-right: 1px solid var(--rule);
-    padding-right: 32px;
+    padding-right: clamp(20px, 3vw, 32px);
   }
   .col-main { padding-top: 4px; min-width: 0; }
+
+  /* Desktop: col-main se divide en dos columnas (medida | resultado) */
+  @media (min-width: 860px) {
+    .grid { grid-template-columns: clamp(180px, 18%, 240px) 1fr 1fr; }
+    .col-main { display: contents; }
+    .col-section { min-width: 0; padding-top: 4px; }
+    .col-section:first-child {
+      border-right: 1px solid var(--rule);
+      padding-right: clamp(20px, 3vw, 32px);
+    }
+    .col-section-result .result-display {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+  }
 
   /* === SECTION HEADS === */
   .section-head {
@@ -317,6 +333,10 @@
     .container { padding: 32px 24px 56px; border: none; }
     .grid { grid-template-columns: 1fr; gap: 32px; }
     .col-side { border-right: none; border-bottom: 1px solid var(--rule); padding-right: 0; padding-bottom: 32px; }
+    /* En móvil col-main vuelve a ser bloque normal */
+    .col-main { display: block; }
+    .col-section:first-child { border-right: none; padding-right: 0; }
+    .col-section-result .result-display { border-bottom: 1px solid var(--rule); padding-bottom: 40px; margin-bottom: 0; }
     .masthead h1 { font-size: 38px; }
     .result-big { font-size: 56px; }
   }
@@ -383,38 +403,42 @@
 
     <div class="col-main">
 
-      <div class="section-head"><span class="num-mark">03</span>Medida de entrada</div>
-      <div class="field">
-        <span class="field-label" id="inputLabel">Medida real</span>
-        <input type="number" class="field-input" id="inputValue" value="0.90" step="any" placeholder="0">
-        <span class="field-unit" id="inputUnitLabel">metros</span>
-      </div>
-      <div class="toggle-block">
-        <span class="toggle-label">Unidad de entrada</span>
-        <div class="seg-control cols-5" id="input-unit-control">
-          <button data-val="km">km</button>
-          <button class="active" data-val="m">m</button>
-          <button data-val="cm">cm</button>
-          <button data-val="mm">mm</button>
-          <button data-val="in">in</button>
+      <div class="col-section">
+        <div class="section-head"><span class="num-mark">03</span>Medida de entrada</div>
+        <div class="field">
+          <span class="field-label" id="inputLabel">Medida real</span>
+          <input type="number" class="field-input" id="inputValue" value="0.90" step="any" placeholder="0">
+          <span class="field-unit" id="inputUnitLabel">metros</span>
+        </div>
+        <div class="toggle-block">
+          <span class="toggle-label">Unidad de entrada</span>
+          <div class="seg-control cols-5" id="input-unit-control">
+            <button data-val="km">km</button>
+            <button class="active" data-val="m">m</button>
+            <button data-val="cm">cm</button>
+            <button data-val="mm">mm</button>
+            <button data-val="in">in</button>
+          </div>
         </div>
       </div>
 
-      <div class="section-head" style="margin-top: 8px"><span class="num-mark">04</span>Resultado</div>
-      <div class="result-display">
-        <div class="result-tag" id="outputLabel">En papel</div>
-        <div class="result-number-wrap" id="copyTrigger">
-          <span class="result-big" id="resultValue">3.6000</span>
-          <span class="result-copy-hint">copiar</span>
-        </div>
-        <div class="toggle-block" style="margin-bottom: 0">
-          <span class="toggle-label">Unidad de resultado</span>
-          <div class="seg-control cols-5" id="output-unit-control">
-            <button data-val="km">km</button>
-            <button data-val="m">m</button>
-            <button data-val="cm">cm</button>
-            <button class="active" data-val="mm">mm</button>
-            <button data-val="in">in</button>
+      <div class="col-section col-section-result">
+        <div class="section-head"><span class="num-mark">04</span>Resultado</div>
+        <div class="result-display">
+          <div class="result-tag" id="outputLabel">En papel</div>
+          <div class="result-number-wrap" id="copyTrigger">
+            <span class="result-big" id="resultValue">3.6000</span>
+            <span class="result-copy-hint">copiar</span>
+          </div>
+          <div class="toggle-block" style="margin-bottom: 0">
+            <span class="toggle-label">Unidad de resultado</span>
+            <div class="seg-control cols-5" id="output-unit-control">
+              <button data-val="km">km</button>
+              <button data-val="m">m</button>
+              <button data-val="cm">cm</button>
+              <button class="active" data-val="mm">mm</button>
+              <button data-val="in">in</button>
+            </div>
           </div>
         </div>
       </div>
