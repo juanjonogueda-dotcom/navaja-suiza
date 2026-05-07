@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rampa — Verificador normativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"] {
+    --bg: #f1ece0;
+    --paper: #f5f1e8;
+    --ink: #5a6b3e;
+    --ink-soft: #7a8862;
+    --ink-faint: #9da888;
+    --rule: #c2c0a8;
+    --rule-soft: #d8d4bf;
+    --warn: #a8503e;
+    --warn-soft: #c47a68;
+    --warn-bg: #ede0d8;
+    --display-num: #5a6b3e;
+  }
+  :root[data-theme="dark"] {
+    --bg: #15130e;
+    --paper: #1c1a14;
+    --ink: #e8e0c8;
+    --ink-soft: #c4bca0;
+    --ink-faint: #8a8470;
+    --rule: #4a4538;
+    --rule-soft: #2e2b22;
+    --warn: #d49580;
+    --warn-soft: #b87a64;
+    --warn-bg: #2a201a;
+    --display-num: #e8e0c8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { background: var(--bg); }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.55;
+    transition: background 0.3s, color 0.3s;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .num {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 56px 64px 96px;
+    border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    background: var(--paper);
+    min-height: 100vh;
+  }
+
+  /* === HEADER === */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 32px;
+    margin-bottom: 56px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .masthead .eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    font-variation-settings: 'opsz' 144;
+  }
+  .masthead .meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 14px;
+    letter-spacing: 0.05em;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+  }
+  .theme-btn {
+    background: none;
+    border: 1px solid var(--rule);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .theme-btn:hover {
+    color: var(--ink);
+    border-color: var(--ink-soft);
+  }
+  .theme-btn svg { width: 15px; height: 15px; }
+  .theme-btn .icon-sun { display: none; }
+  [data-theme="dark"] .theme-btn .icon-moon { display: none; }
+  [data-theme="dark"] .theme-btn .icon-sun { display: block; }
+  .ed-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-align: right;
+    line-height: 1.6;
+  }
+  .ed-num b { color: var(--ink); font-weight: 500; }
+
+  /* === GRID === */
+  .grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 48px;
+    margin-bottom: 56px;
+  }
+
+  .col-side {
+    border-right: 1px solid var(--rule);
+    padding-right: 32px;
+  }
+  .col-main {
+    padding-top: 4px;
+    min-width: 0;
+  }
+
+  /* === SECTION HEADERS === */
+  .section-head {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+  .section-head .num-mark {
+    color: var(--ink);
+    margin-right: 10px;
+    font-weight: 600;
+  }
+
+  /* === INPUT FIELDS === */
+  .input-stack { display: flex; flex-direction: column; gap: 28px; margin-bottom: 32px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field-label {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .field-input {
+    font-family: 'Inter', sans-serif !important;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    font-size: 28px;
+    font-weight: 400;
+    padding: 4px 0;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  .field-input:focus { border-bottom-color: var(--ink); }
+  .field-unit {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* === TOGGLES — ALIGNED === */
+  .toggles { display: flex; flex-direction: column; gap: 22px; }
+  .toggle-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toggle-label {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .seg-control {
+    display: grid;
+    border: 1px solid var(--rule);
+    width: 100%;
+  }
+  .seg-control.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .seg-control.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .seg-control button {
+    background: none;
+    border: none;
+    border-right: 1px solid var(--rule);
+    padding: 8px 4px;
+    color: var(--ink-faint);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+  .seg-control button:last-child { border-right: none; }
+  .seg-control button.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .seg-control button:hover:not(.active) { color: var(--ink); }
+
+  /* === RESULT === */
+  .result-display {
+    margin-bottom: 48px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .result-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+  .result-display.ok .result-tag { color: var(--ink); }
+  .result-display.fail .result-tag { color: var(--warn); }
+  .result-pendiente {
+    font-family: 'Inter', sans-serif;
+    font-size: 96px;
+    font-weight: 300;
+    color: var(--display-num);
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    margin-bottom: 12px;
+  }
+  .result-display.fail .result-pendiente { color: var(--warn); }
+  .result-pendiente .pct {
+    font-size: 48px;
+    color: var(--ink-soft);
+    font-weight: 300;
+    margin-left: -4px;
+  }
+  .result-pendiente .compare {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-weight: 400;
+    margin-left: 14px;
+    letter-spacing: 0;
+  }
+  .result-line {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    max-width: 560px;
+    margin-bottom: 6px;
+  }
+  .result-line em { font-style: italic; color: var(--ink); }
+  .result-cat {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 14px;
+  }
+  .result-cat b { color: var(--ink); font-weight: 500; }
+
+  /* === METRICS === */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+  }
+  .metric-cell {
+    padding: 0 24px;
+    border-right: 1px solid var(--rule);
+  }
+  .metric-cell:first-child { padding-left: 0; }
+  .metric-cell:last-child { border-right: none; padding-right: 0; }
+  .metric-num-mark {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.18em;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .metric-label {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .metric-value {
+    font-family: 'Inter', sans-serif;
+    font-size: 32px;
+    color: var(--ink);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .metric-value .unit {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-left: 4px;
+  }
+
+  /* === HINT === */
+  .hint {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    padding: 18px 0 18px 24px;
+    border-left: 1px solid var(--rule);
+    margin-bottom: 48px;
+    max-width: 680px;
+  }
+  .hint b {
+    font-style: normal;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* === DIAGRAMS === */
+  .diagram-block {
+    margin-bottom: 56px;
+  }
+  .diagram-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+    gap: 16px;
+  }
+  .diagram-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .diagram-title em { font-style: italic; color: var(--ink-soft); }
+  .diagram-head-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .diagram-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .export-btn {
+    background: none;
+    border: 1px solid var(--rule);
+    padding: 7px 14px;
+    color: var(--ink-soft);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+  }
+  .export-btn:hover {
+    color: var(--ink);
+    border-color: var(--ink-soft);
+  }
+  .export-btn svg { width: 13px; height: 13px; }
+  .diagram-svg { width: 100%; overflow-x: auto; }
+
+  /* === NORM REFERENCE === */
+  .norm-ref {
+    margin-top: 56px;
+    padding-top: 40px;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 48px;
+  }
+  .norm-table {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr 1fr;
+    gap: 0;
+    width: 100%;
+  }
+  .norm-table > div {
+    padding: 12px 16px 12px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .norm-table .head {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--rule);
+    font-weight: 500;
+  }
+  .norm-table .pct {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: var(--ink);
+    font-style: italic;
+  }
+  .norm-table .row.active > div { color: var(--ink); }
+  .norm-table .row.active .pct { color: var(--ink); font-weight: 500; }
+
+  /* === FOOTER === */
+  footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+  }
+
+  /* Toast feedback de export */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 22px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s;
+    z-index: 999;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 760px) {
+    .container { padding: 32px 24px 56px; border: none; }
+    .grid { grid-template-columns: 1fr; gap: 32px; }
+    .col-side { border-right: none; border-bottom: 1px solid var(--rule); padding-right: 0; padding-bottom: 32px; }
+    .masthead h1 { font-size: 38px; }
+    .result-pendiente { font-size: 64px; }
+    .result-pendiente .pct { font-size: 32px; }
+    .metrics-row { grid-template-columns: 1fr; }
+    .metric-cell { padding: 12px 0; border-right: none; border-bottom: 1px solid var(--rule-soft); }
+    .metric-cell:last-child { border-bottom: none; }
+    .norm-ref { grid-template-columns: 1fr; }
+    .diagram-head { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <header>
+    <div class="masthead">
+      <div class="eyebrow">Verificador normativo · Accesibilidad</div>
+      <h1>Rampa</h1>
+      <div class="meta">Pendientes peatonales · RCDF · Cablebús</div>
+    </div>
+    <div class="header-right">
+      <button class="theme-btn" onclick="toggleTheme()" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <div class="ed-num">
+        N.° <b id="ed-num">01</b><br>
+        Sec. <b>Cálculo</b><br>
+        Pub. <b>2026</b>
+      </div>
+    </div>
+  </header>
+
+  <!-- INPUTS + RESULTADO -->
+  <div class="grid">
+    <aside class="col-side">
+      <div class="section-head"><span class="num-mark">01</span>Parámetros</div>
+
+      <div class="input-stack">
+        <div class="field">
+          <span class="field-label">Longitud disponible</span>
+          <input type="number" class="field-input" id="inp-L" value="22.09" step="0.01" min="1" oninput="calc()">
+          <span class="field-unit">metros</span>
+        </div>
+        <div class="field">
+          <span class="field-label">Desnivel a salvar</span>
+          <input type="number" class="field-input" id="inp-dh" value="1.399" step="0.001" min="0" oninput="calc()">
+          <span class="field-unit">metros</span>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top:36px"><span class="num-mark">02</span>Configuración</div>
+
+      <div class="toggles">
+        <div class="toggle-block">
+          <span class="toggle-label">Tramos</span>
+          <div class="seg-control cols-5" id="tramos-control">
+            <button class="active" data-val="auto">auto</button>
+            <button data-val="1">1</button>
+            <button data-val="2">2</button>
+            <button data-val="3">3</button>
+            <button data-val="4">4</button>
+          </div>
+        </div>
+        <div class="toggle-block">
+          <span class="toggle-label">Tipo de proyecto</span>
+          <div class="seg-control cols-2" id="tipo-control">
+            <button class="active" data-val="nuevo">Nuevo</button>
+            <button data-val="existente">Existente</button>
+          </div>
+        </div>
+        <div class="toggle-block">
+          <span class="toggle-label">Aplicación</span>
+          <div class="seg-control cols-2" id="app-control">
+            <button class="active" data-val="general">General</button>
+            <button data-val="cablebus">Cablebús</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="col-main">
+      <div class="section-head"><span class="num-mark">03</span>Resultado</div>
+      <div id="result-zone"></div>
+    </div>
+  </div>
+
+  <!-- HINT -->
+  <div id="hint-zone"></div>
+
+  <!-- DIAGRAMAS -->
+  <div class="section-head"><span class="num-mark">04</span>Representación gráfica</div>
+  <div id="diagrams-zone"></div>
+
+  <!-- TABLA NORMATIVA -->
+  <div class="norm-ref">
+    <div>
+      <div class="section-head"><span class="num-mark">05</span>Norma aplicada</div>
+      <p style="font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--ink-soft);line-height:1.6">
+        Categorías de pendiente longitudinal según rango de tramo entre descansos.
+      </p>
+    </div>
+    <div class="norm-table" id="norm-table"></div>
+  </div>
+
+  <footer>
+    <span>Rampa © 2026 — verificador normativo</span>
+    <span id="footer-mode">Modo · Claro</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let modo = 'auto';
+let tipo = 'nuevo';
+let app = 'general';
+let theme = 'light';
+let estado = null;
+
+document.querySelectorAll('#tramos-control button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = btn.dataset.val;
+    modo = v === 'auto' ? 'auto' : parseInt(v);
+    document.querySelectorAll('#tramos-control button').forEach(b => b.classList.toggle('active', b === btn));
+    calc();
+  });
+});
+document.querySelectorAll('#tipo-control button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    tipo = btn.dataset.val;
+    document.querySelectorAll('#tipo-control button').forEach(b => b.classList.toggle('active', b === btn));
+    calc();
+  });
+});
+document.querySelectorAll('#app-control button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    app = btn.dataset.val;
+    document.querySelectorAll('#app-control button').forEach(b => b.classList.toggle('active', b === btn));
+    calc();
+  });
+});
+
+function toggleTheme() {
+  theme = theme === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('footer-mode').textContent = 'Modo · ' + (theme === 'light' ? 'Claro' : 'Oscuro');
+  if (estado) renderDiagrams(estado);
+}
+
+function getConstantes() {
+  return {
+    descansoMin: 1.20,
+    anchoMin: app === 'cablebus' ? 1.50 : 1.00,
+    maxLong6pct: app === 'cablebus' ? 8.00 : 10.00,
+    maxLong8pct: app === 'cablebus' ? 6.00 : 5.99,
+    minLong6pct: 6.00,
+    minLong8pct: 3.00
+  };
+}
+
+function categoriaTramo(lTramo) {
+  const k = getConstantes();
+  const extra = tipo === 'existente' ? 2 : 0;
+  if (lTramo >= k.minLong6pct && lTramo <= k.maxLong6pct + 0.001) {
+    return { categoria: '6%', limite: 6 + extra, rangoMin: k.minLong6pct, rangoMax: k.maxLong6pct, rangoTexto: `${k.minLong6pct.toFixed(2)}–${k.maxLong6pct.toFixed(2)} m` };
+  }
+  if (lTramo >= k.minLong8pct && lTramo <= k.maxLong8pct + 0.001) {
+    return { categoria: '8%', limite: 8 + extra, rangoMin: k.minLong8pct, rangoMax: k.maxLong8pct, rangoTexto: `${k.minLong8pct.toFixed(2)}–${k.maxLong8pct.toFixed(2)} m` };
+  }
+  return null;
+}
+
+function calcularConfig(L, dh, n) {
+  const k = getConstantes();
+  const nDescansos = Math.max(0, n - 1);
+  const lUtil = L - nDescansos * k.descansoMin;
+  if (lUtil <= 0) return { error: 'no-cabe', n };
+  const lTramo = lUtil / n;
+  const cat = categoriaTramo(lTramo);
+  if (!cat) {
+    if (lTramo < k.minLong8pct) return { error: 'tramo-corto', n, lTramo, min: k.minLong8pct };
+    if (lTramo > k.maxLong6pct) return { error: 'tramo-largo', n, lTramo, max: k.maxLong6pct };
+    if (lTramo > k.maxLong8pct && lTramo < k.minLong6pct) return { error: 'zona-muerta', n, lTramo };
+    return { error: 'sin-categoria', n, lTramo };
+  }
+  const pendiente = dh > 0 ? (dh / lUtil) * 100 : 0;
+  const cumple = pendiente <= cat.limite + 0.001;
+  const dhTramo = dh / n;
+  return { n, nDescansos, lUtil, lTramo, pendiente, limite: cat.limite, categoria: cat.categoria, rangoTexto: cat.rangoTexto, cumple, dhTramo, descansoMin: k.descansoMin, anchoMin: k.anchoMin };
+}
+
+function buscarAuto(L, dh) {
+  for (let n = 1; n <= 10; n++) {
+    const c = calcularConfig(L, dh, n);
+    if (!c.error && c.cumple) return c;
+  }
+  let mejor = null;
+  for (let n = 1; n <= 10; n++) {
+    const c = calcularConfig(L, dh, n);
+    if (!c.error) {
+      const exceso = c.pendiente - c.limite;
+      if (!mejor || exceso < mejor._exceso) mejor = { ...c, _exceso: exceso };
+    }
+  }
+  return mejor || { error: 'imposible' };
+}
+
+function longitudMinima(dh) {
+  const k = getConstantes();
+  const extra = tipo === 'existente' ? 2 : 0;
+  let mejor = null;
+  for (let n = 1; n <= 10; n++) {
+    const nDesc = n - 1;
+    const candidatos = [
+      { lim: 6 + extra, minL: k.minLong6pct, maxL: k.maxLong6pct, cat: '6%' },
+      { lim: 8 + extra, minL: k.minLong8pct, maxL: k.maxLong8pct, cat: '8%' }
+    ];
+    for (const cand of candidatos) {
+      const lUtilMin = dh / (cand.lim / 100);
+      const lTramo = lUtilMin / n;
+      if (lTramo < cand.minL || lTramo > cand.maxL + 0.001) continue;
+      const lTotal = lUtilMin + nDesc * k.descansoMin;
+      if (!mejor || lTotal < mejor.lTotal) mejor = { n, lTotal, lUtilMin, lTramo, limite: cand.lim, categoria: cand.cat };
+    }
+  }
+  return mejor;
+}
+
+function calc() {
+  const L = parseFloat(document.getElementById('inp-L').value) || 0;
+  const dh = parseFloat(document.getElementById('inp-dh').value) || 0;
+  if (!L || dh < 0) return;
+  let config;
+  if (modo === 'auto') config = buscarAuto(L, dh);
+  else config = calcularConfig(L, dh, modo);
+  const minNecesaria = longitudMinima(dh);
+  estado = { L, dh, config, minNecesaria };
+  renderResult(estado);
+  renderHint(estado);
+  renderDiagrams(estado);
+  renderNormTable(estado);
+}
+
+function renderResult(st) {
+  const c = st.config;
+  const zone = document.getElementById('result-zone');
+  if (c.error) {
+    let msg = '';
+    if (c.error === 'no-cabe') msg = `Con ${c.n} tramos los descansos exceden la longitud disponible.`;
+    else if (c.error === 'tramo-corto') msg = `Tramos de ${c.lTramo.toFixed(2)} m son menores al mínimo normativo (${c.min.toFixed(2)} m).`;
+    else if (c.error === 'tramo-largo') msg = `Tramos de ${c.lTramo.toFixed(2)} m exceden el máximo normativo (${c.max.toFixed(2)} m).`;
+    else if (c.error === 'zona-muerta') msg = `Tramos de ${c.lTramo.toFixed(2)} m caen entre las categorías 6% y 8%.`;
+    else msg = 'Configuración fuera de norma.';
+    zone.innerHTML = `<div class="result-display fail">
+      <div class="result-tag">No aplica</div>
+      <div class="result-pendiente"><span style="font-family:'Fraunces',serif;font-style:italic;font-size:48px">—</span></div>
+      <div class="result-line"><em>Configuración inválida.</em> ${msg}</div>
+    </div>`;
+    return;
+  }
+
+  const ok = c.cumple;
+  const tag = ok ? 'Cumple normativa' : 'No cumple';
+  const compare = `${ok ? '≤' : '>'} ${c.limite}%`;
+  document.getElementById('ed-num').textContent = String(c.n).padStart(2, '0');
+
+  let lineHtml;
+  if (c.n === 1) lineHtml = `Tramo único de <em>${c.lTramo.toFixed(2)} m</em>, sin descansos.`;
+  else lineHtml = `<em>${c.n} tramos</em> de <em>${c.lTramo.toFixed(2)} m</em> con <em>${c.nDescansos} descanso${c.nDescansos>1?'s':''}</em> de <em>${c.descansoMin.toFixed(2)} m</em>.`;
+  const excesoHtml = !ok ? `<br/><span style="color:var(--warn)">Excede ${(c.pendiente-c.limite).toFixed(2)} puntos porcentuales.</span>` : '';
+
+  zone.innerHTML = `<div class="result-display ${ok?'ok':'fail'}">
+    <div class="result-tag">${tag}</div>
+    <div class="result-pendiente">
+      <span class="num">${c.pendiente.toFixed(2)}</span><span class="pct">%</span>
+      <span class="compare">${compare}</span>
+    </div>
+    <div class="result-line">${lineHtml}${excesoHtml}</div>
+    <div class="result-cat">Categoría <b>${c.categoria}</b> · tramos válidos <b>${c.rangoTexto}</b></div>
+    <div class="metrics-row">
+      <div class="metric-cell">
+        <div class="metric-num-mark">N.° 01</div>
+        <div class="metric-label">Tramos</div>
+        <div class="metric-value num">${c.n}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-num-mark">N.° 02</div>
+        <div class="metric-label">Descansos</div>
+        <div class="metric-value num">${c.nDescansos}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-num-mark">N.° 03</div>
+        <div class="metric-label">Long. tramo</div>
+        <div class="metric-value num">${c.lTramo.toFixed(2)}<span class="unit">m</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderHint(st) {
+  const c = st.config;
+  const min = st.minNecesaria;
+  const zone = document.getElementById('hint-zone');
+  if (c.error || !c.cumple) {
+    if (min) {
+      const dif = min.lTotal - st.L;
+      if (dif > 0.01) {
+        zone.innerHTML = `<div class="hint">Para cumplir normativa estricta necesitarías al menos <b>${min.lTotal.toFixed(2)} m</b> de longitud — ${min.n} tramo${min.n>1?'s':''} al ${min.limite}% en categoría ${min.categoria}. Faltan <b>${dif.toFixed(2)} m</b>.</div>`;
+      } else { zone.innerHTML = ''; }
+    } else { zone.innerHTML = `<div class="hint">No es posible cumplir normativa con configuraciones convencionales.</div>`; }
+  } else {
+    if (min && min.lTotal < st.L - 0.01) {
+      const margen = st.L - min.lTotal;
+      zone.innerHTML = `<div class="hint">Tienes <b>${margen.toFixed(2)} m</b> de margen físico — la longitud mínima necesaria sería <b>${min.lTotal.toFixed(2)} m</b>.</div>`;
+    } else { zone.innerHTML = ''; }
+  }
+}
+
+function renderNormTable(st) {
+  const k = getConstantes();
+  const c = st.config;
+  const extra = tipo === 'existente' ? 2 : 0;
+  const cat6 = c.categoria === '6%';
+  const cat8 = c.categoria === '8%';
+  document.getElementById('norm-table').innerHTML = `
+    <div class="head">Cat.</div>
+    <div class="head">Pendiente máx.</div>
+    <div class="head">Long. tramo</div>
+    <div class="head">Aplicación</div>
+    <div class="row ${cat6 ? 'active' : ''}" style="display:contents">
+      <div class="pct">A</div>
+      <div class="pct">${6 + extra}%</div>
+      <div>${k.minLong6pct.toFixed(2)} – ${k.maxLong6pct.toFixed(2)} m</div>
+      <div>${app === 'cablebus' ? 'Cablebús' : 'General'}</div>
+    </div>
+    <div class="row ${cat8 ? 'active' : ''}" style="display:contents">
+      <div class="pct">B</div>
+      <div class="pct">${8 + extra}%</div>
+      <div>${k.minLong8pct.toFixed(2)} – ${k.maxLong8pct.toFixed(2)} m</div>
+      <div>${app === 'cablebus' ? 'Cablebús' : 'General'}</div>
+    </div>
+    <div style="display:contents">
+      <div></div>
+      <div style="font-style:italic;font-family:'Fraunces',serif">Descanso</div>
+      <div>${k.descansoMin.toFixed(2)} m mínimo</div>
+      <div>—</div>
+    </div>
+    <div style="display:contents">
+      <div></div>
+      <div style="font-style:italic;font-family:'Fraunces',serif">Ancho libre</div>
+      <div>${k.anchoMin.toFixed(2)} m mínimo</div>
+      <div>${app === 'cablebus' ? 'Transporte' : 'General'}</div>
+    </div>
+  `;
+}
+
+function renderDiagrams(st) {
+  const c = st.config;
+  const zone = document.getElementById('diagrams-zone');
+  if (c.error) { zone.innerHTML = ''; return; }
+  zone.innerHTML = `
+    <div class="diagram-block">
+      <div class="diagram-head">
+        <div class="diagram-title">Perfil <em>en corte</em></div>
+        <div class="diagram-head-right">
+          <div class="diagram-meta">Esc. vertical 5×</div>
+          <button class="export-btn" onclick="exportSVG('svg-corte', 'rampa-perfil-corte')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar PNG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-svg" id="svg-corte">${svgCorte(st)}</div>
+    </div>
+    <div class="diagram-block">
+      <div class="diagram-head">
+        <div class="diagram-title">Vista <em>en planta</em></div>
+        <div class="diagram-head-right">
+          <div class="diagram-meta">Esc. real · ancho ${c.anchoMin.toFixed(2)} m</div>
+          <button class="export-btn" onclick="exportSVG('svg-planta', 'rampa-planta')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar PNG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-svg" id="svg-planta">${svgPlanta(st)}</div>
+    </div>
+  `;
+}
+
+function getColors() {
+  const cs = getComputedStyle(document.documentElement);
+  return {
+    paper: cs.getPropertyValue('--paper').trim(),
+    ink: cs.getPropertyValue('--ink').trim(),
+    soft: cs.getPropertyValue('--ink-soft').trim(),
+    faint: cs.getPropertyValue('--ink-faint').trim(),
+    rule: cs.getPropertyValue('--rule').trim(),
+    warn: cs.getPropertyValue('--warn').trim()
+  };
+}
+
+function svgCorte(st) {
+  const c = st.config;
+  const col = getColors();
+  const stroke = c.cumple ? col.ink : col.warn;
+
+  const W = 920;
+  const padL = 100, padR = 100;
+  const drawW = W - padL - padR;
+  const pxPerM_H = drawW / st.L;
+  const pxPerM_V = pxPerM_H * 5;
+  const dhPx = st.dh * pxPerM_V;
+  const tramoPx = c.lTramo * pxPerM_H;
+  const descansoPx = c.descansoMin * pxPerM_H;
+  const dhTramoPx = c.dhTramo * pxPerM_V;
+  const yTop = 70;
+  const yBase = yTop + dhPx;
+  const totalH = yBase + 100;
+
+  const segs = [];
+  let x = padL, y = yTop;
+  for (let i = 0; i < c.n; i++) {
+    const x2 = x + tramoPx, y2 = y + dhTramoPx;
+    segs.push({ type: 'tramo', x1: x, y1: y, x2, y2, idx: i + 1 });
+    x = x2; y = y2;
+    if (i < c.n - 1) {
+      const x3 = x + descansoPx;
+      segs.push({ type: 'desc', x1: x, y1: y, x2: x3, y2: y, idx: i + 1 });
+      x = x3;
+    }
+  }
+
+  let parts = [];
+  parts.push(`<line x1="${padL-20}" y1="${yBase}" x2="${W-padR+20}" y2="${yBase}" stroke="${col.faint}" stroke-width="0.4" stroke-dasharray="2 3"/>`);
+
+  segs.forEach(s => {
+    if (s.type === 'tramo') {
+      parts.push(`<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="${stroke}" stroke-width="0.8" stroke-linecap="round"/>`);
+      const mx = (s.x1 + s.x2) / 2;
+      const my = (s.y1 + s.y2) / 2 - 10;
+      parts.push(`<text x="${mx}" y="${my}" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" font-weight="400" fill="${stroke}">${c.pendiente.toFixed(2)}%</text>`);
+      if (s.idx < c.n) {
+        parts.push(`<line x1="${s.x2}" y1="${s.y2-3}" x2="${s.x2}" y2="${s.y2+3}" stroke="${stroke}" stroke-width="0.6"/>`);
+      }
+    } else {
+      parts.push(`<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="${stroke}" stroke-width="1.4" stroke-linecap="round"/>`);
+      parts.push(`<line x1="${s.x1}" y1="${s.y1-3}" x2="${s.x1}" y2="${s.y1+3}" stroke="${stroke}" stroke-width="0.6"/>`);
+      parts.push(`<line x1="${s.x2}" y1="${s.y2-3}" x2="${s.x2}" y2="${s.y2+3}" stroke="${stroke}" stroke-width="0.6"/>`);
+      parts.push(`<text x="${(s.x1+s.x2)/2}" y="${s.y1-7}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="10" fill="${col.soft}">D${s.idx}</text>`);
+    }
+  });
+
+  parts.push(`<line x1="${padL-30}" y1="${yTop}" x2="${padL-30}" y2="${yBase}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#a)" marker-start="url(#a)"/>`);
+  parts.push(`<text x="${padL-36}" y="${(yTop+yBase)/2+4}" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${st.dh.toFixed(3)} m</text>`);
+  parts.push(`<text x="${padL}" y="${yTop-32}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="13" fill="${col.ink}">llegada</text>`);
+  parts.push(`<text x="${padL}" y="${yTop-18}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">COTA ALTA</text>`);
+  parts.push(`<text x="${W-padR}" y="${yBase+22}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="13" fill="${col.ink}">salida</text>`);
+  parts.push(`<text x="${W-padR}" y="${yBase+36}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">COTA BAJA</text>`);
+
+  const yCota = yBase + 70;
+  parts.push(`<line x1="${padL}" y1="${yCota}" x2="${W-padR}" y2="${yCota}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#a)" marker-start="url(#a)"/>`);
+  parts.push(`<text x="${W/2}" y="${yCota+15}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${st.L.toFixed(2)} m</text>`);
+
+  segs.filter(s => s.type === 'tramo').forEach(s => {
+    const cx = (s.x1 + s.x2) / 2;
+    parts.push(`<text x="${cx}" y="${yBase+18}" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="${col.faint}" letter-spacing="0.1em">T${s.idx}</text>`);
+  });
+
+  return `<svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+    ${parts.join('\n')}
+  </svg>`;
+}
+
+function svgPlanta(st) {
+  const c = st.config;
+  const col = getColors();
+  const stroke = c.cumple ? col.ink : col.warn;
+
+  const W = 920, padL = 100, padR = 100;
+  const drawW = W - padL - padR;
+  const pxPerM = drawW / st.L;
+  const tramoPx = c.lTramo * pxPerM;
+  const descansoPx = c.descansoMin * pxPerM;
+  const ancho = c.anchoMin * pxPerM;
+  const yTop = 60, yBot = yTop + ancho;
+  const yMid = yTop + ancho / 2;
+  const totalH = yBot + 90;
+
+  let parts = [];
+  parts.push(`<rect x="${padL}" y="${yTop}" width="${drawW}" height="${ancho}" fill="none" stroke="${stroke}" stroke-width="0.8"/>`);
+
+  let x = padL;
+  for (let i = 0; i < c.n; i++) {
+    const xEnd = x + tramoPx;
+    const numLines = Math.max(2, Math.floor(tramoPx / 20));
+    for (let j = 1; j < numLines; j++) {
+      const xL = x + (tramoPx * j / numLines);
+      parts.push(`<line x1="${xL}" y1="${yTop}" x2="${xL - 8}" y2="${yBot}" stroke="${stroke}" stroke-width="0.3" stroke-opacity="0.4"/>`);
+    }
+    const fontSize = ancho < 40 ? 11 : 13;
+    parts.push(`<text x="${(x+xEnd)/2}" y="${yMid-2}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="${fontSize}" fill="${stroke}">T${i+1}</text>`);
+    parts.push(`<text x="${(x+xEnd)/2}" y="${yMid+12}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${c.lTramo.toFixed(2)} m</text>`);
+
+    x = xEnd;
+    parts.push(`<line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBot}" stroke="${stroke}" stroke-width="0.6"/>`);
+
+    if (i < c.n - 1) {
+      const xDEnd = x + descansoPx;
+      const hatchSpacing = 4;
+      for (let xh = x; xh < xDEnd; xh += hatchSpacing) {
+        parts.push(`<line x1="${xh}" y1="${yTop}" x2="${Math.min(xh + ancho, xDEnd)}" y2="${Math.min(yBot, yTop + (xDEnd - xh))}" stroke="${stroke}" stroke-width="0.3" stroke-opacity="0.3"/>`);
+      }
+      parts.push(`<text x="${(x+xDEnd)/2}" y="${yMid+4}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="${fontSize-1}" fill="${stroke}">D${i+1}</text>`);
+      x = xDEnd;
+      parts.push(`<line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBot}" stroke="${stroke}" stroke-width="0.6"/>`);
+    }
+  }
+
+  parts.push(`<line x1="${padL-22}" y1="${yTop}" x2="${padL-22}" y2="${yBot}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#b)" marker-start="url(#b)"/>`);
+  parts.push(`<text x="${padL-28}" y="${yMid+4}" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${c.anchoMin.toFixed(2)} m</text>`);
+  parts.push(`<text x="${padL}" y="${yTop-22}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="13" fill="${col.ink}">llegada</text>`);
+  parts.push(`<text x="${padL}" y="${yTop-9}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">←</text>`);
+  parts.push(`<text x="${W-padR}" y="${yTop-22}" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="13" fill="${col.ink}">salida</text>`);
+  parts.push(`<text x="${W-padR}" y="${yTop-9}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="${col.faint}" letter-spacing="0.1em">→</text>`);
+
+  const yCota = yBot + 38;
+  parts.push(`<line x1="${padL}" y1="${yCota}" x2="${W-padR}" y2="${yCota}" stroke="${col.faint}" stroke-width="0.5" marker-end="url(#b)" marker-start="url(#b)"/>`);
+  parts.push(`<text x="${W/2}" y="${yCota+15}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="${col.soft}">${st.L.toFixed(2)} m</text>`);
+
+  return `<svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+    ${parts.join('\n')}
+  </svg>`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function exportSVG(containerId, filename) {
+  const container = document.getElementById(containerId);
+  const svg = container.querySelector('svg');
+  if (!svg) { showToast('No hay diagrama para exportar'); return; }
+
+  const col = getColors();
+  const bgColor = col.paper;
+  const scale = 3; // alta resolución
+
+  // Clonar el SVG y embeber estilos inline
+  const clone = svg.cloneNode(true);
+  const vb = svg.viewBox.baseVal;
+  const w = vb.width;
+  const h = vb.height;
+  clone.setAttribute('width', w);
+  clone.setAttribute('height', h);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  const svgString = new XMLSerializer().serializeToString(clone);
+  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = w * scale;
+    canvas.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    // Fondo crema/oscuro
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    canvas.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${filename}-${new Date().toISOString().slice(0,10)}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      showToast('Imagen exportada');
+    }, 'image/png');
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    showToast('Error al exportar');
+  };
+  img.src = url;
+}
+
+calc();
+</script>
+</body>
+</html>
