@@ -1,414 +1,431 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Escalímetro</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:             #F4F2EE;
-    --surface:        #EDEAE4;
-    --border:         rgba(0,0,0,0.10);
-    --border-strong:  rgba(0,0,0,0.18);
-    --text-primary:   #1A1814;
-    --text-secondary: #6B6760;
-    --text-tertiary:  #A09D98;
-    --result-bg:      #A09D98;
-    --result-text:    #F4F2EE;
-    --result-muted:   rgba(255,255,255,0.60);
-    --tag-bg:         #E0DDD7;
-    --tag-text:       #6B6760;
+  :root[data-theme="light"] {
+    --bg: #f1ece0;
+    --paper: #f5f1e8;
+    --ink: #5a6b3e;
+    --ink-soft: #7a8862;
+    --ink-faint: #9da888;
+    --rule: #c2c0a8;
+    --rule-soft: #d8d4bf;
+    --display-num: #5a6b3e;
+  }
+  :root[data-theme="dark"] {
+    --bg: #15130e;
+    --paper: #1c1a14;
+    --ink: #e8e0c8;
+    --ink-soft: #c4bca0;
+    --ink-faint: #8a8470;
+    --rule: #4a4538;
+    --rule-soft: #2e2b22;
+    --display-num: #e8e0c8;
   }
 
-  body[data-theme="dark"] {
-    --bg:             #141210;
-    --surface:        #1C1A17;
-    --border:         rgba(255,255,255,0.07);
-    --border-strong:  rgba(255,255,255,0.14);
-    --text-primary:   #EAE6DF;
-    --text-secondary: #8A8680;
-    --text-tertiary:  #504D49;
-    --result-bg:      #252220;
-    --result-text:    #EAE6DF;
-    --result-muted:   rgba(255,255,255,0.35);
-    --tag-bg:         #1C1A17;
-    --tag-text:       #605D58;
-  }
-
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
   body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 14px;
+    line-height: 1.55;
+    transition: background 0.3s, color 0.3s;
+    -webkit-font-smoothing: antialiased;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-    transition: background 0.25s ease, color 0.25s ease;
   }
 
-  .card { width: 100%; max-width: 400px; }
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 56px 64px 96px;
+    border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+    background: var(--paper);
+    min-height: 100vh;
+  }
 
-  .header {
+  /* === HEADER === */
+  header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-bottom: 2.5rem;
+    align-items: flex-start;
+    padding-bottom: 32px;
+    margin-bottom: 56px;
+    border-bottom: 1px solid var(--rule);
   }
-  .header-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
+  .masthead .eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
     font-weight: 400;
-    color: var(--text-tertiary);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    font-variation-settings: 'opsz' 144;
   }
-  .header-right { display: flex; align-items: center; gap: 10px; }
-  .header-version {
-    font-family: 'DM Mono', monospace;
+  .masthead .meta {
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
-    color: var(--text-tertiary);
+    color: var(--ink-faint);
+    margin-top: 14px;
+    letter-spacing: 0.05em;
   }
-  .theme-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-tertiary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.15s, color 0.15s, background 0.25s;
-  }
-  .theme-btn:hover { border-color: var(--border-strong); color: var(--text-secondary); }
-  .icon-sun  { display: block; }
-  .icon-moon { display: none; }
-  body[data-theme="dark"] .icon-sun  { display: none; }
-  body[data-theme="dark"] .icon-moon { display: block; }
-
-  .mode-toggle {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: var(--surface);
-    border-radius: 10px;
-    padding: 3px;
-    margin-bottom: 2rem;
-    border: 1px solid var(--border);
-    transition: background 0.25s, border-color 0.25s;
-  }
-  .mode-btn {
-    padding: 9px 0;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.04em;
-    color: var(--text-tertiary);
-    background: transparent;
-    border: none;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .mode-btn.active {
-    background: var(--bg);
-    color: var(--text-primary);
-    font-weight: 500;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-
-  .formula-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--tag-text);
-    background: var(--tag-bg);
-    border-radius: 6px;
-    padding: 5px 10px;
-    margin-bottom: 1.75rem;
-    letter-spacing: 0.02em;
-    transition: background 0.25s, color 0.25s;
-  }
-  .formula-tag .op { color: var(--text-tertiary); font-style: italic; }
-
-  .field { margin-bottom: 1.25rem; }
-  .field-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-tertiary);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 7px;
-  }
-  .field-row { display: flex; gap: 8px; }
-
-  input[type="number"] {
-    width: 100%;
-    padding: 11px 14px;
-    font-family: 'DM Mono', monospace;
-    font-size: 16px;
-    color: var(--text-primary);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    outline: none;
-    transition: border-color 0.15s, background 0.25s, color 0.25s;
-    -moz-appearance: textfield;
-  }
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button { display: none; }
-  input[type="number"]:focus { border-color: var(--border-strong); }
-
-  select {
-    padding: 11px 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    color: var(--text-secondary);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    min-width: 72px;
-    text-align: center;
-    transition: border-color 0.15s, background 0.25s, color 0.25s;
-  }
-  select:focus { border-color: var(--border-strong); }
-
-  .scale-inner { position: relative; }
-  .scale-prefix {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--text-tertiary);
-    pointer-events: none;
-  }
-  .scale-inner input { padding-left: 36px; }
-
-  .presets { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
-  .preset-btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    padding: 5px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-tertiary);
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.02em;
-  }
-  .preset-btn:hover { color: var(--text-secondary); border-color: var(--border-strong); }
-  .preset-btn.active {
-    background: var(--text-primary);
-    color: var(--bg);
-    border-color: var(--text-primary);
-  }
-
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 1.75rem 0;
-    transition: background 0.25s;
-  }
-
-  .result-block {
-    background: var(--result-bg);
-    border-radius: 14px;
-    padding: 1.5rem;
-    transition: background 0.25s;
-  }
-  .result-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-  }
-  .result-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--result-muted);
-  }
-  select.result-unit-select {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.15);
-    color: var(--result-muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 5px 10px;
-    border-radius: 6px;
-    min-width: auto;
-    text-align: center;
-    appearance: none;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.15s, color 0.15s;
-  }
-  select.result-unit-select:hover,
-  select.result-unit-select:focus {
-    border-color: rgba(255,255,255,0.30);
-    color: rgba(255,255,255,0.75);
-  }
-
-  .copy-trigger {
-    cursor: pointer;
-    user-select: none;
+  .header-right {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    align-items: flex-end;
+    gap: 16px;
   }
-  .copy-trigger:active { opacity: 0.7; }
-  .result-number {
-    font-family: 'DM Mono', monospace;
-    font-size: 44px;
-    font-weight: 300;
-    color: var(--result-text);
-    letter-spacing: -0.03em;
-    line-height: 1;
-  }
-  .result-bottom-row { display: flex; align-items: center; gap: 8px; }
-  .result-unit-display {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--result-muted);
-    letter-spacing: 0.04em;
-  }
-  .copy-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 5px;
-    border: 1px solid rgba(255,255,255,0.12);
-    display: flex;
+  .theme-btn {
+    background: none;
+    border: 1px solid var(--rule);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--result-muted);
-    transition: all 0.15s;
+    transition: all 0.2s;
   }
-  .copy-trigger:hover .copy-icon {
-    border-color: rgba(255,255,255,0.25);
-    color: rgba(255,255,255,0.65);
+  .theme-btn:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .theme-btn svg { width: 15px; height: 15px; }
+  .theme-btn .icon-sun { display: none; }
+  [data-theme="dark"] .theme-btn .icon-moon { display: none; }
+  [data-theme="dark"] .theme-btn .icon-sun { display: block; }
+  .ed-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-align: right;
+    line-height: 1.6;
+  }
+  .ed-num b { color: var(--ink); font-weight: 500; }
+
+  /* === GRID === */
+  .grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 48px;
+  }
+  .col-side {
+    border-right: 1px solid var(--rule);
+    padding-right: 32px;
+  }
+  .col-main { padding-top: 4px; min-width: 0; }
+
+  /* === SECTION HEADS === */
+  .section-head {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .section-head .num-mark {
+    color: var(--ink);
+    margin-right: 10px;
+    font-weight: 600;
   }
 
+  /* === FIELDS === */
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 28px; }
+  .field-label {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .field-input {
+    font-family: 'Inter', sans-serif !important;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink);
+    font-size: 28px;
+    font-weight: 400;
+    padding: 4px 0;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .field-input::-webkit-inner-spin-button,
+  .field-input::-webkit-outer-spin-button { display: none; }
+  .field-input:focus { border-bottom-color: var(--ink); }
+  .field-unit {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* === SCALE ROW === */
+  .scale-row { display: flex; align-items: flex-end; gap: 6px; }
+  .scale-prefix {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    padding: 4px 0;
+    line-height: 1;
+    border-bottom: 1px solid transparent;
+  }
+  .scale-row .field-input { flex: 1; }
+
+  /* === TOGGLES / SEG CONTROLS === */
+  .toggle-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .toggle-label {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .seg-control {
+    display: grid;
+    border: 1px solid var(--rule);
+    width: 100%;
+  }
+  .seg-control.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .seg-control.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .seg-control.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .seg-control button {
+    background: none;
+    border: none;
+    border-right: 1px solid var(--rule);
+    padding: 8px 4px;
+    color: var(--ink-faint);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+  .seg-control button:last-child { border-right: none; }
+  .seg-control button.active { background: var(--ink); color: var(--paper); }
+  .seg-control button:hover:not(.active) { color: var(--ink); }
+  .seg-control + .seg-control { border-top: none; }
+
+  /* === FORMULA === */
+  .formula-display {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+
+  /* === RESULT === */
+  .result-display {
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0;
+  }
+  .result-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+  .result-number-wrap {
+    cursor: pointer;
+    user-select: none;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .result-number-wrap:active { opacity: 0.7; }
+  .result-big {
+    font-family: 'Inter', sans-serif;
+    font-size: 80px;
+    font-weight: 300;
+    color: var(--display-num);
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    font-feature-settings: 'tnum' 1;
+  }
+  .result-copy-hint {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  /* === FOOTER === */
+  footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+  }
+
+  /* === TOAST === */
   .toast {
     position: fixed;
-    bottom: 2rem;
+    bottom: 32px;
     left: 50%;
-    transform: translateX(-50%) translateY(12px);
-    background: var(--text-primary);
-    color: var(--bg);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 8px 18px;
-    border-radius: 100px;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 22px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.04em;
     opacity: 0;
-    transition: all 0.22s ease;
     pointer-events: none;
+    transition: all 0.25s;
+    z-index: 999;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 680px) {
+    .container { padding: 32px 24px 56px; border: none; }
+    .grid { grid-template-columns: 1fr; gap: 32px; }
+    .col-side { border-right: none; border-bottom: 1px solid var(--rule); padding-right: 0; padding-bottom: 32px; }
+    .masthead h1 { font-size: 38px; }
+    .result-big { font-size: 56px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
 
-  <div class="header">
-    <span class="header-title">Escalímetro</span>
+  <header>
+    <div class="masthead">
+      <div class="eyebrow">Herramienta de cálculo · Escalas arquitectónicas</div>
+      <h1>Escalímetro</h1>
+      <div class="meta" id="headerMeta">Real → Papel · 1 : 250</div>
+    </div>
     <div class="header-right">
-      <span class="header-version">v2.0</span>
-      <button class="theme-btn" id="themeBtn">
-        <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </svg>
-        <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
+      <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-    </div>
-  </div>
-
-  <div class="mode-toggle">
-    <button class="mode-btn active" id="btn-to-paper" onclick="setMode('to-paper')">Real → Papel</button>
-    <button class="mode-btn" id="btn-to-real" onclick="setMode('to-real')">Papel → Real</button>
-  </div>
-
-  <div class="formula-tag" id="formulaTag">
-    <span>real</span><span class="op">÷</span><span>escala</span><span class="op">=</span><span>papel</span>
-  </div>
-
-  <div class="field">
-    <div class="field-label" id="inputLabel">Medida real</div>
-    <div class="field-row">
-      <input type="number" id="inputValue" value="0.90" step="any" placeholder="0">
-      <select id="inputUnit">
-        <option value="km">km</option>
-        <option value="m" selected>m</option>
-        <option value="cm">cm</option>
-        <option value="mm">mm</option>
-        <option value="in">in</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="field">
-    <div class="field-label">Escala</div>
-    <div class="scale-inner">
-      <span class="scale-prefix">1 :</span>
-      <input type="number" id="scaleFactor" value="250" placeholder="250">
-    </div>
-    <div class="presets">
-      <button class="preset-btn" onclick="setPreset(20,this)">1:20</button>
-      <button class="preset-btn" onclick="setPreset(50,this)">1:50</button>
-      <button class="preset-btn" onclick="setPreset(100,this)">1:100</button>
-      <button class="preset-btn active" onclick="setPreset(250,this)">1:250</button>
-      <button class="preset-btn" onclick="setPreset(500,this)">1:500</button>
-      <button class="preset-btn" onclick="setPreset(1000,this)">1:1000</button>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="result-block">
-    <div class="result-top">
-      <span class="result-label" id="outputLabel">En papel</span>
-      <select class="result-unit-select" id="outputUnit">
-        <option value="km">km</option>
-        <option value="m">m</option>
-        <option value="cm">cm</option>
-        <option value="mm" selected>mm</option>
-        <option value="in">in</option>
-      </select>
-    </div>
-    <div class="copy-trigger" id="copyTrigger">
-      <div class="result-number" id="resultValue">3.6000</div>
-      <div class="result-bottom-row">
-        <span class="result-unit-display" id="resultUnitDisplay">mm</span>
-        <div class="copy-icon">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-        </div>
+      <div class="ed-num">
+        Ver. <b>2.0</b><br>
+        Sec. <b>Cálculo</b><br>
+        Pub. <b>2026</b>
       </div>
     </div>
+  </header>
+
+  <div class="grid">
+
+    <aside class="col-side">
+
+      <div class="section-head"><span class="num-mark">01</span>Dirección</div>
+      <div class="toggle-block">
+        <span class="toggle-label">Conversión</span>
+        <div class="seg-control cols-2" id="mode-control">
+          <button class="active" data-val="to-paper">Real → Papel</button>
+          <button data-val="to-real">Papel → Real</button>
+        </div>
+        <div class="formula-display" id="formulaDisplay">real ÷ escala = papel</div>
+      </div>
+
+      <div class="section-head" style="margin-top: 8px"><span class="num-mark">02</span>Escala</div>
+      <div class="field">
+        <span class="toggle-label">Factor</span>
+        <div class="scale-row">
+          <span class="scale-prefix">1 :</span>
+          <input type="number" class="field-input" id="scaleFactor" value="250" placeholder="250">
+        </div>
+        <span class="field-unit">denominador</span>
+      </div>
+      <div class="seg-control cols-3" id="presets-top">
+        <button data-val="20">1:20</button>
+        <button data-val="50">1:50</button>
+        <button data-val="100">1:100</button>
+      </div>
+      <div class="seg-control cols-3" id="presets-bot">
+        <button class="active" data-val="250">1:250</button>
+        <button data-val="500">1:500</button>
+        <button data-val="1000">1:1000</button>
+      </div>
+
+    </aside>
+
+    <div class="col-main">
+
+      <div class="section-head"><span class="num-mark">03</span>Medida de entrada</div>
+      <div class="field">
+        <span class="field-label" id="inputLabel">Medida real</span>
+        <input type="number" class="field-input" id="inputValue" value="0.90" step="any" placeholder="0">
+        <span class="field-unit" id="inputUnitLabel">metros</span>
+      </div>
+      <div class="toggle-block">
+        <span class="toggle-label">Unidad de entrada</span>
+        <div class="seg-control cols-5" id="input-unit-control">
+          <button data-val="km">km</button>
+          <button class="active" data-val="m">m</button>
+          <button data-val="cm">cm</button>
+          <button data-val="mm">mm</button>
+          <button data-val="in">in</button>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top: 8px"><span class="num-mark">04</span>Resultado</div>
+      <div class="result-display">
+        <div class="result-tag" id="outputLabel">En papel</div>
+        <div class="result-number-wrap" id="copyTrigger">
+          <span class="result-big" id="resultValue">3.6000</span>
+          <span class="result-copy-hint">copiar</span>
+        </div>
+        <div class="toggle-block" style="margin-bottom: 0">
+          <span class="toggle-label">Unidad de resultado</span>
+          <div class="seg-control cols-5" id="output-unit-control">
+            <button data-val="km">km</button>
+            <button data-val="m">m</button>
+            <button data-val="cm">cm</button>
+            <button class="active" data-val="mm">mm</button>
+            <button data-val="in">in</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
+
+  <footer>
+    <span>Escalímetro © 2026 — herramienta de cálculo</span>
+    <span id="footer-mode">Modo · Claro</span>
+  </footer>
 
 </div>
 
@@ -417,47 +434,75 @@
 <script>
   const toM   = { km:1000, m:1, cm:0.01, mm:0.001, in:0.0254 };
   const fromM = { km:0.001, m:1, cm:100, mm:1000, in:39.3701 };
+  const unitNames = { km:'kilómetros', m:'metros', cm:'centímetros', mm:'milímetros', in:'pulgadas' };
   let mode = 'to-paper';
+  let inputUnit = 'm';
+  let outputUnit = 'mm';
 
   function calc() {
-    const v  = parseFloat(document.getElementById('inputValue').value) || 0;
-    const iu = document.getElementById('inputUnit').value;
-    const s  = parseFloat(document.getElementById('scaleFactor').value) || 1;
-    const ou = document.getElementById('outputUnit').value;
+    const v = parseFloat(document.getElementById('inputValue').value) || 0;
+    const s = parseFloat(document.getElementById('scaleFactor').value) || 1;
     if (s <= 0) return;
-    const inM = v * toM[iu];
-    const result = (mode === 'to-paper' ? inM / s : inM * s) * fromM[ou];
+    const inM = v * toM[inputUnit];
+    const result = (mode === 'to-paper' ? inM / s : inM * s) * fromM[outputUnit];
     document.getElementById('resultValue').textContent = result.toFixed(4);
-    document.getElementById('resultUnitDisplay').textContent = ou;
+    document.getElementById('inputUnitLabel').textContent = unitNames[inputUnit];
+    const dir = mode === 'to-paper' ? 'Real → Papel' : 'Papel → Real';
+    document.getElementById('headerMeta').textContent = `${dir} · 1 : ${s}`;
   }
 
   function setMode(m) {
     mode = m;
+    document.querySelectorAll('#mode-control button').forEach(b => b.classList.toggle('active', b.dataset.val === m));
     const toPaper = m === 'to-paper';
-    document.getElementById('btn-to-paper').classList.toggle('active', toPaper);
-    document.getElementById('btn-to-real').classList.toggle('active', !toPaper);
-    document.getElementById('inputLabel').textContent  = toPaper ? 'Medida real'     : 'Medida en dibujo';
-    document.getElementById('outputLabel').textContent = toPaper ? 'En papel'        : 'Medida real';
-    document.getElementById('formulaTag').innerHTML = toPaper
-      ? '<span>real</span><span class="op">÷</span><span>escala</span><span class="op">=</span><span>papel</span>'
-      : '<span>papel</span><span class="op">×</span><span>escala</span><span class="op">=</span><span>real</span>';
+    document.getElementById('inputLabel').textContent  = toPaper ? 'Medida real' : 'Medida en dibujo';
+    document.getElementById('outputLabel').textContent = toPaper ? 'En papel' : 'Medida real';
+    document.getElementById('formulaDisplay').textContent = toPaper
+      ? 'real ÷ escala = papel'
+      : 'papel × escala = real';
     calc();
   }
 
-  function setPreset(v, btn) {
+  function setPreset(v) {
     document.getElementById('scaleFactor').value = v;
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('#presets-top button, #presets-bot button').forEach(b => {
+      b.classList.toggle('active', b.dataset.val == v);
+    });
     calc();
   }
+
+  document.querySelectorAll('#mode-control button').forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.val));
+  });
+
+  document.querySelectorAll('#presets-top button, #presets-bot button').forEach(btn => {
+    btn.addEventListener('click', () => setPreset(btn.dataset.val));
+  });
 
   document.getElementById('scaleFactor').addEventListener('input', () => {
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#presets-top button, #presets-bot button').forEach(b => b.classList.remove('active'));
     calc();
   });
+
   document.getElementById('inputValue').addEventListener('input', calc);
-  document.getElementById('inputUnit').addEventListener('change', calc);
-  document.getElementById('outputUnit').addEventListener('change', calc);
+
+  document.querySelectorAll('#input-unit-control button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#input-unit-control button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      inputUnit = btn.dataset.val;
+      calc();
+    });
+  });
+
+  document.querySelectorAll('#output-unit-control button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#output-unit-control button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      outputUnit = btn.dataset.val;
+      calc();
+    });
+  });
 
   document.getElementById('copyTrigger').addEventListener('click', () => {
     const txt = document.getElementById('resultValue').textContent;
@@ -471,8 +516,10 @@
   });
 
   document.getElementById('themeBtn').addEventListener('click', () => {
-    const isDark = document.body.getAttribute('data-theme') === 'dark';
-    document.body.setAttribute('data-theme', isDark ? '' : 'dark');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    document.getElementById('footer-mode').textContent = 'Modo · ' + (next === 'light' ? 'Claro' : 'Oscuro');
   });
 
   calc();
