@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Escalímetro</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root[data-theme="light"] {
     --bg:            #f6f1ea;
@@ -40,9 +38,9 @@
   body {
     background: var(--surface);
     color: var(--text);
-    font-family: 'Lora', Georgia, serif;
-    font-size: 14px;
-    line-height: 1.55;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
     transition: background 0.3s, color 0.3s;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
@@ -52,41 +50,32 @@
     max-width: 1600px;
     margin: 0 auto;
     padding: clamp(32px, 4vw, 56px) clamp(24px, 5vw, 64px) clamp(48px, 7vw, 96px);
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    min-height: 100vh;
   }
 
-  /* === HEADER === */
   header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding-bottom: 32px;
-    margin-bottom: 56px;
-    border-bottom: 1px solid var(--border);
+    padding-bottom: 40px;
+    margin-bottom: 52px;
   }
   .masthead .eyebrow {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
     margin-bottom: 12px;
   }
   .masthead h1 {
-    font-family: 'Lora', serif;
-    font-size: 2.8rem;
-    font-weight: 500;
-    font-style: italic;
-    letter-spacing: -0.025em;
-    line-height: 1.1;
+    font-size: 2.6rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
     color: var(--text);
   }
   .masthead .meta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.88rem;
     color: var(--text-muted);
     margin-top: 0.5rem;
   }
@@ -116,64 +105,48 @@
   [data-theme="dark"] .theme-btn .icon-sun { display: block; }
   .ed-num {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
+    font-size: 0.68rem;
     color: var(--text-muted);
     text-align: right;
     line-height: 1.6;
   }
   .ed-num b { color: var(--text); font-weight: 500; }
 
-  /* === GRID === */
   .grid {
     display: grid;
     grid-template-columns: clamp(180px, 20%, 240px) 1fr;
-    gap: clamp(32px, 4vw, 48px);
+    gap: clamp(32px, 4vw, 56px);
   }
-  .col-side {
-    border-right: 1px solid var(--border);
-    padding-right: clamp(20px, 3vw, 32px);
-  }
+  .col-side { padding-right: clamp(20px, 3vw, 32px); }
   .col-main { padding-top: 4px; min-width: 0; }
 
   @media (min-width: 860px) {
     .grid { grid-template-columns: clamp(180px, 18%, 240px) 1fr 1fr; }
     .col-main { display: contents; }
     .col-section { min-width: 0; padding-top: 4px; }
-    .col-section:first-child {
-      border-right: 1px solid var(--border);
-      padding-right: clamp(20px, 3vw, 32px);
-    }
-    .col-section-result .result-display {
-      border-bottom: none;
-      padding-bottom: 0;
-      margin-bottom: 0;
-    }
+    .col-section:first-child { padding-right: clamp(20px, 3vw, 32px); }
+    .col-section-result .result-display { padding-bottom: 0; margin-bottom: 0; }
   }
 
-  /* === SECTION HEADS === */
   .section-head {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+    margin-bottom: 22px;
   }
   .section-head .num-mark {
-    color: var(--text);
-    margin-right: 10px;
+    color: var(--accent);
+    margin-right: 8px;
     font-weight: 500;
   }
 
-  /* === FIELDS === */
   .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 28px; }
   .field-label {
-    font-family: 'Lora', serif;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     color: var(--text-mid);
-    font-style: italic;
+    font-weight: 500;
   }
   .field-input {
     font-family: 'JetBrains Mono', monospace !important;
@@ -191,17 +164,15 @@
   }
   .field-input::-webkit-inner-spin-button,
   .field-input::-webkit-outer-spin-button { display: none; }
-  .field-input:focus { border-bottom-color: var(--text); }
+  .field-input:focus { border-bottom-color: var(--accent); }
   .field-unit {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     color: var(--text-muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    letter-spacing: 0.08em;
     margin-top: 2px;
   }
 
-  /* === SCALE ROW === */
   .scale-row { display: flex; align-items: flex-end; gap: 6px; }
   .scale-prefix {
     font-family: 'JetBrains Mono', monospace;
@@ -211,22 +182,19 @@
     white-space: nowrap;
     padding: 4px 0;
     line-height: 1;
-    border-bottom: 1px solid transparent;
   }
   .scale-row .field-input { flex: 1; }
 
-  /* === TOGGLES / SEG CONTROLS === */
-  .toggle-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .toggle-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
   .toggle-label {
-    font-family: 'Lora', serif;
-    font-style: italic;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     color: var(--text-mid);
+    font-weight: 500;
   }
   .seg-control {
     display: grid;
     border: 1px solid var(--border);
-    border-radius: 5px;
+    border-radius: 6px;
     overflow: hidden;
     width: 100%;
   }
@@ -237,59 +205,47 @@
     background: none;
     border: none;
     border-right: 1px solid var(--border);
-    padding: 8px 4px;
+    padding: 9px 4px;
     color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 0.82rem;
     cursor: pointer;
     transition: all 0.15s;
-    letter-spacing: 0.02em;
     text-align: center;
     line-height: 1.2;
-    font-weight: 400;
   }
   .seg-control button:last-child { border-right: none; }
-  .seg-control button.active {
-    background: var(--text);
-    color: var(--surface);
-    font-family: 'Lora', serif;
-    font-style: italic;
-    font-size: 0.82rem;
-  }
-  .seg-control button:hover:not(.active) { color: var(--text-mid); }
+  .seg-control button.active { background: var(--text); color: var(--surface); font-weight: 500; }
+  .seg-control button:hover:not(.active) { color: var(--text-mid); background: var(--surface-hover); }
   .seg-control + .seg-control { border-top: none; border-radius: 0; }
-  .seg-control + .seg-control:last-child { border-bottom-left-radius: 5px; border-bottom-right-radius: 5px; }
-  .seg-control:has(+ .seg-control) { border-radius: 5px 5px 0 0; }
+  .seg-control + .seg-control:last-child { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+  .seg-control:has(+ .seg-control) { border-radius: 6px 6px 0 0; }
 
-  /* === FORMULA === */
   .formula-display {
-    font-family: 'Lora', serif;
-    font-style: italic;
-    font-size: 0.82rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
-  /* === RESULT === */
   .result-display {
     padding-bottom: 40px;
-    border-bottom: 1px solid var(--border);
     margin-bottom: 0;
   }
   .result-tag {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    margin-bottom: 18px;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    margin-bottom: 16px;
   }
   .result-number-wrap {
     cursor: pointer;
     user-select: none;
     display: inline-flex;
     align-items: baseline;
-    gap: 12px;
+    gap: 14px;
     margin-bottom: 20px;
   }
   .result-number-wrap:active { opacity: 0.7; }
@@ -303,29 +259,21 @@
     font-feature-settings: 'tnum' 1;
   }
   .result-copy-hint {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    opacity: 0.6;
+    opacity: 0.7;
   }
 
-  /* === FOOTER === */
   footer {
     margin-top: 72px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
+    padding-top: 28px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
-    letter-spacing: 0.08em;
   }
 
-  /* === TOAST === */
   .toast {
     position: fixed;
     bottom: 32px;
@@ -333,11 +281,9 @@
     transform: translateX(-50%) translateY(20px);
     background: var(--text);
     color: var(--surface);
-    padding: 12px 22px;
-    border-radius: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.04em;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 0.82rem;
     opacity: 0;
     pointer-events: none;
     transition: all 0.25s;
@@ -346,12 +292,11 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 680px) {
-    .container { padding: 32px 24px 56px; border: none; }
+    .container { padding: 32px 24px 56px; }
     .grid { grid-template-columns: 1fr; gap: 32px; }
-    .col-side { border-right: none; border-bottom: 1px solid var(--border); padding-right: 0; padding-bottom: 32px; }
+    .col-side { padding-right: 0; padding-bottom: 32px; }
     .col-main { display: block; }
-    .col-section:first-child { border-right: none; padding-right: 0; }
-    .col-section-result .result-display { border-bottom: 1px solid var(--border); padding-bottom: 40px; margin-bottom: 0; }
+    .col-section:first-child { padding-right: 0; }
     .masthead h1 { font-size: 2rem; }
     .result-big { font-size: 56px; }
   }
@@ -363,7 +308,7 @@
 
   <header>
     <div class="masthead">
-      <div class="eyebrow">Herramienta de cálculo · Escalas arquitectónicas</div>
+      <div class="eyebrow">herramienta de cálculo · escalas arquitectónicas</div>
       <h1>Escalímetro</h1>
       <div class="meta" id="headerMeta">Real → Papel · 1 : 250</div>
     </div>
@@ -374,7 +319,6 @@
       </button>
       <div class="ed-num">
         Ver. <b>2.0</b><br>
-        Sec. <b>Cálculo</b><br>
         Pub. <b>2026</b>
       </div>
     </div>
@@ -384,7 +328,7 @@
 
     <aside class="col-side">
 
-      <div class="section-head"><span class="num-mark">01</span>Dirección</div>
+      <div class="section-head"><span class="num-mark">01</span>dirección</div>
       <div class="toggle-block">
         <span class="toggle-label">Conversión</span>
         <div class="seg-control cols-2" id="mode-control">
@@ -394,7 +338,7 @@
         <div class="formula-display" id="formulaDisplay">real ÷ escala = papel</div>
       </div>
 
-      <div class="section-head" style="margin-top: 8px"><span class="num-mark">02</span>Escala</div>
+      <div class="section-head"><span class="num-mark">02</span>escala</div>
       <div class="field">
         <span class="toggle-label">Factor</span>
         <div class="scale-row">
@@ -419,7 +363,7 @@
     <div class="col-main">
 
       <div class="col-section">
-        <div class="section-head"><span class="num-mark">03</span>Medida de entrada</div>
+        <div class="section-head"><span class="num-mark">03</span>medida de entrada</div>
         <div class="field">
           <span class="field-label" id="inputLabel">Medida real</span>
           <input type="number" class="field-input" id="inputValue" value="0.90" step="any" placeholder="0">
@@ -438,9 +382,9 @@
       </div>
 
       <div class="col-section col-section-result">
-        <div class="section-head"><span class="num-mark">04</span>Resultado</div>
+        <div class="section-head"><span class="num-mark">04</span>resultado</div>
         <div class="result-display">
-          <div class="result-tag" id="outputLabel">En papel</div>
+          <div class="result-tag" id="outputLabel">en papel</div>
           <div class="result-number-wrap" id="copyTrigger">
             <span class="result-big" id="resultValue">3.6000</span>
             <span class="result-copy-hint">copiar</span>
@@ -462,7 +406,7 @@
   </div>
 
   <footer>
-    <span>Escalímetro © 2026 — herramienta de cálculo</span>
+    <span>Escalímetro © 2026</span>
     <span id="footer-mode">Modo · Claro</span>
   </footer>
 
@@ -495,7 +439,7 @@
     document.querySelectorAll('#mode-control button').forEach(b => b.classList.toggle('active', b.dataset.val === m));
     const toPaper = m === 'to-paper';
     document.getElementById('inputLabel').textContent  = toPaper ? 'Medida real' : 'Medida en dibujo';
-    document.getElementById('outputLabel').textContent = toPaper ? 'En papel' : 'Medida real';
+    document.getElementById('outputLabel').textContent = toPaper ? 'en papel' : 'medida real';
     document.getElementById('formulaDisplay').textContent = toPaper
       ? 'real ÷ escala = papel'
       : 'papel × escala = real';
