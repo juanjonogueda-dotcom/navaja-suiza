@@ -103,14 +103,6 @@
   .theme-btn .icon-sun { display: none; }
   [data-theme="dark"] .theme-btn .icon-moon { display: none; }
   [data-theme="dark"] .theme-btn .icon-sun { display: block; }
-  .ed-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    text-align: right;
-    line-height: 1.6;
-  }
-  .ed-num b { color: var(--text); font-weight: 500; }
 
   .grid {
     display: grid;
@@ -264,16 +256,6 @@
     opacity: 0.7;
   }
 
-  footer {
-    margin-top: 72px;
-    padding-top: 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-  }
-
   .toast {
     position: fixed;
     bottom: 32px;
@@ -317,10 +299,6 @@
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-      <div class="ed-num">
-        Ver. <b>2.0</b><br>
-        Pub. <b>2026</b>
-      </div>
     </div>
   </header>
 
@@ -404,11 +382,6 @@
 
     </div>
   </div>
-
-  <footer>
-    <span>Escalímetro © 2026</span>
-    <span id="footer-mode">Modo · Claro</span>
-  </footer>
 
 </div>
 
@@ -502,7 +475,6 @@
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const next = isDark ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    document.getElementById('footer-mode').textContent = 'Modo · ' + (next === 'light' ? 'Claro' : 'Oscuro');
   });
 
   calc();
