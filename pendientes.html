@@ -85,11 +85,6 @@
     line-height: 1.05;
     color: var(--text);
   }
-  .masthead .meta {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    margin-top: 0.5rem;
-  }
   .header-right {
     display: flex;
     flex-direction: column;
@@ -114,14 +109,6 @@
   .theme-btn .icon-sun { display: none; }
   [data-theme="dark"] .theme-btn .icon-moon { display: none; }
   [data-theme="dark"] .theme-btn .icon-sun { display: block; }
-  .ed-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    text-align: right;
-    line-height: 1.6;
-  }
-  .ed-num b { color: var(--text); font-weight: 500; }
 
   .grid {
     display: grid;
@@ -420,16 +407,6 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   }
 
-  footer {
-    margin-top: 72px;
-    padding-top: 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-  }
-
   .toast {
     position: fixed;
     bottom: 32px;
@@ -468,22 +445,26 @@
     <div class="masthead">
       <div class="eyebrow">verificador normativo · accesibilidad</div>
       <h1>Rampa</h1>
-      <div class="meta">Pendientes peatonales · RCDF · Cablebús</div>
     </div>
     <div class="header-right">
       <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-      <div class="ed-num">
-        N.° <b id="ed-num">01</b><br>
-        Pub. <b>2026</b>
-      </div>
     </div>
   </header>
 
   <div class="grid">
     <aside class="col-side">
+
+      <div class="toggle-block" style="margin-bottom:28px">
+        <span class="toggle-label">Modo</span>
+        <div class="seg-control cols-2" id="modo-calc-control">
+          <button class="active" data-val="verificar">Verificar longitud</button>
+          <button data-val="calcular">Calcular longitud</button>
+        </div>
+      </div>
+
       <div class="section-head"><span class="num-mark">01</span>parámetros</div>
 
       <div class="input-stack">
@@ -502,7 +483,14 @@
       <div class="section-head"><span class="num-mark">02</span>configuración</div>
 
       <div class="toggles">
-        <div class="toggle-block">
+        <div id="pendiente-obj-block" class="toggle-block" style="display:none">
+          <span class="toggle-label">Pendiente objetivo</span>
+          <div class="seg-control cols-2" id="pendiente-obj-control">
+            <button class="active" data-val="6">6%</button>
+            <button data-val="8">8%</button>
+          </div>
+        </div>
+        <div id="tramos-block" class="toggle-block">
           <span class="toggle-label">Tramos</span>
           <div class="seg-control cols-5" id="tramos-top">
             <button class="active" data-val="auto">auto</button>
@@ -555,10 +543,6 @@
     <div class="norm-table" id="norm-table"></div>
   </div>
 
-  <footer>
-    <span>Rampa © 2026 — verificador normativo</span>
-    <span id="footer-mode">Modo · Claro</span>
-  </footer>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -569,6 +553,8 @@ let modo = 'auto';
 let tipo = 'nuevo';
 let app = 'general';
 let theme = 'light';
+let modoCalculo = 'verificar';
+let pendienteObj = 6;
 let estado = null;
 
 function initSegControl(selector, onChange) {
@@ -589,36 +575,55 @@ initSegControl('#tramos-top button, #tramos-bot button', v => {
 });
 initSegControl('#tipo-control button', v => { tipo = v; calc(); });
 initSegControl('#app-control button', v => { app = v; calc(); });
+initSegControl('#modo-calc-control button', v => {
+  modoCalculo = v;
+  aplicarModoCalculo();
+});
+initSegControl('#pendiente-obj-control button', v => {
+  pendienteObj = parseInt(v);
+  calc();
+});
 
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 
 function toggleTheme() {
   theme = theme === 'light' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', theme);
-  document.getElementById('footer-mode').textContent = 'Modo · ' + (theme === 'light' ? 'Claro' : 'Oscuro');
   saveState();
   if (estado) renderDiagrams(estado);
 }
 
+function aplicarModoCalculo() {
+  const esCalc = modoCalculo === 'calcular';
+  document.getElementById('inp-L').closest('.field').style.display = esCalc ? 'none' : '';
+  document.getElementById('tramos-block').style.display = esCalc ? 'none' : '';
+  document.getElementById('pendiente-obj-block').style.display = esCalc ? '' : 'none';
+  calc();
+}
+
 function saveState() {
   try {
-    localStorage.setItem('pendientes_L',     document.getElementById('inp-L').value);
-    localStorage.setItem('pendientes_dh',    document.getElementById('inp-dh').value);
-    localStorage.setItem('pendientes_modo',  String(modo));
-    localStorage.setItem('pendientes_tipo',  tipo);
-    localStorage.setItem('pendientes_app',   app);
-    localStorage.setItem('pendientes_theme', theme);
+    localStorage.setItem('pendientes_L',            document.getElementById('inp-L').value);
+    localStorage.setItem('pendientes_dh',           document.getElementById('inp-dh').value);
+    localStorage.setItem('pendientes_modo',         String(modo));
+    localStorage.setItem('pendientes_tipo',         tipo);
+    localStorage.setItem('pendientes_app',          app);
+    localStorage.setItem('pendientes_theme',        theme);
+    localStorage.setItem('pendientes_modoCalculo',  modoCalculo);
+    localStorage.setItem('pendientes_pendienteObj', String(pendienteObj));
   } catch (e) {}
 }
 
 function loadState() {
   try {
-    const sL     = localStorage.getItem('pendientes_L');
-    const sDh    = localStorage.getItem('pendientes_dh');
-    const sModo  = localStorage.getItem('pendientes_modo');
-    const sTipo  = localStorage.getItem('pendientes_tipo');
-    const sApp   = localStorage.getItem('pendientes_app');
-    const sTheme = localStorage.getItem('pendientes_theme');
+    const sL            = localStorage.getItem('pendientes_L');
+    const sDh           = localStorage.getItem('pendientes_dh');
+    const sModo         = localStorage.getItem('pendientes_modo');
+    const sTipo         = localStorage.getItem('pendientes_tipo');
+    const sApp          = localStorage.getItem('pendientes_app');
+    const sTheme        = localStorage.getItem('pendientes_theme');
+    const sModoCalculo  = localStorage.getItem('pendientes_modoCalculo');
+    const sPendienteObj = localStorage.getItem('pendientes_pendienteObj');
     if (sL)  document.getElementById('inp-L').value  = sL;
     if (sDh) document.getElementById('inp-dh').value = sDh;
     if (sModo) {
@@ -639,10 +644,19 @@ function loadState() {
     if (sTheme) {
       theme = sTheme;
       document.documentElement.setAttribute('data-theme', theme);
-      document.getElementById('footer-mode').textContent =
-        'Modo · ' + (theme === 'light' ? 'Claro' : 'Oscuro');
+    }
+    if (sModoCalculo) {
+      modoCalculo = sModoCalculo;
+      document.querySelectorAll('#modo-calc-control button').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === modoCalculo));
+    }
+    if (sPendienteObj) {
+      pendienteObj = parseInt(sPendienteObj);
+      document.querySelectorAll('#pendiente-obj-control button').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === sPendienteObj));
     }
   } catch (e) {}
+  aplicarModoCalculo();
 }
 
 function getConstantes() {
@@ -654,6 +668,26 @@ function getConstantes() {
     minLong6pct:  6.00,
     minLong8pct:  3.00
   };
+}
+
+function calcularLongitudMinima(dh, pendienteObjetivo, k) {
+  const extra = tipo === 'existente' ? 2 : 0;
+  const lim   = pendienteObjetivo + extra;
+  const minL  = pendienteObjetivo === 6 ? k.minLong6pct : k.minLong8pct;
+  const maxL  = pendienteObjetivo === 6 ? k.maxLong6pct : k.maxLong8pct;
+  const cat   = pendienteObjetivo === 6 ? '6%' : '8%';
+  let mejor = null;
+  for (let n = 1; n <= MAX_TRAMOS; n++) {
+    const nDesc    = n - 1;
+    const lUtilMin = dh / (lim / 100);
+    const lTramo   = lUtilMin / n;
+    if (lTramo < minL || lTramo > maxL + 0.001) continue;
+    const lTotal   = lUtilMin + nDesc * k.descansoMin;
+    if (!mejor || lTotal < mejor.lTotal)
+      mejor = { n, nDescansos: nDesc, lTotal, lUtil: lUtilMin, lTramo, limite: lim,
+                categoria: cat, descansoMin: k.descansoMin, anchoMin: k.anchoMin };
+  }
+  return mejor;
 }
 
 function categoriaTramo(lTramo, k) {
@@ -721,8 +755,31 @@ function longitudMinima(dh, k) {
 }
 
 function calc() {
-  const L  = parseFloat(document.getElementById('inp-L').value)  || 0;
   const dh = parseFloat(document.getElementById('inp-dh').value) || 0;
+
+  if (modoCalculo === 'calcular') {
+    if (dh <= 0) return;
+    const k = getConstantes();
+    const res = calcularLongitudMinima(dh, pendienteObj, k);
+    estado = { mode: 'calcular', dh, res };
+    renderResultCalc(estado);
+    if (res) {
+      const stCompat = { L: res.lTotal, dh, config: {
+        ...res, cumple: true, pendiente: res.limite,
+        rangoTexto: `${res.lTramo.toFixed(2)} m`,
+        dhTramo: dh / res.n
+      }};
+      renderDiagrams(stCompat);
+    } else {
+      document.getElementById('diagrams-zone').innerHTML = '';
+    }
+    document.getElementById('hint-zone').innerHTML = '';
+    renderNormTable({ config: { categoria: res ? res.categoria : null } }, k);
+    saveState();
+    return;
+  }
+
+  const L = parseFloat(document.getElementById('inp-L').value) || 0;
   if (!L || dh < 0) return;
   if (dh > L) {
     document.getElementById('result-zone').innerHTML = `<div class="result-display fail">
@@ -748,6 +805,47 @@ function calc() {
   saveState();
 }
 
+function renderResultCalc(st) {
+  const zone = document.getElementById('result-zone');
+  if (!st.res) {
+    zone.innerHTML = `<div class="result-display fail">
+      <div class="result-tag">no es posible</div>
+      <div class="result-pendiente">&mdash;</div>
+      <div class="result-line">Con ${pendienteObj}% y ese desnivel no existe una configuración normativa válida.</div>
+    </div>`;
+    return;
+  }
+  const r = st.res;
+  const lineHtml = r.n === 1
+    ? `Tramo único de <em>${r.lTramo.toFixed(2)} m</em>, sin descansos.`
+    : `<em>${r.n} tramos</em> de <em>${r.lTramo.toFixed(2)} m</em> con <em>${r.nDescansos} descanso${r.nDescansos > 1 ? 's' : ''}</em> de <em>${r.descansoMin.toFixed(2)} m</em>.`;
+  zone.innerHTML = `<div class="result-display ok">
+    <div class="result-tag">longitud mínima necesaria</div>
+    <div class="result-pendiente">
+      <span class="num">${r.lTotal.toFixed(2)}</span><span class="pct" style="font-size:48px"> m</span>
+    </div>
+    <div class="result-line">${lineHtml}</div>
+    <div class="result-cat">Categoría <b>${r.categoria}</b> · pendiente <b>${r.limite}%</b></div>
+    <div class="metrics-row">
+      <div class="metric-cell">
+        <div class="metric-num-mark">01</div>
+        <div class="metric-label">Tramos</div>
+        <div class="metric-value num">${r.n}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-num-mark">02</div>
+        <div class="metric-label">Descansos</div>
+        <div class="metric-value num">${r.nDescansos}</div>
+      </div>
+      <div class="metric-cell">
+        <div class="metric-num-mark">03</div>
+        <div class="metric-label">Long. tramo</div>
+        <div class="metric-value num">${r.lTramo.toFixed(2)}<span class="unit">m</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderResult(st) {
   const c = st.config;
   const zone = document.getElementById('result-zone');
@@ -766,7 +864,7 @@ function renderResult(st) {
     return;
   }
   const ok = c.cumple;
-  document.getElementById('ed-num').textContent = String(c.n).padStart(2, '0');
+  const edEl = document.getElementById('ed-num'); if (edEl) edEl.textContent = String(c.n).padStart(2, '0');
   const lineHtml = c.n === 1
     ? `Tramo único de <em>${c.lTramo.toFixed(2)} m</em>, sin descansos.`
     : `<em>${c.n} tramos</em> de <em>${c.lTramo.toFixed(2)} m</em> con <em>${c.nDescansos} descanso${c.nDescansos > 1 ? 's' : ''}</em> de <em>${c.descansoMin.toFixed(2)} m</em>.`;
@@ -828,7 +926,7 @@ function renderNormTable(st, k) {
   const a = (active) => active ? 'cell-active' : '';
   const cat6 = c.categoria === '6%';
   const cat8 = c.categoria === '8%';
-  const appLabel = app === 'cablebus' ? 'Cablebús' : 'General';
+  const appLabel = app === 'cablebus' ? 'Calebús' : 'General';
   document.getElementById('norm-table').innerHTML = `
     <div class="head">Cat.</div>
     <div class="head">Pendiente máx.</div>
@@ -1062,7 +1160,6 @@ function exportSVG(containerId, filename) {
 }
 
 loadState();
-calc();
 </script>
 </body>
 </html>

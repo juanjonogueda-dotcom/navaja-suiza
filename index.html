@@ -74,11 +74,6 @@
     line-height: 1.05;
     color: var(--text);
   }
-  .masthead .meta {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-top: 0.6rem;
-  }
   .header-right {
     display: flex;
     flex-direction: column;
@@ -103,14 +98,6 @@
   .theme-btn .icon-sun { display: none; }
   [data-theme="dark"] .theme-btn .icon-moon { display: none; }
   [data-theme="dark"] .theme-btn .icon-sun { display: block; }
-  .ed-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    text-align: right;
-    line-height: 1.6;
-  }
-  .ed-num b { color: var(--text); font-weight: 500; }
 
   .page {
     display: flex;
@@ -159,15 +146,6 @@
 
   main { flex: 1; min-width: 0; }
 
-  .section-title {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
-    color: var(--text-muted);
-    margin-bottom: 1.25rem;
-  }
-
   .tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -211,30 +189,10 @@
     color: var(--text-mid);
     line-height: 1.55;
   }
-  .card-link {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    margin-top: auto;
-    padding-top: 14px;
-    transition: color 0.12s;
-  }
-  .tool-card:hover .card-link { color: var(--accent); }
-
-  footer {
-    padding: 28px 0 48px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-  }
-  .footer-theme { cursor: pointer; }
-  .footer-theme:hover { color: var(--text-mid); }
 
   @media (max-width: 700px) {
     .sidebar { display: none; }
     .page { padding: 0 0 6rem; }
-    footer { flex-direction: column; gap: 10px; align-items: flex-start; }
   }
 </style>
 </head>
@@ -245,17 +203,12 @@
     <div class="masthead">
       <div class="eyebrow">colección de herramientas · arquitectura</div>
       <h1>Navaja Suiza</h1>
-      <div class="meta">Calculadoras y verificadores normativos</div>
     </div>
     <div class="header-right">
       <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
-      <div class="ed-num">
-        <b>v1.0</b><br>
-        2026
-      </div>
     </div>
   </header>
 
@@ -274,7 +227,6 @@
     </aside>
 
     <main>
-      <div class="section-title">herramientas disponibles</div>
       <div class="tools-grid">
 
         <a class="tool-card" href="escalimetro.html">
@@ -282,7 +234,6 @@
           <div class="card-eyebrow">Herramienta de cálculo · Escalas</div>
           <div class="card-name">Escalímetro</div>
           <div class="card-desc">Convierte medidas entre escala real y papel. Escalas 1:20 a 1:1000, bidireccional.</div>
-          <div class="card-link">Abrir →</div>
         </a>
 
         <a class="tool-card" href="pendientes.html">
@@ -290,7 +241,6 @@
           <div class="card-eyebrow">Verificador normativo · Accesibilidad</div>
           <div class="card-name">Rampa</div>
           <div class="card-desc">Verifica pendientes de rampas contra RCDF y Cablebús. Genera diagramas en corte y planta.</div>
-          <div class="card-link">Abrir →</div>
         </a>
 
       </div>
@@ -298,19 +248,12 @@
 
   </div>
 
-  <footer>
-    <span>Navaja Suiza © 2026</span>
-    <span class="footer-theme" id="footerTheme">Modo · <span id="themeLabel">Claro</span></span>
-  </footer>
-
 </div>
 <script>
   const root = document.documentElement;
-  const themeLabel = document.getElementById('themeLabel');
 
   function applyTheme(t) {
     root.setAttribute('data-theme', t);
-    themeLabel.textContent = t === 'dark' ? 'Oscuro' : 'Claro';
     localStorage.setItem('ns-theme', t);
   }
 
@@ -319,7 +262,6 @@
   }
 
   document.getElementById('themeBtn').addEventListener('click', toggleTheme);
-  document.getElementById('footerTheme').addEventListener('click', toggleTheme);
 
   const saved = localStorage.getItem('ns-theme');
   if (saved) applyTheme(saved);
