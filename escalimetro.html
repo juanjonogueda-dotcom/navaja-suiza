@@ -364,7 +364,7 @@
         <div class="result-display">
           <div class="result-tag" id="outputLabel">en papel</div>
           <div class="result-number-wrap" id="copyTrigger">
-            <span class="result-big" id="resultValue">3.6000</span>
+            <span class="result-big" id="resultValue">3.600</span>
             <span class="result-copy-hint">copiar</span>
           </div>
           <div class="toggle-block" style="margin-bottom: 0">
@@ -401,7 +401,7 @@
     if (s <= 0) return;
     const inM = v * toM[inputUnit];
     const result = (mode === 'to-paper' ? inM / s : inM * s) * fromM[outputUnit];
-    document.getElementById('resultValue').textContent = result.toFixed(4);
+    document.getElementById('resultValue').textContent = result.toFixed(3);
     document.getElementById('inputUnitLabel').textContent = unitNames[inputUnit];
     const dir = mode === 'to-paper' ? 'Real → Papel' : 'Papel → Real';
     document.getElementById('headerMeta').textContent = `${dir} · 1 : ${s}`;
