@@ -822,28 +822,50 @@ function getConstantes() {
   };
 }
 
-function calcularLongitudMinima(dh, pctObjetivo, k) {
-  const es6 = Math.abs(pctObjetivo - 6) < 0.005;
-  const es8 = Math.abs(pctObjetivo - 8) < 0.005;
-  if (!es6 && !es8) return { error: 'no-normativo', pct: pctObjetivo };
-  const pendienteObjetivo = es6 ? 6 : 8;
+/*
+ * Dado un desnivel dh y una pendiente libre p (0–10%),
+ * encuentra la configuración de tramos de menor longitud total
+ * que cumpla la normativa para cualquier categoría compatible.
+ *
+ * Categorías:
+ *   A: pendiente ≤ 6% (nuevo) / 8% (existente), tramo dentro de [minLong6pct, maxLong6pct]
+ *   B: pendiente ≤ 8% (nuevo) / 10% (existente), tramo dentro de [minLong8pct, maxLong8pct]
+ */
+function calcularLongitudMinima(dh, p, k) {
+  if (p < 0.10) return { error: 'pendiente-baja', pct: p };
+
   const extra = tipo === 'existente' ? 2 : 0;
-  const lim   = pendienteObjetivo + extra;
-  const minL  = pendienteObjetivo === 6 ? k.minLong6pct : k.minLong8pct;
-  const maxL  = pendienteObjetivo === 6 ? k.maxLong6pct : k.maxLong8pct;
-  const cat   = pendienteObjetivo === 6 ? '6%' : '8%';
+  const limA  = 6 + extra;
+  const limB  = 8 + extra;
+
+  if (p > limB + 0.001) return { error: 'fuera-norma', pct: p };
+
+  const lUtil = dh / (p / 100);
+
+  /* Categorías compatibles con p */
+  const cats = [];
+  if (p <= limA + 0.001)
+    cats.push({ lim: limA, minL: k.minLong6pct, maxL: k.maxLong6pct, catLabel: '6%' });
+  cats.push(  { lim: limB, minL: k.minLong8pct, maxL: k.maxLong8pct, catLabel: '8%' });
+
   let mejor = null;
-  for (let n = 1; n <= MAX_TRAMOS; n++) {
-    const nDesc    = n - 1;
-    const lUtilMin = dh / (lim / 100);
-    const lTramo   = lUtilMin / n;
-    if (lTramo < minL || lTramo > maxL + 0.001) continue;
-    const lTotal   = lUtilMin + nDesc * k.descansoMin;
-    if (!mejor || lTotal < mejor.lTotal)
-      mejor = { n, nDescansos: nDesc, lTotal, lUtil: lUtilMin, lTramo, limite: lim,
-                categoria: cat, descansoMin: k.descansoMin, anchoMin: k.anchoMin };
+  for (const cand of cats) {
+    for (let n = 1; n <= MAX_TRAMOS; n++) {
+      const nDesc  = n - 1;
+      const lTramo = lUtil / n;
+      if (lTramo < cand.minL - 0.001 || lTramo > cand.maxL + 0.001) continue;
+      const lTotal = lUtil + nDesc * k.descansoMin;
+      if (!mejor ||
+          lTotal < mejor.lTotal - 0.001 ||
+          (Math.abs(lTotal - mejor.lTotal) < 0.001 && n < mejor.n))
+        mejor = { n, nDescansos: nDesc, lTotal, lUtil, lTramo,
+                  limite: cand.lim, pendiente: p,
+                  categoria: cand.catLabel,
+                  descansoMin: k.descansoMin, anchoMin: k.anchoMin };
+    }
   }
-  return mejor;
+
+  return mejor || { error: 'sin-config', pct: p };
 }
 
 function categoriaTramo(lTramo, k) {
@@ -919,9 +941,17 @@ function calc() {
     const res = calcularLongitudMinima(dh, pendienteObj, k);
     estado = { mode: 'calcular', dh, res };
     renderResultCalc(estado);
+
+    /* Hint: pasillo (informativo, no bloquea el cálculo) */
+    let hintHtml = '';
+    if (dh < 0.30 && pendienteObj <= 4 + 0.001) {
+      hintHtml = `<div class="hint-block"><div class="hint-label">aviso</div><div class="hint">Este caso no se considera rampa sino pasillo según normativa — no requiere pasamanos.</div></div>`;
+    }
+    document.getElementById('hint-zone').innerHTML = hintHtml;
+
     if (res && !res.error) {
       const stCompat = { L: res.lTotal, dh, config: {
-        ...res, cumple: true, pendiente: res.limite,
+        ...res, cumple: true, pendiente: res.pendiente,
         rangoTexto: `${res.lTramo.toFixed(2)} m`,
         dhTramo: dh / res.n
       }};
@@ -929,7 +959,6 @@ function calc() {
     } else {
       document.getElementById('diagrams-zone').innerHTML = '';
     }
-    document.getElementById('hint-zone').innerHTML = '';
     renderNormTable({ config: { categoria: (res && !res.error) ? res.categoria : null } }, k);
     saveState();
     return;
@@ -963,23 +992,40 @@ function calc() {
 
 function renderResultCalc(st) {
   const zone = document.getElementById('result-zone');
-  if (st.res && st.res.error === 'no-normativo') {
-    zone.innerHTML = `<div class="result-display fail">
-      <div class="result-tag">sin categoría normativa</div>
-      <div class="result-pendiente"><span class="num">${st.res.pct.toFixed(2)}</span><span class="pct">%</span></div>
-      <div class="result-line">${st.res.pct.toFixed(2)}% no corresponde a ninguna categoría normativa. Los únicos valores válidos son <em>6%</em> y <em>8%</em>.</div>
-    </div>`;
-    return;
-  }
   if (!st.res) {
     zone.innerHTML = `<div class="result-display fail">
       <div class="result-tag">no es posible</div>
       <div class="result-pendiente">&mdash;</div>
-      <div class="result-line">Con ${pendienteObj.toFixed(2)}% y ese desnivel no existe una configuración normativa válida.</div>
+      <div class="result-line">No se puede calcular con estos valores.</div>
     </div>`;
     return;
   }
   const r = st.res;
+  if (r.error === 'pendiente-baja') {
+    zone.innerHTML = `<div class="result-display fail">
+      <div class="result-tag">pendiente insuficiente</div>
+      <div class="result-pendiente"><span class="num">${r.pct.toFixed(2)}</span><span class="pct">%</span></div>
+      <div class="result-line">Pendiente demasiado baja — la longitud necesaria sería impracticable. Aumenta la pendiente.</div>
+    </div>`;
+    return;
+  }
+  if (r.error === 'fuera-norma') {
+    const extra = tipo === 'existente' ? 2 : 0;
+    zone.innerHTML = `<div class="result-display fail">
+      <div class="result-tag">fuera de norma</div>
+      <div class="result-pendiente"><span class="num">${r.pct.toFixed(2)}</span><span class="pct">%</span></div>
+      <div class="result-line">${r.pct.toFixed(2)}% excede el límite normativo máximo de <em>${8 + extra}%</em> para proyectos ${tipo === 'existente' ? 'existentes' : 'nuevos'}.</div>
+    </div>`;
+    return;
+  }
+  if (r.error === 'sin-config') {
+    zone.innerHTML = `<div class="result-display fail">
+      <div class="result-tag">sin configuración válida</div>
+      <div class="result-pendiente"><span class="num">${r.pct.toFixed(2)}</span><span class="pct">%</span></div>
+      <div class="result-line">No existe configuración de tramos que cumpla la normativa con esta pendiente y desnivel.</div>
+    </div>`;
+    return;
+  }
   const lineHtml = r.n === 1
     ? `Tramo único de <em>${r.lTramo.toFixed(2)} m</em>, sin descansos.`
     : `<em>${r.n} tramos</em> de <em>${r.lTramo.toFixed(2)} m</em> con <em>${r.nDescansos} descanso${r.nDescansos > 1 ? 's' : ''}</em> de <em>${r.descansoMin.toFixed(2)} m</em>.`;
@@ -989,7 +1035,7 @@ function renderResultCalc(st) {
       <span class="num">${r.lTotal.toFixed(2)}</span><span class="pct" style="font-size:48px"> m</span>
     </div>
     <div class="result-line">${lineHtml}</div>
-    <div class="result-cat">Categoría <b>${r.categoria}</b> · pendiente <b>${r.limite}%</b></div>
+    <div class="result-cat">Categoría <b>${r.categoria === '6%' ? 'A' : 'B'}</b> · pendiente <b>${r.pendiente.toFixed(2)}%</b> ≤ <b>${r.limite}%</b></div>
     <div class="metrics-row">
       <div class="metric-cell">
         <div class="metric-num-mark">01</div>
