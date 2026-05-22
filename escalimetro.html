@@ -1,152 +1,109 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escalímetro</title>
+<title>Escalímetro — Navaja Suiza</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root[data-theme="light"] {
-    --bg:            #f6f1ea;
-    --bg-alt:        #ede7dc;
-    --surface:       #f0ebe2;
-    --surface-hover: #e8e0d4;
-    --border:        #d8cfc2;
-    --border-hover:  #c2b49e;
-    --text:          #2b1d0e;
-    --text-mid:      #6b5030;
-    --text-muted:    #a8906f;
-    --accent:        #7a5230;
-    --accent-light:  #c49a6c;
-  }
-  :root[data-theme="dark"] {
-    --bg:            #1a1308;
-    --bg-alt:        #201810;
-    --surface:       #231b0f;
-    --surface-hover: #2c2214;
-    --border:        #4a3828;
-    --border-hover:  #6b5030;
-    --text:          #ede7dc;
-    --text-mid:      #c49a6c;
-    --text-muted:    #8a6848;
-    --accent:        #c49a6c;
-    --accent-light:  #e8c898;
+  :root {
+    --bg:           #000000;
+    --surface:      #0d0d0d;
+    --border:       rgba(255,255,255,0.1);
+    --border-hover: rgba(255,255,255,0.25);
+    --text:         #ffffff;
+    --text-mid:     rgba(255,255,255,0.6);
+    --text-muted:   rgba(255,255,255,0.3);
+    --accent:       #ffffff;
+    --warn:         #ff6b6b;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { background: var(--bg); }
-  body {
-    background: var(--surface);
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 15px;
     line-height: 1.6;
-    transition: background 0.3s, color 0.3s;
     -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
+    overflow: hidden;
   }
 
-  .container {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: clamp(32px, 4vw, 56px) clamp(24px, 5vw, 64px) clamp(48px, 7vw, 96px);
+  .page {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    padding: clamp(20px, 2.5vh, 36px) clamp(24px, 4vw, 56px);
+    gap: 0;
   }
 
   header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 40px;
-    margin-bottom: 52px;
+    align-items: baseline;
+    gap: 16px;
+    padding-bottom: clamp(14px, 1.8vh, 24px);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: clamp(14px, 1.8vh, 24px);
+    flex-shrink: 0;
   }
-  .masthead .eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+
+  .back-link {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
     color: var(--text-muted);
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
-    margin-bottom: 12px;
+    text-decoration: none;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    transition: color 0.15s;
   }
-  .masthead h1 {
-    font-size: 2.6rem;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
+  .back-link:hover { color: var(--text); }
+
+  h1 {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
     color: var(--text);
   }
-  .masthead .meta {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    margin-top: 0.5rem;
+
+  .content {
+    display: grid;
+    grid-template-columns: 280px 1fr 1fr;
+    gap: clamp(24px, 4vw, 56px);
+    min-height: 0;
+    overflow: hidden;
   }
-  .header-right {
+
+  .col {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 16px;
-  }
-  .theme-btn {
-    background: none;
-    border: 1px solid var(--border);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-  .theme-btn:hover { color: var(--text); border-color: var(--border-hover); }
-  .theme-btn svg { width: 14px; height: 14px; }
-  .theme-btn .icon-sun { display: none; }
-  [data-theme="dark"] .theme-btn .icon-moon { display: none; }
-  [data-theme="dark"] .theme-btn .icon-sun { display: block; }
-
-  .grid {
-    display: grid;
-    grid-template-columns: clamp(180px, 20%, 240px) 1fr;
-    gap: clamp(32px, 4vw, 56px);
-  }
-  .col-side { padding-right: clamp(20px, 3vw, 32px); }
-  .col-main { padding-top: 4px; min-width: 0; }
-
-  @media (min-width: 860px) {
-    .grid { grid-template-columns: clamp(180px, 18%, 240px) 1fr 1fr; }
-    .col-main { display: contents; }
-    .col-section { min-width: 0; padding-top: 4px; }
-    .col-section:first-child { padding-right: clamp(20px, 3vw, 32px); }
-    .col-section-result .result-display { padding-bottom: 0; margin-bottom: 0; }
+    min-height: 0;
+    overflow: hidden;
   }
 
   .section-head {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: var(--text-muted);
     letter-spacing: 0.1em;
     text-transform: lowercase;
-    margin-bottom: 22px;
-  }
-  .section-head .num-mark {
-    color: var(--accent);
-    margin-right: 8px;
-    font-weight: 500;
+    margin-bottom: clamp(12px, 1.6vh, 20px);
   }
 
-  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 28px; }
-  .field-label {
-    font-size: 0.9rem;
-    color: var(--text-mid);
-    font-weight: 500;
-  }
+  .num-mark { color: var(--text-muted); margin-right: 8px; }
+
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: clamp(16px, 2vh, 26px); }
+  .field-label { font-size: 0.88rem; color: var(--text-mid); font-weight: 500; }
+
   .field-input {
-    font-family: 'JetBrains Mono', monospace !important;
+    font-family: 'JetBrains Mono', monospace;
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--border);
     color: var(--text);
-    font-size: 28px;
+    font-size: clamp(22px, 2.5vw, 28px);
     font-weight: 400;
     padding: 4px 0;
     outline: none;
@@ -156,7 +113,8 @@
   }
   .field-input::-webkit-inner-spin-button,
   .field-input::-webkit-outer-spin-button { display: none; }
-  .field-input:focus { border-bottom-color: var(--accent); }
+  .field-input:focus { border-bottom-color: var(--text); }
+
   .field-unit {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.65rem;
@@ -168,21 +126,25 @@
   .scale-row { display: flex; align-items: flex-end; gap: 6px; }
   .scale-prefix {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 28px;
+    font-size: clamp(22px, 2.5vw, 28px);
     font-weight: 400;
     color: var(--text-muted);
-    white-space: nowrap;
     padding: 4px 0;
     line-height: 1;
+    white-space: nowrap;
   }
   .scale-row .field-input { flex: 1; }
 
-  .toggle-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
-  .toggle-label {
-    font-size: 0.9rem;
-    color: var(--text-mid);
-    font-weight: 500;
+  .toggle-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: clamp(16px, 2vh, 26px); }
+  .toggle-label { font-size: 0.88rem; color: var(--text-mid); font-weight: 500; }
+
+  .formula-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 2px;
   }
+
   .seg-control {
     display: grid;
     border: 1px solid var(--border);
@@ -190,8 +152,8 @@
     overflow: hidden;
     width: 100%;
   }
+  .seg-control.cols-6 { grid-template-columns: repeat(6, 1fr); }
   .seg-control.cols-5 { grid-template-columns: repeat(5, 1fr); }
-  .seg-control.cols-3 { grid-template-columns: repeat(3, 1fr); }
   .seg-control.cols-2 { grid-template-columns: repeat(2, 1fr); }
   .seg-control button {
     background: none;
@@ -199,57 +161,52 @@
     border-right: 1px solid var(--border);
     padding: 9px 4px;
     color: var(--text-muted);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 0.82rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: clamp(11px, 2vw, 13px);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: color 0.15s;
     text-align: center;
     line-height: 1.2;
+    min-height: 36px;
   }
   .seg-control button:last-child { border-right: none; }
-  .seg-control button.active { background: var(--text); color: var(--surface); font-weight: 500; }
-  .seg-control button:hover:not(.active) { color: var(--text-mid); background: var(--surface-hover); }
-  .seg-control + .seg-control { border-top: none; border-radius: 0; }
-  .seg-control + .seg-control:last-child { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
-  .seg-control:has(+ .seg-control) { border-radius: 6px 6px 0 0; }
-
-  .formula-display {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    margin-top: 2px;
+  .seg-control button.active {
+    background: transparent;
+    color: var(--text);
+    box-shadow: inset 0 -2px 0 0 var(--text);
+    font-weight: 500;
   }
+  .seg-control button:hover:not(.active) { color: var(--text-mid); }
 
-  .result-display {
-    padding-bottom: 40px;
-    margin-bottom: 0;
-  }
   .result-tag {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: var(--text-muted);
     letter-spacing: 0.08em;
     text-transform: lowercase;
-    margin-bottom: 16px;
+    margin-bottom: clamp(10px, 1.4vh, 18px);
   }
+
   .result-number-wrap {
     cursor: pointer;
     user-select: none;
     display: inline-flex;
     align-items: baseline;
     gap: 14px;
-    margin-bottom: 20px;
+    margin-bottom: clamp(16px, 2vh, 28px);
   }
   .result-number-wrap:active { opacity: 0.7; }
+
   .result-big {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 80px;
+    font-size: clamp(52px, 6.5vw, 96px);
     font-weight: 400;
-    color: var(--accent);
+    color: var(--text);
     letter-spacing: -0.04em;
     line-height: 0.9;
     font-feature-settings: 'tnum' 1;
   }
+
   .result-copy-hint {
     font-size: 0.8rem;
     color: var(--text-muted);
@@ -262,7 +219,7 @@
     left: 50%;
     transform: translateX(-50%) translateY(20px);
     background: var(--text);
-    color: var(--surface);
+    color: var(--bg);
     padding: 10px 20px;
     border-radius: 100px;
     font-size: 0.82rem;
@@ -273,39 +230,27 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  @media (max-width: 680px) {
-    .container { padding: 32px 24px 56px; }
-    .grid { grid-template-columns: 1fr; gap: 32px; }
-    .col-side { padding-right: 0; padding-bottom: 32px; }
-    .col-main { display: block; }
-    .col-section:first-child { padding-right: 0; }
-    .masthead h1 { font-size: 2rem; }
-    .result-big { font-size: 56px; }
+  @media (max-width: 860px) {
+    html, body { overflow: auto; }
+    .page { height: auto; overflow: visible; padding: 24px 20px 56px; }
+    .content { grid-template-columns: 1fr; overflow: visible; }
+    .col { overflow: visible; }
+    .seg-control.cols-6 { grid-template-columns: repeat(3, 1fr); }
+    .seg-control button { min-height: 44px; }
   }
 </style>
 </head>
 <body>
-
-<div class="container">
+<div class="page">
 
   <header>
-    <div class="masthead">
-      <div class="eyebrow">herramienta de cálculo · escalas arquitectónicas</div>
-      <h1>Escalímetro</h1>
-      <div class="meta" id="headerMeta">Real → Papel · 1 : 250</div>
-    </div>
-    <div class="header-right">
-      <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </button>
-    </div>
+    <a class="back-link" href="index.html">←</a>
+    <h1>Escalímetro</h1>
   </header>
 
-  <div class="grid">
+  <div class="content">
 
-    <aside class="col-side">
-
+    <aside class="col">
       <div class="section-head"><span class="num-mark">01</span>dirección</div>
       <div class="toggle-block">
         <span class="toggle-label">Conversión</span>
@@ -318,71 +263,61 @@
 
       <div class="section-head"><span class="num-mark">02</span>escala</div>
       <div class="field">
-        <span class="toggle-label">Factor</span>
+        <span class="field-label">Factor</span>
         <div class="scale-row">
           <span class="scale-prefix">1 :</span>
           <input type="number" class="field-input" id="scaleFactor" value="250" placeholder="250">
         </div>
-        <span class="field-unit">denominador</span>
       </div>
-      <div class="seg-control cols-3" id="presets-top">
+      <div class="seg-control cols-6" id="presets">
         <button data-val="20">1:20</button>
         <button data-val="50">1:50</button>
         <button data-val="100">1:100</button>
-      </div>
-      <div class="seg-control cols-3" id="presets-bot">
         <button class="active" data-val="250">1:250</button>
         <button data-val="500">1:500</button>
         <button data-val="1000">1:1000</button>
       </div>
-
     </aside>
 
-    <div class="col-main">
-
-      <div class="col-section">
-        <div class="section-head"><span class="num-mark">03</span>medida de entrada</div>
-        <div class="field">
-          <span class="field-label" id="inputLabel">Medida real</span>
-          <input type="number" class="field-input" id="inputValue" value="0.90" step="any" placeholder="0">
-          <span class="field-unit" id="inputUnitLabel">metros</span>
-        </div>
-        <div class="toggle-block">
-          <span class="toggle-label">Unidad de entrada</span>
-          <div class="seg-control cols-5" id="input-unit-control">
-            <button data-val="km">km</button>
-            <button class="active" data-val="m">m</button>
-            <button data-val="cm">cm</button>
-            <button data-val="mm">mm</button>
-            <button data-val="in">in</button>
-          </div>
+    <div class="col">
+      <div class="section-head"><span class="num-mark">03</span>medida de entrada</div>
+      <div class="field">
+        <span class="field-label" id="inputLabel">Medida real</span>
+        <input type="number" class="field-input" id="inputValue" value="0.90" step="any" placeholder="0">
+        <span class="field-unit" id="inputUnitLabel">metros</span>
+      </div>
+      <div class="toggle-block">
+        <span class="toggle-label">Unidad de entrada</span>
+        <div class="seg-control cols-5" id="input-unit-control">
+          <button data-val="km">km</button>
+          <button class="active" data-val="m">m</button>
+          <button data-val="cm">cm</button>
+          <button data-val="mm">mm</button>
+          <button data-val="in">in</button>
         </div>
       </div>
-
-      <div class="col-section col-section-result">
-        <div class="section-head"><span class="num-mark">04</span>resultado</div>
-        <div class="result-display">
-          <div class="result-tag" id="outputLabel">en papel</div>
-          <div class="result-number-wrap" id="copyTrigger">
-            <span class="result-big" id="resultValue">3.600</span>
-            <span class="result-copy-hint">copiar</span>
-          </div>
-          <div class="toggle-block" style="margin-bottom: 0">
-            <span class="toggle-label">Unidad de resultado</span>
-            <div class="seg-control cols-5" id="output-unit-control">
-              <button data-val="km">km</button>
-              <button data-val="m">m</button>
-              <button data-val="cm">cm</button>
-              <button class="active" data-val="mm">mm</button>
-              <button data-val="in">in</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </div>
 
+    <div class="col">
+      <div class="section-head"><span class="num-mark">04</span>resultado</div>
+      <div class="result-tag" id="outputLabel">en papel</div>
+      <div class="result-number-wrap" id="copyTrigger">
+        <span class="result-big" id="resultValue">3.600</span>
+        <span class="result-copy-hint">copiar</span>
+      </div>
+      <div class="toggle-block" style="margin-bottom:0">
+        <span class="toggle-label">Unidad de resultado</span>
+        <div class="seg-control cols-5" id="output-unit-control">
+          <button data-val="km">km</button>
+          <button data-val="m">m</button>
+          <button data-val="cm">cm</button>
+          <button class="active" data-val="mm">mm</button>
+          <button data-val="in">in</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <div class="toast" id="toast">copiado</div>
@@ -395,16 +330,38 @@
   let inputUnit = 'm';
   let outputUnit = 'mm';
 
+  let currentDisplayValue = 0;
+  let animFrame = null;
+
+  function animateTo(target) {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    const start = currentDisplayValue;
+    const startTime = performance.now();
+    const duration = 300;
+    function step(now) {
+      const t = Math.min((now - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const cur = start + (target - start) * ease;
+      document.getElementById('resultValue').textContent = cur.toFixed(3);
+      if (t < 1) {
+        animFrame = requestAnimationFrame(step);
+      } else {
+        currentDisplayValue = target;
+        document.getElementById('resultValue').textContent = target.toFixed(3);
+        animFrame = null;
+      }
+    }
+    animFrame = requestAnimationFrame(step);
+  }
+
   function calc() {
     const v = parseFloat(document.getElementById('inputValue').value) || 0;
     const s = parseFloat(document.getElementById('scaleFactor').value) || 1;
     if (s <= 0) return;
     const inM = v * toM[inputUnit];
     const result = (mode === 'to-paper' ? inM / s : inM * s) * fromM[outputUnit];
-    document.getElementById('resultValue').textContent = result.toFixed(3);
+    animateTo(result);
     document.getElementById('inputUnitLabel').textContent = unitNames[inputUnit];
-    const dir = mode === 'to-paper' ? 'Real → Papel' : 'Papel → Real';
-    document.getElementById('headerMeta').textContent = `${dir} · 1 : ${s}`;
   }
 
   function setMode(m) {
@@ -421,22 +378,20 @@
 
   function setPreset(v) {
     document.getElementById('scaleFactor').value = v;
-    document.querySelectorAll('#presets-top button, #presets-bot button').forEach(b => {
+    document.querySelectorAll('#presets button').forEach(b => {
       b.classList.toggle('active', b.dataset.val == v);
     });
     calc();
   }
 
-  document.querySelectorAll('#mode-control button').forEach(btn => {
-    btn.addEventListener('click', () => setMode(btn.dataset.val));
-  });
+  document.querySelectorAll('#mode-control button').forEach(btn =>
+    btn.addEventListener('click', () => setMode(btn.dataset.val)));
 
-  document.querySelectorAll('#presets-top button, #presets-bot button').forEach(btn => {
-    btn.addEventListener('click', () => setPreset(btn.dataset.val));
-  });
+  document.querySelectorAll('#presets button').forEach(btn =>
+    btn.addEventListener('click', () => setPreset(btn.dataset.val)));
 
   document.getElementById('scaleFactor').addEventListener('input', () => {
-    document.querySelectorAll('#presets-top button, #presets-bot button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active'));
     calc();
   });
 
@@ -469,12 +424,6 @@
     const t = document.getElementById('toast');
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 1400);
-  });
-
-  document.getElementById('themeBtn').addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const next = isDark ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
   });
 
   calc();
