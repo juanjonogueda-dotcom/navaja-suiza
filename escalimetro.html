@@ -70,17 +70,30 @@
 
   .content {
     display: grid;
-    grid-template-columns: 280px 1fr 1fr;
+    grid-template-columns: 320px 1fr;
     gap: clamp(24px, 4vw, 56px);
     min-height: 0;
     overflow: hidden;
   }
 
-  .col {
+  .sidebar {
+    overflow-y: auto;
+    padding-right: 8px;
+    padding-bottom: 48px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .main-area {
+    overflow-y: auto;
+    padding-bottom: 56px;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
+    justify-content: flex-start;
   }
 
   .section-head {
@@ -199,7 +212,7 @@
 
   .result-big {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(52px, 6.5vw, 96px);
+    font-size: clamp(72px, 11vw, 160px);
     font-weight: 400;
     color: var(--text);
     letter-spacing: -0.04em;
@@ -234,9 +247,10 @@
     html, body { overflow: auto; }
     .page { height: auto; overflow: visible; padding: 24px 20px 56px; }
     .content { grid-template-columns: 1fr; overflow: visible; }
-    .col { overflow: visible; }
+    .sidebar, .main-area { overflow: visible; padding-right: 0; padding-bottom: 0; }
     .seg-control.cols-6 { grid-template-columns: repeat(3, 1fr); }
     .seg-control button { min-height: 44px; }
+    .result-big { font-size: clamp(64px, 18vw, 120px); }
   }
 </style>
 </head>
@@ -250,7 +264,7 @@
 
   <div class="content">
 
-    <aside class="col">
+    <aside class="sidebar">
       <div class="section-head"><span class="num-mark">01</span>dirección</div>
       <div class="toggle-block">
         <span class="toggle-label">Conversión</span>
@@ -277,10 +291,8 @@
         <button data-val="500">1:500</button>
         <button data-val="1000">1:1000</button>
       </div>
-    </aside>
 
-    <div class="col">
-      <div class="section-head"><span class="num-mark">03</span>medida de entrada</div>
+      <div class="section-head" style="margin-top:clamp(20px, 2.5vh, 32px)"><span class="num-mark">03</span>medida de entrada</div>
       <div class="field">
         <span class="field-label" id="inputLabel">Medida real</span>
         <input type="number" class="field-input" id="inputValue" value="0.90" step="any" placeholder="0">
@@ -296,16 +308,16 @@
           <button data-val="in">in</button>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <div class="col">
+    <div class="main-area">
       <div class="section-head"><span class="num-mark">04</span>resultado</div>
       <div class="result-tag" id="outputLabel">en papel</div>
       <div class="result-number-wrap" id="copyTrigger">
         <span class="result-big" id="resultValue">3.600</span>
         <span class="result-copy-hint">copiar</span>
       </div>
-      <div class="toggle-block" style="margin-bottom:0">
+      <div class="toggle-block" style="margin-bottom:0; max-width: 480px">
         <span class="toggle-label">Unidad de resultado</span>
         <div class="seg-control cols-5" id="output-unit-control">
           <button data-val="km">km</button>
@@ -330,37 +342,13 @@
   let inputUnit = 'm';
   let outputUnit = 'mm';
 
-  let currentDisplayValue = 0;
-  let animFrame = null;
-
-  function animateTo(target) {
-    if (animFrame) cancelAnimationFrame(animFrame);
-    const start = currentDisplayValue;
-    const startTime = performance.now();
-    const duration = 300;
-    function step(now) {
-      const t = Math.min((now - startTime) / duration, 1);
-      const ease = 1 - Math.pow(1 - t, 3);
-      const cur = start + (target - start) * ease;
-      document.getElementById('resultValue').textContent = cur.toFixed(3);
-      if (t < 1) {
-        animFrame = requestAnimationFrame(step);
-      } else {
-        currentDisplayValue = target;
-        document.getElementById('resultValue').textContent = target.toFixed(3);
-        animFrame = null;
-      }
-    }
-    animFrame = requestAnimationFrame(step);
-  }
-
   function calc() {
     const v = parseFloat(document.getElementById('inputValue').value) || 0;
     const s = parseFloat(document.getElementById('scaleFactor').value) || 1;
     if (s <= 0) return;
     const inM = v * toM[inputUnit];
     const result = (mode === 'to-paper' ? inM / s : inM * s) * fromM[outputUnit];
-    animateTo(result);
+    document.getElementById('resultValue').textContent = result.toFixed(3);
     document.getElementById('inputUnitLabel').textContent = unitNames[inputUnit];
   }
 
