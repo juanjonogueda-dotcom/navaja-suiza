@@ -478,9 +478,10 @@
 
       <div class="toggle-block" style="margin-bottom:24px">
         <span class="toggle-label">Modo</span>
-        <div class="seg-control cols-2" id="modo-calc-control">
+        <div class="seg-control" id="modo-calc-control" style="grid-template-columns: repeat(3, 1fr)">
           <button class="active" data-val="verificar">Longitud</button>
           <button data-val="calcular">Pendiente</button>
+          <button data-val="libre">Libre</button>
         </div>
       </div>
 
@@ -627,13 +628,50 @@ document.getElementById('pendiente-slider').addEventListener('input', function (
   calc();
 });
 
+const sliderLabel = document.getElementById('pct-slider-label');
+sliderLabel.style.cursor = 'pointer';
+sliderLabel.title = 'Doble clic para editar';
+
+sliderLabel.addEventListener('dblclick', function () {
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.value = pendienteObj.toFixed(2);
+  input.min = 0;
+  input.max = 10;
+  input.step = 0.01;
+  input.style.cssText = 'font-family: JetBrains Mono, monospace; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border-hover); border-radius: 3px; padding: 2px 6px; width: 68px; text-align: right; outline: none;';
+  this.replaceWith(input);
+  input.focus();
+  input.select();
+  function commit() {
+    const val = Math.min(10, Math.max(0, parseFloat(input.value) || 0));
+    pendienteObj = Math.round(val * 100) / 100;
+    input.replaceWith(sliderLabel);
+    updateSliderUI(pendienteObj);
+    calc();
+    saveState();
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') {
+      input.replaceWith(sliderLabel);
+      updateSliderUI(pendienteObj);
+    }
+  });
+});
+
 /* --- Modo calcular --- */
 
 function aplicarModoCalculo() {
+  const esLibre = modoCalculo === 'libre';
   const esCalc = modoCalculo === 'calcular';
   document.getElementById('inp-L').closest('.field').style.display = esCalc ? 'none' : '';
-  document.getElementById('tramos-block').style.display = esCalc ? 'none' : '';
+  document.getElementById('tramos-block').style.display = (esCalc || esLibre) ? 'none' : '';
   document.getElementById('pendiente-obj-block').style.display = esCalc ? '' : 'none';
+  document.getElementById('tipo-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
+  document.getElementById('app-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
+  document.getElementById('norm-ref-section').style.display = esLibre ? 'none' : '';
   if (esCalc) setTimeout(() => updateSliderUI(pendienteObj), 0);
   calc();
 }
@@ -691,7 +729,7 @@ function getConstantes() {
     descansoMin:  1.20,
     anchoMin:     app === 'cablebus' ? 1.50 : 1.00,
     maxLong6pct:  app === 'cablebus' ? 8.00 : 10.00,
-    maxLong8pct:  app === 'cablebus' ? 6.00 : 5.99,
+    maxLong8pct:  app === 'cablebus' ? 6.00 : 6.00,
     minLong6pct:  6.00,
     minLong8pct:  3.00
   };
@@ -735,10 +773,10 @@ function calcularLongitudMinima(dh, p, k) {
 
 function categoriaTramo(lTramo, k) {
   const extra = tipo === 'existente' ? 2 : 0;
-  if (lTramo >= k.minLong6pct && lTramo <= k.maxLong6pct + 0.001)
+  if (lTramo >= k.minLong6pct - 0.001 && lTramo <= k.maxLong6pct + 0.001)
     return { categoria: '6%', limite: 6 + extra, rangoTexto: `${k.minLong6pct.toFixed(2)}–${k.maxLong6pct.toFixed(2)} m` };
-  if (lTramo >= k.minLong8pct && lTramo <= k.maxLong8pct + 0.001)
-    return { categoria: '8%', limite: 8 + extra, rangoTexto: `${k.minLong8pct.toFixed(2)}–${k.maxLong8pct.toFixed(2)} m` };
+  if (lTramo >= k.minLong8pct - 0.001 && lTramo < k.minLong6pct - 0.001)
+    return { categoria: '8%', limite: 8 + extra, rangoTexto: `${k.minLong8pct.toFixed(2)}–${(k.minLong6pct - 0.01).toFixed(2)} m` };
   return null;
 }
 
@@ -826,6 +864,37 @@ function calc() {
     return;
   }
 
+  if (modoCalculo === 'libre') {
+    const L = parseFloat(document.getElementById('inp-L').value) || 0;
+    const dh = parseFloat(document.getElementById('inp-dh').value) || 0;
+    if (L <= 0 || dh < 0) {
+      document.getElementById('result-zone').innerHTML = '';
+      document.getElementById('diagrams-zone').innerHTML = '';
+      document.getElementById('hint-zone').innerHTML = '';
+      return;
+    }
+    const pendiente = (dh / L) * 100;
+    const lInclinada = Math.sqrt(L*L + dh*dh);
+    const angulo = Math.atan(dh / L) * 180 / Math.PI;
+    document.getElementById('result-zone').innerHTML = `
+      <div class="result-display ok">
+        <div class="result-tag">pendiente calculada · sin restricción normativa</div>
+        <div class="result-pendiente">
+          <span class="num">${pendiente.toFixed(2)}</span><span class="pct">%</span>
+        </div>
+        <div class="result-line">Cálculo geométrico directo, sin verificación contra norma.</div>
+        <div class="metrics-row" style="grid-template-columns: repeat(3, 1fr)">
+          <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Long. horizontal</div><div class="metric-value num">${L.toFixed(2)}<span class="unit">m</span></div></div>
+          <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Long. inclinada</div><div class="metric-value num">${lInclinada.toFixed(3)}<span class="unit">m</span></div></div>
+          <div class="metric-cell"><div class="metric-num-mark">03</div><div class="metric-label">Ángulo</div><div class="metric-value num">${angulo.toFixed(2)}<span class="unit">°</span></div></div>
+        </div>
+      </div>`;
+    document.getElementById('hint-zone').innerHTML = '';
+    document.getElementById('diagrams-zone').innerHTML = svgLibre(L, dh, pendiente, lInclinada);
+    saveState();
+    return;
+  }
+
   const L = parseFloat(document.getElementById('inp-L').value) || 0;
   if (!L || dh < 0) return;
   if (dh > L) {
@@ -897,6 +966,7 @@ function renderResultCalc(st) {
   const lineHtml = r.n === 1
     ? `Tramo único de <em>${r.lTramo.toFixed(2)} m</em>, sin descansos.`
     : `<em>${r.n} tramos</em> de <em>${r.lTramo.toFixed(2)} m</em> con <em>${r.nDescansos} descanso${r.nDescansos > 1 ? 's' : ''}</em> de <em>${r.descansoMin.toFixed(2)} m</em>.`;
+  const lInclinada = r.lTramo * Math.sqrt(1 + (r.pendiente / 100) ** 2);
   zone.innerHTML = `<div class="result-display ok">
     <div class="result-tag">longitud mínima necesaria</div>
     ${impracticableHtml}
@@ -905,10 +975,11 @@ function renderResultCalc(st) {
     </div>
     <div class="result-line">${lineHtml}</div>
     <div class="result-cat">Categoría <b>${r.categoria === '6%' ? 'A' : 'B'}</b> · pendiente <b>${r.pendiente.toFixed(2)}%</b> ≤ <b>${r.limite}%</b></div>
-    <div class="metrics-row">
+    <div class="metrics-row" style="grid-template-columns: repeat(4, 1fr)">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Tramos</div><div class="metric-value num">${r.n}</div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Descansos</div><div class="metric-value num">${r.nDescansos}</div></div>
       <div class="metric-cell"><div class="metric-num-mark">03</div><div class="metric-label">Long. tramo</div><div class="metric-value num">${r.lTramo.toFixed(2)}<span class="unit">m</span></div></div>
+      <div class="metric-cell"><div class="metric-num-mark">04</div><div class="metric-label">Long. inclinada</div><div class="metric-value num">${lInclinada.toFixed(2)}<span class="unit">m</span></div></div>
     </div>
   </div>`;
 }
@@ -937,6 +1008,7 @@ function renderResult(st) {
     : `<em>${c.n} tramos</em> de <em>${c.lTramo.toFixed(2)} m</em> con <em>${c.nDescansos} descanso${c.nDescansos > 1 ? 's' : ''}</em> de <em>${c.descansoMin.toFixed(2)} m</em>.`;
   const excesoHtml = !ok
     ? `<br/><span style="color:var(--warn)">Excede ${(c.pendiente - c.limite).toFixed(2)} puntos porcentuales.</span>` : '';
+  const lInclinada = c.lTramo * Math.sqrt(1 + (c.pendiente / 100) ** 2);
   zone.innerHTML = `<div class="result-display ${ok ? 'ok' : 'fail'}">
     <div class="result-tag">${ok ? 'cumple normativa' : 'no cumple'}</div>
     <div class="result-pendiente">
@@ -945,10 +1017,11 @@ function renderResult(st) {
     </div>
     <div class="result-line">${lineHtml}${excesoHtml}</div>
     <div class="result-cat">Categoría <b>${c.categoria}</b> · tramos válidos <b>${c.rangoTexto}</b></div>
-    <div class="metrics-row">
+    <div class="metrics-row" style="grid-template-columns: repeat(4, 1fr)">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Tramos</div><div class="metric-value num">${c.n}</div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Descansos</div><div class="metric-value num">${c.nDescansos}</div></div>
       <div class="metric-cell"><div class="metric-num-mark">03</div><div class="metric-label">Long. tramo</div><div class="metric-value num">${c.lTramo.toFixed(2)}<span class="unit">m</span></div></div>
+      <div class="metric-cell"><div class="metric-num-mark">04</div><div class="metric-label">Long. inclinada</div><div class="metric-value num">${lInclinada.toFixed(2)}<span class="unit">m</span></div></div>
     </div>
   </div>`;
   if (!ok) triggerShake(zone);
@@ -1177,6 +1250,39 @@ function svgPlanta(st) {
     <defs><marker id="arr-planta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
     ${parts.join('\n')}
   </svg>`;
+}
+
+function svgLibre(L, dh, pendiente, lInclinada) {
+  const col = getColors();
+  const W = 920, padL = 80, padR = 80, padT = 60, padB = 80;
+  const drawW = W - padL - padR;
+  const aspect = dh / L;
+  const visualDh = Math.min(Math.max(aspect * drawW * 5, 60), 280);
+  const totalH = padT + visualDh + padB;
+  const x1 = padL, y1 = padT + visualDh;
+  const x2 = padL + drawW, y2 = padT + visualDh;
+  const xTop = padL, yTop = padT;
+  return `
+  <div class="diagram-block">
+    <div class="diagram-head">
+      <div class="diagram-title">Perfil <em>libre</em></div>
+      <div class="diagram-head-right">
+        <div class="diagram-meta">esc. vertical exagerada</div>
+      </div>
+    </div>
+    <div class="diagram-svg">
+      <svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs><marker id="arr-libre" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col.muted}" stroke-width="0.5" stroke-dasharray="3 4"/>
+        <line x1="${x2}" y1="${y2}" x2="${xTop}" y2="${yTop}" stroke="${col.muted}" stroke-width="0.5" stroke-dasharray="3 4"/>
+        <line class="ramp-seg" x1="${x1}" y1="${y1}" x2="${xTop}" y2="${yTop}" stroke="${col.accent}" stroke-width="1.2" stroke-linecap="round"/>
+        <text x="${(x1+x2)/2}" y="${y1+20}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.mid}">${L.toFixed(2)} m</text>
+        <text x="${x2+18}" y="${(y1+yTop)/2+4}" text-anchor="start" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.mid}">${dh.toFixed(3)} m</text>
+        <text x="${(x1+xTop)/2 - 18}" y="${(y1+yTop)/2 - 8}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.accent}" transform="rotate(${-Math.atan2(yTop-y1, xTop-x1)*180/Math.PI}, ${(x1+xTop)/2 - 18}, ${(y1+yTop)/2 - 8})">${pendiente.toFixed(2)}%</text>
+        <text x="${x2+18}" y="${y1-6}" text-anchor="start" font-family="JetBrains Mono,monospace" font-size="9" fill="${col.muted}" letter-spacing="0.08em">DESNIVEL</text>
+      </svg>
+    </div>
+  </div>`;
 }
 
 function showToast(msg) {
