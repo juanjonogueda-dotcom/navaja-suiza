@@ -699,32 +699,38 @@ function getConstantes() {
 
 function calcularLongitudMinima(dh, p, k) {
   if (p < 0.10) return { error: 'pendiente-baja', pct: p };
+
   const extra = tipo === 'existente' ? 2 : 0;
-  const limA  = 6 + extra;
-  const limB  = 8 + extra;
-  if (p > limB + 0.001) return { error: 'fuera-norma', pct: p };
-  const lUtil = dh / (p / 100);
-  const cats = [];
-  if (p <= limA + 0.001)
-    cats.push({ lim: limA, minL: k.minLong6pct, maxL: k.maxLong6pct, catLabel: '6%' });
-  cats.push(  { lim: limB, minL: k.minLong8pct, maxL: k.maxLong8pct, catLabel: '8%' });
-  let mejor = null;
-  for (const cand of cats) {
-    for (let n = 1; n <= MAX_TRAMOS; n++) {
-      const nDesc  = n - 1;
-      const lTramo = lUtil / n;
-      if (lTramo < cand.minL - 0.001 || lTramo > cand.maxL + 0.001) continue;
-      const lTotal = lUtil + nDesc * k.descansoMin;
-      if (!mejor ||
-          lTotal < mejor.lTotal - 0.001 ||
-          (Math.abs(lTotal - mejor.lTotal) < 0.001 && n < mejor.n))
-        mejor = { n, nDescansos: nDesc, lTotal, lUtil, lTramo,
-                  limite: cand.lim, pendiente: p,
-                  categoria: cand.catLabel,
-                  descansoMin: k.descansoMin, anchoMin: k.anchoMin };
-    }
+  const limA = 6 + extra;
+  const limB = 8 + extra;
+
+  if (p > limB + 0.001) return { error: 'fuera-norma', pct: p, limMax: limB };
+
+  let categoria, limite, tramoMax;
+  if (p <= limA + 0.001) {
+    categoria = '6%';
+    limite = limA;
+    tramoMax = k.maxLong6pct;
+  } else {
+    categoria = '8%';
+    limite = limB;
+    tramoMax = k.maxLong8pct;
   }
-  return mejor || { error: 'sin-config', pct: p };
+
+  const lUtil = dh / (p / 100);
+  const n = Math.max(1, Math.ceil(lUtil / tramoMax));
+  const nDesc = n - 1;
+  const lTramo = lUtil / n;
+  const lTotal = lUtil + nDesc * k.descansoMin;
+
+  const impracticable = n > 10 || lTotal > 200;
+
+  return {
+    n, nDescansos: nDesc, lTotal, lUtil, lTramo,
+    limite, pendiente: p, categoria,
+    descansoMin: k.descansoMin, anchoMin: k.anchoMin,
+    impracticable
+  };
 }
 
 function categoriaTramo(lTramo, k) {
@@ -877,29 +883,23 @@ function renderResultCalc(st) {
     return;
   }
   if (r.error === 'fuera-norma') {
-    const extra = tipo === 'existente' ? 2 : 0;
     zone.innerHTML = `<div class="result-display fail">
       <div class="result-tag">fuera de norma</div>
       <div class="result-pendiente"><span class="num">${r.pct.toFixed(2)}</span><span class="pct">%</span></div>
-      <div class="result-line">${r.pct.toFixed(2)}% excede el límite normativo máximo de <em>${8 + extra}%</em> para proyectos ${tipo === 'existente' ? 'existentes' : 'nuevos'}.</div>
+      <div class="result-line">${r.pct.toFixed(2)}% excede el límite normativo máximo de <em>${r.limMax}%</em> para proyectos ${tipo === 'existente' ? 'existentes' : 'nuevos'}.</div>
     </div>`;
     triggerShake(zone);
     return;
   }
-  if (r.error === 'sin-config') {
-    zone.innerHTML = `<div class="result-display fail">
-      <div class="result-tag">sin configuración válida</div>
-      <div class="result-pendiente"><span class="num">${r.pct.toFixed(2)}</span><span class="pct">%</span></div>
-      <div class="result-line">No existe configuración de tramos que cumpla la normativa con esta pendiente y desnivel.</div>
-    </div>`;
-    triggerShake(zone);
-    return;
-  }
+  const impracticableHtml = r.impracticable
+    ? `<div class="hint" style="margin-bottom:16px;color:rgba(255,200,80,0.9);border-color:rgba(255,200,80,0.25)">Esta configuración requiere <b>${r.n} tramos</b> en <b>${r.lTotal.toFixed(0)} m</b> de longitud — considera aumentar la pendiente para una solución más práctica.</div>`
+    : '';
   const lineHtml = r.n === 1
     ? `Tramo único de <em>${r.lTramo.toFixed(2)} m</em>, sin descansos.`
     : `<em>${r.n} tramos</em> de <em>${r.lTramo.toFixed(2)} m</em> con <em>${r.nDescansos} descanso${r.nDescansos > 1 ? 's' : ''}</em> de <em>${r.descansoMin.toFixed(2)} m</em>.`;
   zone.innerHTML = `<div class="result-display ok">
     <div class="result-tag">longitud mínima necesaria</div>
+    ${impracticableHtml}
     <div class="result-pendiente">
       <span class="num">${r.lTotal.toFixed(2)}</span><span class="pct" style="font-size:0.5em"> m</span>
     </div>
