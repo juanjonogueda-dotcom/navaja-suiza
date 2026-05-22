@@ -1,270 +1,156 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Navaja Suiza — Herramientas de arquitectura</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Navaja Suiza</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-  :root[data-theme="light"] {
-    --bg:            #f6f1ea;
-    --bg-alt:        #ede7dc;
-    --surface:       #f0ebe2;
-    --surface-hover: #e8e0d4;
-    --border:        #d8cfc2;
-    --border-hover:  #c2b49e;
-    --text:          #2b1d0e;
-    --text-mid:      #6b5030;
-    --text-muted:    #a8906f;
-    --accent:        #7a5230;
-    --accent-light:  #c49a6c;
-  }
-  :root[data-theme="dark"] {
-    --bg:            #1a1308;
-    --bg-alt:        #201810;
-    --surface:       #231b0f;
-    --surface-hover: #2c2214;
-    --border:        #4a3828;
-    --border-hover:  #6b5030;
-    --text:          #ede7dc;
-    --text-mid:      #c49a6c;
-    --text-muted:    #8a6848;
-    --accent:        #c49a6c;
-    --accent-light:  #e8c898;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000000;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { background: var(--bg); }
   body {
-    background: var(--surface);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
-    transition: background 0.3s, color 0.3s;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-  }
-
-  .wrap {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-  }
-
-  header {
+    position: relative;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: clamp(32px, 4vw, 56px) 0 40px;
-    margin-bottom: 3rem;
-  }
-  .masthead .eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
-    margin-bottom: 14px;
-  }
-  .masthead h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1.05;
-    color: var(--text);
-  }
-  .header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 16px;
-  }
-  .theme-btn {
-    background: none;
-    border: 1px solid var(--border);
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-  }
-  .theme-btn:hover { color: var(--text); border-color: var(--border-hover); }
-  .theme-btn svg { width: 14px; height: 14px; }
-  .theme-btn .icon-sun { display: none; }
-  [data-theme="dark"] .theme-btn .icon-moon { display: none; }
-  [data-theme="dark"] .theme-btn .icon-sun { display: block; }
-
-  .page {
-    display: flex;
-    align-items: flex-start;
-    gap: 3rem;
-    padding-bottom: 8rem;
   }
 
-  .sidebar {
-    width: 200px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 3.5rem;
-    align-self: flex-start;
+  .wordmark {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-weight: 800;
+    font-size: clamp(72px, 12vw, 160px);
+    color: #ffffff;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
   }
-  .sidebar-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
-    color: var(--text-muted);
-    margin-bottom: 0.9rem;
-  }
-  .nav-list {
-    list-style: none;
+
+  .shape {
+    position: absolute;
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
-  }
-  .nav-item a {
-    display: flex;
     align-items: center;
-    justify-content: space-between;
-    text-decoration: none;
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    padding: 0.35rem 0;
-    transition: color 0.12s;
-  }
-  .nav-item a:hover { color: var(--text-mid); }
-  .nav-count {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--border-hover);
-  }
-
-  main { flex: 1; min-width: 0; }
-
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0.75rem;
-  }
-
-  .tool-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: clamp(20px, 2.5vw, 32px);
-    display: flex;
-    flex-direction: column;
     gap: 10px;
     text-decoration: none;
-    color: inherit;
-    transition: border-color 0.12s, background 0.12s;
+    cursor: pointer;
   }
-  .tool-card:hover { border-color: var(--border-hover); background: var(--surface-hover); }
 
-  .card-num {
+  .shape svg {
+    display: block;
+    opacity: 0.9;
+    transition: transform 0.25s ease;
+  }
+
+  .shape:hover svg {
+    transform: scale(1.06);
+  }
+
+  .shape-label {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    letter-spacing: 0.08em;
-  }
-  .card-eyebrow {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-  }
-  .card-name {
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    color: var(--text);
-    margin-top: 2px;
-  }
-  .card-desc {
-    font-size: 0.9rem;
-    color: var(--text-mid);
-    line-height: 1.55;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+    color: #ffffff;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    white-space: nowrap;
   }
 
-  @media (max-width: 700px) {
-    .sidebar { display: none; }
-    .page { padding: 0 0 6rem; }
+  .shape:hover .shape-label {
+    opacity: 1;
+  }
+
+  .shape-escalimetro {
+    top: 8%;
+    right: 6%;
+    transform: rotate(-15deg);
+  }
+
+  .shape-rampa {
+    bottom: 10%;
+    left: 5%;
+    transform: rotate(8deg);
+  }
+
+  .shape-escalera {
+    top: 50%;
+    right: 8%;
+    transform: translateY(-50%) rotate(-5deg);
   }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header>
-    <div class="masthead">
-      <div class="eyebrow">colección de herramientas · arquitectura</div>
-      <h1>Navaja Suiza</h1>
-    </div>
-    <div class="header-right">
-      <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      </button>
-    </div>
-  </header>
+  <h1 class="wordmark">Navaja Suiza</h1>
 
-  <div class="page">
+  <!-- Escalímetro: long ruler with scale marks, top right -->
+  <a class="shape shape-escalimetro" href="escalimetro.html" aria-label="Escalímetro">
+    <svg width="320" height="44" viewBox="0 0 320 44" xmlns="http://www.w3.org/2000/svg">
+      <!-- Major ticks every 40px (3px wide × 14px tall) -->
+      <rect x="0"   y="0" width="3" height="14" fill="white"/>
+      <rect x="40"  y="0" width="3" height="14" fill="white"/>
+      <rect x="80"  y="0" width="3" height="14" fill="white"/>
+      <rect x="120" y="0" width="3" height="14" fill="white"/>
+      <rect x="160" y="0" width="3" height="14" fill="white"/>
+      <rect x="200" y="0" width="3" height="14" fill="white"/>
+      <rect x="240" y="0" width="3" height="14" fill="white"/>
+      <rect x="280" y="0" width="3" height="14" fill="white"/>
+      <rect x="317" y="0" width="3" height="14" fill="white"/>
+      <!-- Minor ticks every 10px (2px wide × 7px tall) -->
+      <rect x="10"  y="7" width="2" height="7" fill="white"/>
+      <rect x="20"  y="7" width="2" height="7" fill="white"/>
+      <rect x="30"  y="7" width="2" height="7" fill="white"/>
+      <rect x="50"  y="7" width="2" height="7" fill="white"/>
+      <rect x="60"  y="7" width="2" height="7" fill="white"/>
+      <rect x="70"  y="7" width="2" height="7" fill="white"/>
+      <rect x="90"  y="7" width="2" height="7" fill="white"/>
+      <rect x="100" y="7" width="2" height="7" fill="white"/>
+      <rect x="110" y="7" width="2" height="7" fill="white"/>
+      <rect x="130" y="7" width="2" height="7" fill="white"/>
+      <rect x="140" y="7" width="2" height="7" fill="white"/>
+      <rect x="150" y="7" width="2" height="7" fill="white"/>
+      <rect x="170" y="7" width="2" height="7" fill="white"/>
+      <rect x="180" y="7" width="2" height="7" fill="white"/>
+      <rect x="190" y="7" width="2" height="7" fill="white"/>
+      <rect x="210" y="7" width="2" height="7" fill="white"/>
+      <rect x="220" y="7" width="2" height="7" fill="white"/>
+      <rect x="230" y="7" width="2" height="7" fill="white"/>
+      <rect x="250" y="7" width="2" height="7" fill="white"/>
+      <rect x="260" y="7" width="2" height="7" fill="white"/>
+      <rect x="270" y="7" width="2" height="7" fill="white"/>
+      <rect x="290" y="7" width="2" height="7" fill="white"/>
+      <rect x="300" y="7" width="2" height="7" fill="white"/>
+      <rect x="310" y="7" width="2" height="7" fill="white"/>
+      <!-- Ruler body -->
+      <rect x="0" y="14" width="320" height="30" fill="white"/>
+    </svg>
+    <span class="shape-label">escalímetro</span>
+  </a>
 
-    <aside class="sidebar">
-      <div class="sidebar-label">herramientas</div>
-      <ul class="nav-list">
-        <li class="nav-item">
-          <a href="escalimetro.html">Escalímetro <span class="nav-count">01</span></a>
-        </li>
-        <li class="nav-item">
-          <a href="pendientes.html">Rampa <span class="nav-count">02</span></a>
-        </li>
-      </ul>
-    </aside>
+  <!-- Rampa: triangular ramp profile, bottom left -->
+  <a class="shape shape-rampa" href="pendientes.html" aria-label="Rampa">
+    <svg width="200" height="120" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 0,120 L 200,120 L 200,0 Z" fill="white"/>
+    </svg>
+    <span class="shape-label">rampa</span>
+  </a>
 
-    <main>
-      <div class="tools-grid">
+  <!-- Escalera: staircase profile with 4 steps, center right -->
+  <a class="shape shape-escalera" href="pendientes.html" aria-label="Escalera">
+    <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 0,0 L 40,0 L 40,30 L 80,30 L 80,60 L 120,60 L 120,90 L 160,90 L 160,120 L 0,120 Z" fill="white"/>
+    </svg>
+    <span class="shape-label">escalera</span>
+  </a>
 
-        <a class="tool-card" href="escalimetro.html">
-          <div class="card-num">01</div>
-          <div class="card-eyebrow">Herramienta de cálculo · Escalas</div>
-          <div class="card-name">Escalímetro</div>
-          <div class="card-desc">Convierte medidas entre escala real y papel. Escalas 1:20 a 1:1000, bidireccional.</div>
-        </a>
-
-        <a class="tool-card" href="pendientes.html">
-          <div class="card-num">02</div>
-          <div class="card-eyebrow">Verificador normativo · Accesibilidad</div>
-          <div class="card-name">Rampa</div>
-          <div class="card-desc">Verifica pendientes de rampas contra RCDF y Cablebús. Genera diagramas en corte y planta.</div>
-        </a>
-
-      </div>
-    </main>
-
-  </div>
-
-</div>
-<script>
-  const root = document.documentElement;
-
-  function applyTheme(t) {
-    root.setAttribute('data-theme', t);
-    localStorage.setItem('ns-theme', t);
-  }
-
-  function toggleTheme() {
-    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-  }
-
-  document.getElementById('themeBtn').addEventListener('click', toggleTheme);
-
-  const saved = localStorage.getItem('ns-theme');
-  if (saved) applyTheme(saved);
-</script>
 </body>
 </html>
