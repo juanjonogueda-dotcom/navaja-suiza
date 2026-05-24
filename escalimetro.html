@@ -7,22 +7,12 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:           #0a0907;
-    --border:       rgba(240,224,200,0.12);
-    --border-focus: rgba(240,224,200,0.45);
-    --text:         #f0e0c8;
-    --text-mid:     rgba(240,224,200,0.55);
-    --text-muted:   rgba(240,224,200,0.28);
-  }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg:           #f2e8d8;
-      --border:       rgba(80,45,15,0.18);
-      --border-focus: rgba(80,45,15,0.55);
-      --text:         #2c1a08;
-      --text-mid:     rgba(44,26,8,0.55);
-      --text-muted:   rgba(44,26,8,0.30);
-    }
+    --bg:           #000000;
+    --border:       rgba(255,255,255,0.12);
+    --border-focus: rgba(255,255,255,0.45);
+    --text:         #ffffff;
+    --text-mid:     rgba(255,255,255,0.55);
+    --text-muted:   rgba(255,255,255,0.28);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -63,17 +53,17 @@
   .back-link:hover { color: var(--text); }
   h1 {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     font-weight: 400;
     color: var(--text-muted);
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: lowercase;
   }
 
   /* ── input grande ── */
   .input-big {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(52px, 16vw, 88px);
+    font-size: clamp(38px, 11vw, 60px);
     font-weight: 400;
     color: var(--text);
     background: transparent;
@@ -110,7 +100,7 @@
     height: 40px;
     color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     cursor: pointer;
     transition: color 0.15s;
     text-align: center;
@@ -125,6 +115,13 @@
 
   /* ── escala ── */
   .scale-block { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+  .scale-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
   .scale-row { display: flex; align-items: baseline; gap: 6px; }
   .scale-prefix {
     font-family: 'JetBrains Mono', monospace;
@@ -154,7 +151,7 @@
     flex: 1;
     min-height: 0;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     cursor: pointer;
     user-select: none;
     overflow: hidden;
@@ -163,7 +160,7 @@
 
   .result-big {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(72px, 22vw, 140px);
+    font-size: clamp(52px, 15vw, 96px);
     font-weight: 400;
     color: var(--text);
     letter-spacing: -0.04em;
@@ -215,6 +212,7 @@
   </div>
 
   <div class="scale-block">
+    <span class="scale-label">escala</span>
     <div class="scale-row">
       <span class="scale-prefix">1 :</span>
       <input type="number" class="scale-input" id="scaleFactor" value="100" placeholder="100">
