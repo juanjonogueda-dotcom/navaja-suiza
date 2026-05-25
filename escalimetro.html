@@ -233,7 +233,7 @@
   .ruler-label-top {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.6rem;
-    color: var(--text-muted);
+    color: rgba(255,255,255,0.35);
     letter-spacing: 0.1em;
     text-transform: lowercase;
   }
@@ -273,12 +273,12 @@
   .ruler-bar::after  { right: 0; }
 
   .ruler-row--papel .ruler-bar {
-    color: var(--text-mid);
-    background: var(--text-mid);
+    color: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.55);
   }
   .ruler-row--real .ruler-bar {
-    color: var(--text);
-    background: var(--text);
+    color: rgba(255,255,255,1);
+    background: rgba(255,255,255,1);
   }
 
   .ruler-ticks {
@@ -292,7 +292,7 @@
     height: 5px;
     top: -2px;
     background: currentColor;
-    opacity: 0.35;
+    opacity: 0.25;
   }
 
   .ruler-label-value {
@@ -301,8 +301,8 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .ruler-row--papel .ruler-label-value { color: var(--text-mid); }
-  .ruler-row--real  .ruler-label-value { color: var(--text); }
+  .ruler-row--papel .ruler-label-value { color: rgba(255,255,255,0.55); }
+  .ruler-row--real  .ruler-label-value { color: rgba(255,255,255,1); }
 
   @media (max-width: 480px) {
     .ruler-bar-area { flex-direction: column; align-items: flex-start; gap: 4px; }
@@ -343,7 +343,7 @@
 
   <header>
     <a class="back-link" href="index.html">←</a>
-    <h1>escalímetro</h1>
+    <h1>Escalímetro</h1>
   </header>
 
   <div class="layout">
