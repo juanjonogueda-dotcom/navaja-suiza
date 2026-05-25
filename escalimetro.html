@@ -3,54 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escalímetro</title>
+<title>Escalímetro — Navaja Suiza</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:           #000000;
-    --border:       rgba(255,255,255,0.12);
-    --border-focus: rgba(255,255,255,0.45);
+    --surface:      #0d0d0d;
+    --border:       rgba(255,255,255,0.1);
+    --border-hover: rgba(255,255,255,0.25);
     --text:         #ffffff;
-    --text-mid:     rgba(255,255,255,0.55);
-    --text-muted:   rgba(255,255,255,0.28);
+    --text-mid:     rgba(255,255,255,0.6);
+    --text-muted:   rgba(255,255,255,0.3);
+    --accent:       #ffffff;
+    --warn:         #ff6b6b;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     height: 100%;
-    overflow: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    overflow: hidden;
   }
 
-  .app {
-    display: flex;
-    flex-direction: column;
-    height: 100svh;
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 18px 22px 22px;
-    gap: 14px;
+  .page {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    padding: clamp(20px, 2.5vh, 36px) clamp(24px, 4vw, 56px) 0;
+    gap: 0;
   }
 
-  /* ── título ── */
-  .title-row {
+  header {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: baseline;
+    gap: 16px;
+    padding-bottom: clamp(14px, 1.8vh, 22px);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: clamp(14px, 1.8vh, 22px);
     flex-shrink: 0;
   }
+
   .back-link {
-    font-size: 1rem;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
     color: var(--text-muted);
     text-decoration: none;
-    line-height: 1;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
     transition: color 0.15s;
   }
   .back-link:hover { color: var(--text); }
+
   h1 {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.82rem;
@@ -60,180 +69,265 @@
     text-transform: lowercase;
   }
 
-  /* ── input grande ── */
-  .input-big {
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: clamp(24px, 4vw, 56px);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    overflow-y: auto;
+    padding-right: 8px;
+    padding-bottom: 48px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .main-area {
+    overflow-y: auto;
+    padding-bottom: 56px;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .main-area::-webkit-scrollbar { width: 4px; }
+  .main-area::-webkit-scrollbar-track { background: transparent; }
+  .main-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .section-head {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(38px, 11vw, 60px);
-    font-weight: 400;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+    margin-bottom: 16px;
+  }
+  .section-head .num-mark { color: var(--text-muted); margin-right: 8px; }
+
+  .toggle-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+
+  .seg-control {
+    display: grid;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    width: 100%;
+  }
+  .seg-control.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .seg-control.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .seg-control.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .seg-control button {
+    background: none;
+    border: none;
+    border-right: 1px solid var(--border);
+    padding: 9px 4px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(11px, 2vw, 13px);
+    cursor: pointer;
+    transition: color 0.15s;
+    text-align: center;
+    line-height: 1.2;
+    min-height: 36px;
+  }
+  .seg-control button:last-child { border-right: none; }
+  .seg-control button.active {
+    background: transparent;
+    color: var(--text);
+    box-shadow: inset 0 -2px 0 0 var(--text);
+    font-weight: 500;
+  }
+  .seg-control button:hover:not(.active) { color: var(--text-mid); }
+
+  /* row divider for 2-row presets grid */
+  .seg-control.cols-3 > button:nth-child(-n+3) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Scale input */
+  .scale-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .scale-prefix {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .scale-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    outline: none;
+    flex: 1;
+    min-width: 0;
+    padding: 2px 0 4px;
+    -moz-appearance: textfield;
+    transition: border-color 0.15s;
+  }
+  .scale-input::-webkit-inner-spin-button,
+  .scale-input::-webkit-outer-spin-button { display: none; }
+  .scale-input:focus { border-bottom-color: var(--text); }
+
+  /* Entrada input */
+  .entrada-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
     color: var(--text);
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--border);
     outline: none;
     width: 100%;
-    padding: 0 0 6px;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    flex-shrink: 0;
-    -moz-appearance: textfield;
-  }
-  .input-big::-webkit-inner-spin-button,
-  .input-big::-webkit-outer-spin-button { display: none; }
-  .input-big:focus { border-bottom-color: var(--border-focus); }
-
-  /* ── segmented control ── */
-  .seg {
-    display: grid;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  .seg-5 { grid-template-columns: repeat(5, 1fr); }
-  .seg-3 { grid-template-columns: repeat(3, 1fr); }
-
-  .seg button {
-    background: none;
-    border: none;
-    border-right: 1px solid var(--border);
-    padding: 0 4px;
-    height: 40px;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: color 0.15s;
-    text-align: center;
-  }
-  .seg button:last-child { border-right: none; }
-  .seg button.active {
-    color: var(--text);
-    box-shadow: inset 0 -2px 0 0 var(--text);
-    font-weight: 500;
-  }
-  .seg button:hover:not(.active) { color: var(--text-mid); }
-
-  /* ── escala ── */
-  .scale-block { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
-  .scale-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    letter-spacing: 0.08em;
-    margin-bottom: 2px;
-  }
-  .scale-row { display: flex; align-items: baseline; gap: 6px; }
-  .scale-prefix {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.15rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-    line-height: 1;
-  }
-  .scale-input {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.15rem;
-    color: var(--text);
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border);
-    outline: none;
-    width: 90px;
     padding: 2px 0 4px;
     -moz-appearance: textfield;
+    transition: border-color 0.15s;
   }
-  .scale-input::-webkit-inner-spin-button,
-  .scale-input::-webkit-outer-spin-button { display: none; }
-  .scale-input:focus { border-bottom-color: var(--border-focus); }
+  .entrada-input::-webkit-inner-spin-button,
+  .entrada-input::-webkit-outer-spin-button { display: none; }
+  .entrada-input:focus { border-bottom-color: var(--text); }
 
-  /* ── resultado ── */
-  .result-wrap {
-    flex: 1;
-    min-height: 0;
+  /* Result */
+  .result-block { margin-bottom: 32px; }
+  .result-value-row {
     display: flex;
-    align-items: flex-start;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
     cursor: pointer;
     user-select: none;
-    overflow: hidden;
   }
-  .result-wrap:active { opacity: 0.55; }
-
-  .result-big {
+  .result-value-row:active { opacity: 0.55; }
+  .result-number {
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(52px, 15vw, 96px);
+    font-size: 1.4rem;
     font-weight: 400;
     color: var(--text);
-    letter-spacing: -0.04em;
-    line-height: 0.88;
+    letter-spacing: -0.02em;
     font-feature-settings: 'tnum' 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+  }
+  .result-unit-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
   }
 
-  /* ── toast ── */
+  /* Proportion SVG */
+  .proportion-svg-wrap { width: 100%; overflow: hidden; }
+  .proportion-svg-wrap svg { display: block; width: 100%; }
+
+  /* Toast */
   .toast {
     position: fixed;
-    bottom: 28px;
+    bottom: 32px;
     left: 50%;
-    transform: translateX(-50%) translateY(12px);
+    transform: translateX(-50%) translateY(20px);
     background: var(--text);
     color: var(--bg);
-    padding: 9px 20px;
+    padding: 10px 20px;
     border-radius: 100px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
+    font-size: 0.82rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.22s, transform 0.22s;
+    transition: all 0.25s;
     z-index: 999;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 760px) {
+    html, body { overflow: auto; }
+    .page { height: auto; overflow: visible; padding: 24px 20px 0; }
+    .layout { grid-template-columns: 1fr; overflow: visible; }
+    .sidebar { overflow: visible; padding-right: 0; padding-bottom: 0; }
+    .main-area { overflow: visible; padding-bottom: 56px; }
+    .seg-control button { min-height: 44px; }
+  }
 </style>
 </head>
 <body>
+<div class="page">
 
-<div class="app">
-
-  <div class="title-row">
+  <header>
     <a class="back-link" href="index.html">←</a>
     <h1>escalímetro</h1>
-  </div>
+  </header>
 
-  <input type="number" class="input-big" id="inputValue" value="0.90" step="any" placeholder="0">
+  <div class="layout">
+    <aside class="sidebar">
 
-  <div class="seg seg-5" id="input-unit-control">
-    <button data-val="km">km</button>
-    <button class="active" data-val="m">m</button>
-    <button data-val="cm">cm</button>
-    <button data-val="mm">mm</button>
-    <button data-val="in">in</button>
-  </div>
+      <div class="section-head"><span class="num-mark">01</span>dirección</div>
+      <div class="toggle-block">
+        <div class="seg-control cols-2" id="dir-control">
+          <button class="active" data-val="realPaper">Real → Papel</button>
+          <button data-val="paperReal">Papel → Real</button>
+        </div>
+      </div>
 
-  <div class="scale-block">
-    <span class="scale-label">escala</span>
-    <div class="scale-row">
-      <span class="scale-prefix">1 :</span>
-      <input type="number" class="scale-input" id="scaleFactor" value="100" placeholder="100">
+      <div class="section-head"><span class="num-mark">02</span>escala</div>
+      <div class="toggle-block">
+        <div class="scale-row">
+          <span class="scale-prefix">1 :</span>
+          <input type="number" class="scale-input" id="scaleFactor" value="100" placeholder="100" min="1">
+        </div>
+        <div class="seg-control cols-3" id="presets">
+          <button data-val="50">1:50</button>
+          <button class="active" data-val="100">1:100</button>
+          <button data-val="200">1:200</button>
+          <button data-val="250">1:250</button>
+          <button data-val="500">1:500</button>
+          <button data-val="1000">1:1000</button>
+        </div>
+      </div>
+
+      <div class="section-head"><span class="num-mark">03</span>entrada</div>
+      <div class="toggle-block">
+        <input type="number" class="entrada-input" id="inputValue" value="1" step="any" placeholder="0">
+        <div class="seg-control cols-5" id="input-unit-control">
+          <button data-val="km">km</button>
+          <button class="active" data-val="m">m</button>
+          <button data-val="cm">cm</button>
+          <button data-val="mm">mm</button>
+          <button data-val="in">in</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <div class="main-area">
+
+      <div class="section-head"><span class="num-mark">04</span>resultado</div>
+      <div class="result-block">
+        <div class="result-value-row" id="copyTrigger" title="Clic para copiar">
+          <span class="result-number" id="resultValue">—</span>
+          <span class="result-unit-label" id="resultUnit">mm</span>
+        </div>
+        <div class="seg-control cols-5" id="output-unit-control">
+          <button data-val="km">km</button>
+          <button data-val="m">m</button>
+          <button data-val="cm">cm</button>
+          <button class="active" data-val="mm">mm</button>
+          <button data-val="in">in</button>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top:32px"><span class="num-mark">05</span>proporción</div>
+      <div class="proportion-svg-wrap" id="proportionSvg"></div>
+
     </div>
-    <div class="seg seg-3" id="presets">
-      <button data-val="50">1:50</button>
-      <button class="active" data-val="100">1:100</button>
-      <button data-val="200">1:200</button>
-    </div>
-  </div>
-
-  <div class="seg seg-5" id="output-unit-control">
-    <button data-val="km">km</button>
-    <button data-val="m">m</button>
-    <button data-val="cm">cm</button>
-    <button class="active" data-val="mm">mm</button>
-    <button data-val="in">in</button>
-  </div>
-
-  <div class="result-wrap" id="copyTrigger">
-    <span class="result-big" id="resultValue">9.000</span>
   </div>
 
 </div>
@@ -243,52 +337,146 @@
 <script>
   const toM   = { km:1000, m:1, cm:0.01, mm:0.001, in:0.0254 };
   const fromM = { km:0.001, m:1, cm:100, mm:1000, in:39.3701 };
+
+  let direction  = 'realPaper';
   let inputUnit  = 'm';
   let outputUnit = 'mm';
 
   function calc() {
-    const v = parseFloat(document.getElementById('inputValue').value) || 0;
+    const v = parseFloat(document.getElementById('inputValue').value);
     const s = parseFloat(document.getElementById('scaleFactor').value) || 1;
-    if (s <= 0) return;
-    const result = (v * toM[inputUnit] / s) * fromM[outputUnit];
-    document.getElementById('resultValue').textContent = result.toFixed(3);
+    const resultEl = document.getElementById('resultValue');
+    const unitEl   = document.getElementById('resultUnit');
+
+    if (isNaN(v) || s <= 0) {
+      resultEl.textContent = '—';
+      document.getElementById('proportionSvg').innerHTML = '';
+      return;
+    }
+
+    let result;
+    if (direction === 'realPaper') {
+      result = (v * toM[inputUnit] / s) * fromM[outputUnit];
+    } else {
+      result = (v * toM[inputUnit] * s) * fromM[outputUnit];
+    }
+
+    resultEl.textContent = formatResult(result);
+    unitEl.textContent   = outputUnit;
+
+    renderProportion(v, inputUnit, result, outputUnit, s);
+    saveState();
   }
 
-  function setPreset(v) {
-    document.getElementById('scaleFactor').value = v;
-    document.querySelectorAll('#presets button').forEach(b =>
-      b.classList.toggle('active', b.dataset.val == v));
-    calc();
+  function formatResult(val) {
+    if (val === 0) return '0';
+    const abs = Math.abs(val);
+    if (abs >= 10000) return val.toFixed(0);
+    if (abs >= 1000)  return val.toFixed(1);
+    if (abs >= 100)   return val.toFixed(2);
+    if (abs >= 10)    return val.toFixed(3);
+    if (abs >= 1)     return val.toFixed(4);
+    if (abs >= 0.01)  return val.toFixed(5);
+    return val.toPrecision(4);
   }
+
+  function renderProportion(inputVal, inUnit, outputVal, outUnit, scale) {
+    const container = document.getElementById('proportionSvg');
+    const W      = 600;
+    const padL   = 12;
+    const padR   = 10;
+    const drawW  = W - padL - padR;
+    const lineY1 = 32;
+    const lineY2 = 76;
+    const tickH  = 10;
+    const minPx  = 3;
+    const strokeW = 1.5;
+    const totalH  = 100;
+
+    const col = {
+      text:  'rgba(255,255,255,1)',
+      mid:   'rgba(255,255,255,0.6)',
+      muted: 'rgba(255,255,255,0.3)',
+    };
+
+    // line1 = real, line2 = paper (for realPaper direction)
+    // ratio = paper / real = 1/scale
+    // for paperReal, line1 = paper input, line2 = real output, ratio = scale
+    const ratio = direction === 'realPaper' ? (1 / scale) : scale;
+
+    let line1W = drawW;
+    let line2W = drawW * ratio;
+
+    // If line2 would be longer than drawW, flip so line2 fills drawW
+    if (line2W > drawW) {
+      line1W = drawW / ratio;
+      line2W = drawW;
+      if (line1W < minPx) line1W = minPx;
+    }
+    if (line2W < minPx) line2W = minPx;
+
+    const x1s = padL, x1e = padL + line1W;
+    const x2s = padL, x2e = padL + line2W;
+
+    const desc1  = direction === 'realPaper' ? 'real' : 'papel';
+    const desc2  = direction === 'realPaper' ? 'papel' : 'real';
+    const label1 = formatResult(inputVal) + ' ' + inUnit;
+    const label2 = formatResult(outputVal) + ' ' + outUnit;
+
+    // label x: right after the line's tick, with a small gap
+    const lx1 = x1e + 10;
+    const lx2 = x2e + 10;
+
+    container.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid meet">
+  <text x="${x1s}" y="${lineY1 - 12}" font-family="JetBrains Mono,monospace" font-size="9" fill="${col.muted}" letter-spacing="0.1em">${desc1}</text>
+  <line x1="${x1s}" y1="${lineY1}" x2="${x1e}" y2="${lineY1}" stroke="${col.mid}" stroke-width="${strokeW}" stroke-linecap="round"/>
+  <line x1="${x1s}" y1="${lineY1 - tickH/2}" x2="${x1s}" y2="${lineY1 + tickH/2}" stroke="${col.mid}" stroke-width="${strokeW}" stroke-linecap="round"/>
+  <line x1="${x1e}" y1="${lineY1 - tickH/2}" x2="${x1e}" y2="${lineY1 + tickH/2}" stroke="${col.mid}" stroke-width="${strokeW}" stroke-linecap="round"/>
+  <text x="${lx1}" y="${lineY1 + 4}" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.mid}">${label1}</text>
+
+  <text x="${x2s}" y="${lineY2 - 12}" font-family="JetBrains Mono,monospace" font-size="9" fill="${col.muted}" letter-spacing="0.1em">${desc2}</text>
+  <line x1="${x2s}" y1="${lineY2}" x2="${x2e}" y2="${lineY2}" stroke="${col.text}" stroke-width="${strokeW}" stroke-linecap="round"/>
+  <line x1="${x2s}" y1="${lineY2 - tickH/2}" x2="${x2s}" y2="${lineY2 + tickH/2}" stroke="${col.text}" stroke-width="${strokeW}" stroke-linecap="round"/>
+  <line x1="${x2e}" y1="${lineY2 - tickH/2}" x2="${x2e}" y2="${lineY2 + tickH/2}" stroke="${col.text}" stroke-width="${strokeW}" stroke-linecap="round"/>
+  <text x="${lx2}" y="${lineY2 + 4}" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.text}">${label2}</text>
+</svg>`;
+  }
+
+  function initSegControl(selector, onChange) {
+    const btns = document.querySelectorAll(selector);
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        onChange(btn.dataset.val);
+      });
+    });
+  }
+
+  initSegControl('#dir-control button', v => { direction = v; calc(); });
+  initSegControl('#input-unit-control button', v => { inputUnit = v; calc(); });
+  initSegControl('#output-unit-control button', v => { outputUnit = v; calc(); });
 
   document.querySelectorAll('#presets button').forEach(btn =>
-    btn.addEventListener('click', () => setPreset(btn.dataset.val)));
+    btn.addEventListener('click', () => {
+      document.getElementById('scaleFactor').value = btn.dataset.val;
+      document.querySelectorAll('#presets button').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === btn.dataset.val));
+      calc();
+    }));
 
   document.getElementById('scaleFactor').addEventListener('input', () => {
-    document.querySelectorAll('#presets button').forEach(b => b.classList.remove('active'));
+    const v = document.getElementById('scaleFactor').value;
+    document.querySelectorAll('#presets button').forEach(b =>
+      b.classList.toggle('active', b.dataset.val == v));
     calc();
   });
 
   document.getElementById('inputValue').addEventListener('input', calc);
 
-  document.querySelectorAll('#input-unit-control button').forEach(btn =>
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#input-unit-control button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      inputUnit = btn.dataset.val;
-      calc();
-    }));
-
-  document.querySelectorAll('#output-unit-control button').forEach(btn =>
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#output-unit-control button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      outputUnit = btn.dataset.val;
-      calc();
-    }));
-
   document.getElementById('copyTrigger').addEventListener('click', () => {
     const txt = document.getElementById('resultValue').textContent;
+    if (txt === '—') return;
     navigator.clipboard.writeText(txt).catch(() => {
       const ta = Object.assign(document.createElement('textarea'),
         { value: txt, style: 'position:fixed;left:-9999px' });
@@ -299,7 +487,49 @@
     setTimeout(() => t.classList.remove('show'), 1400);
   });
 
-  calc();
+  function saveState() {
+    try {
+      localStorage.setItem('escalimetro_direction',  direction);
+      localStorage.setItem('escalimetro_inputUnit',  inputUnit);
+      localStorage.setItem('escalimetro_outputUnit', outputUnit);
+      localStorage.setItem('escalimetro_scale',      document.getElementById('scaleFactor').value);
+      localStorage.setItem('escalimetro_value',      document.getElementById('inputValue').value);
+    } catch(e) {}
+  }
+
+  function loadState() {
+    try {
+      const sDir   = localStorage.getItem('escalimetro_direction');
+      const sIU    = localStorage.getItem('escalimetro_inputUnit');
+      const sOU    = localStorage.getItem('escalimetro_outputUnit');
+      const sScale = localStorage.getItem('escalimetro_scale');
+      const sVal   = localStorage.getItem('escalimetro_value');
+      if (sDir) {
+        direction = sDir;
+        document.querySelectorAll('#dir-control button').forEach(b =>
+          b.classList.toggle('active', b.dataset.val === sDir));
+      }
+      if (sIU) {
+        inputUnit = sIU;
+        document.querySelectorAll('#input-unit-control button').forEach(b =>
+          b.classList.toggle('active', b.dataset.val === sIU));
+      }
+      if (sOU) {
+        outputUnit = sOU;
+        document.querySelectorAll('#output-unit-control button').forEach(b =>
+          b.classList.toggle('active', b.dataset.val === sOU));
+      }
+      if (sScale) {
+        document.getElementById('scaleFactor').value = sScale;
+        document.querySelectorAll('#presets button').forEach(b =>
+          b.classList.toggle('active', b.dataset.val == sScale));
+      }
+      if (sVal) document.getElementById('inputValue').value = sVal;
+    } catch(e) {}
+    calc();
+  }
+
+  loadState();
 </script>
 </body>
 </html>
