@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Drag start
   function onDown(e, name) {
     if (e.button !== undefined && e.button !== 0) return;
-    e.preventDefault();
+    if (!e.touches) e.preventDefault();
     const t = e.touches ? e.touches[0] : e;
     active = name;
     startX = t.clientX;
@@ -243,9 +243,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Drag move
   function onMove(e) {
     if (!active) return;
-    e.preventDefault();
     const t  = e.touches ? e.touches[0] : e;
-    if (!hasDragged && Math.hypot(t.clientX - startX, t.clientY - startY) > 5) hasDragged = true;
+    if (!hasDragged && Math.hypot(t.clientX - startX, t.clientY - startY) > 12) hasDragged = true;
+    if (hasDragged) e.preventDefault();
+    if (!hasDragged) return;
     const el = els[active];
     const r  = el.getBoundingClientRect();
     const vw = window.innerWidth, vh = window.innerHeight;
@@ -277,7 +278,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.addEventListener('mouseup',  onUp);
-  document.addEventListener('touchend', onUp);
+  document.addEventListener('touchend', e => {
+    const wasDragging = hasDragged;
+    const name = active;
+    onUp();
+    if (!wasDragging && name) {
+      window.location.href = els[name].getAttribute('href');
+    }
+  });
 
   // Reset
   document.getElementById('resetBtn').addEventListener('click', () => {
