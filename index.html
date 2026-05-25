@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const defaults = {};
   let active = null, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+  let hasDragged = false;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -226,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const r = els[name].getBoundingClientRect();
     origLeft = r.left;
     origTop  = r.top;
+    hasDragged = false;
     els[name].classList.add('dragging');
     els[name].style.zIndex     = '10';
     els[name].style.transition = 'none';
@@ -235,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
   NAMES.forEach(name => {
     els[name].addEventListener('mousedown',  e => onDown(e, name));
     els[name].addEventListener('touchstart', e => onDown(e, name), { passive: false });
+    els[name].addEventListener('click', e => { if (hasDragged) { e.preventDefault(); hasDragged = false; } });
   });
 
   // Drag move
@@ -242,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!active) return;
     e.preventDefault();
     const t  = e.touches ? e.touches[0] : e;
+    if (!hasDragged && Math.hypot(t.clientX - startX, t.clientY - startY) > 5) hasDragged = true;
     const el = els[active];
     const r  = el.getBoundingClientRect();
     const vw = window.innerWidth, vh = window.innerHeight;
