@@ -61,12 +61,10 @@
   .back-link:hover { color: var(--text); }
 
   h1 {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    font-weight: 400;
-    color: var(--text-muted);
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
   }
 
   .layout {
@@ -226,9 +224,91 @@
     letter-spacing: 0.06em;
   }
 
-  /* Proportion SVG */
-  .proportion-svg-wrap { width: 100%; overflow: hidden; }
-  .proportion-svg-wrap svg { display: block; width: 100%; }
+  /* Ruler proportion */
+  .ruler-wrap { display: flex; flex-direction: column; gap: 28px; }
+  .ruler-wrap.hidden { visibility: hidden; }
+
+  .ruler-row { display: flex; flex-direction: column; gap: 7px; }
+
+  .ruler-label-top {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+  }
+
+  .ruler-bar-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ruler-bar-wrap {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    height: 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  .ruler-bar {
+    height: 1.5px;
+    position: relative;
+    transition: width 300ms ease;
+    min-width: 0;
+  }
+
+  .ruler-bar::before,
+  .ruler-bar::after {
+    content: '';
+    position: absolute;
+    width: 1.5px;
+    height: 10px;
+    top: -4px;
+    background: currentColor;
+  }
+  .ruler-bar::before { left: 0; }
+  .ruler-bar::after  { right: 0; }
+
+  .ruler-row--papel .ruler-bar {
+    color: var(--text-mid);
+    background: var(--text-mid);
+  }
+  .ruler-row--real .ruler-bar {
+    color: var(--text);
+    background: var(--text);
+  }
+
+  .ruler-ticks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .ruler-tick {
+    position: absolute;
+    width: 1px;
+    height: 5px;
+    top: -2px;
+    background: currentColor;
+    opacity: 0.35;
+  }
+
+  .ruler-label-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.73rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ruler-row--papel .ruler-label-value { color: var(--text-mid); }
+  .ruler-row--real  .ruler-label-value { color: var(--text); }
+
+  @media (max-width: 480px) {
+    .ruler-bar-area { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .ruler-bar-wrap { width: 100%; }
+    .ruler-label-value { padding-left: 0; }
+  }
 
   /* Toast */
   .toast {
@@ -325,7 +405,30 @@
       </div>
 
       <div class="section-head" style="margin-top:32px"><span class="num-mark">05</span>proporción</div>
-      <div class="proportion-svg-wrap" id="proportionSvg"></div>
+      <div class="ruler-wrap hidden" id="rulerWrap">
+        <div class="ruler-row ruler-row--papel" id="rulerRow1">
+          <div class="ruler-label-top" id="rulerDesc1">papel</div>
+          <div class="ruler-bar-area">
+            <div class="ruler-bar-wrap">
+              <div class="ruler-bar" id="rulerBar1" style="width:100%">
+                <div class="ruler-ticks" id="rulerTicks1"></div>
+              </div>
+            </div>
+            <div class="ruler-label-value" id="rulerLabel1">—</div>
+          </div>
+        </div>
+        <div class="ruler-row ruler-row--real" id="rulerRow2">
+          <div class="ruler-label-top" id="rulerDesc2">real</div>
+          <div class="ruler-bar-area">
+            <div class="ruler-bar-wrap">
+              <div class="ruler-bar" id="rulerBar2" style="width:100%">
+                <div class="ruler-ticks" id="rulerTicks2"></div>
+              </div>
+            </div>
+            <div class="ruler-label-value" id="rulerLabel2">—</div>
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -350,7 +453,7 @@
 
     if (isNaN(v) || s <= 0) {
       resultEl.textContent = '—';
-      document.getElementById('proportionSvg').innerHTML = '';
+      document.getElementById('rulerWrap').classList.add('hidden');
       return;
     }
 
@@ -380,68 +483,49 @@
     return val.toPrecision(4);
   }
 
-  function renderProportion(inputVal, inUnit, outputVal, outUnit, scale) {
-    const container = document.getElementById('proportionSvg');
-    const W      = 600;
-    const padL   = 12;
-    const padR   = 10;
-    const drawW  = W - padL - padR;
-    const lineY1 = 32;
-    const lineY2 = 76;
-    const tickH  = 10;
-    const minPx  = 3;
-    const strokeW = 1.5;
-    const totalH  = 100;
-
-    const col = {
-      text:  'rgba(255,255,255,1)',
-      mid:   'rgba(255,255,255,0.6)',
-      muted: 'rgba(255,255,255,0.3)',
-    };
-
-    // line1 = real, line2 = paper (for realPaper direction)
-    // ratio = paper / real = 1/scale
-    // for paperReal, line1 = paper input, line2 = real output, ratio = scale
-    const ratio = direction === 'realPaper' ? (1 / scale) : scale;
-
-    let line1W = drawW;
-    let line2W = drawW * ratio;
-
-    // If line2 would be longer than drawW, flip so line2 fills drawW
-    if (line2W > drawW) {
-      line1W = drawW / ratio;
-      line2W = drawW;
-      if (line1W < minPx) line1W = minPx;
+  function setTicks(containerId, count) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    for (let i = 1; i <= count; i++) {
+      const d = document.createElement('div');
+      d.className = 'ruler-tick';
+      d.style.left = (i / (count + 1) * 100) + '%';
+      el.appendChild(d);
     }
-    if (line2W < minPx) line2W = minPx;
-
-    const x1s = padL, x1e = padL + line1W;
-    const x2s = padL, x2e = padL + line2W;
-
-    const desc1  = direction === 'realPaper' ? 'real' : 'papel';
-    const desc2  = direction === 'realPaper' ? 'papel' : 'real';
-    const label1 = formatResult(inputVal) + ' ' + inUnit;
-    const label2 = formatResult(outputVal) + ' ' + outUnit;
-
-    // label x: right after the line's tick, with a small gap
-    const lx1 = x1e + 10;
-    const lx2 = x2e + 10;
-
-    container.innerHTML = `<svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid meet">
-  <text x="${x1s}" y="${lineY1 - 12}" font-family="JetBrains Mono,monospace" font-size="9" fill="${col.muted}" letter-spacing="0.1em">${desc1}</text>
-  <line x1="${x1s}" y1="${lineY1}" x2="${x1e}" y2="${lineY1}" stroke="${col.mid}" stroke-width="${strokeW}" stroke-linecap="round"/>
-  <line x1="${x1s}" y1="${lineY1 - tickH/2}" x2="${x1s}" y2="${lineY1 + tickH/2}" stroke="${col.mid}" stroke-width="${strokeW}" stroke-linecap="round"/>
-  <line x1="${x1e}" y1="${lineY1 - tickH/2}" x2="${x1e}" y2="${lineY1 + tickH/2}" stroke="${col.mid}" stroke-width="${strokeW}" stroke-linecap="round"/>
-  <text x="${lx1}" y="${lineY1 + 4}" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.mid}">${label1}</text>
-
-  <text x="${x2s}" y="${lineY2 - 12}" font-family="JetBrains Mono,monospace" font-size="9" fill="${col.muted}" letter-spacing="0.1em">${desc2}</text>
-  <line x1="${x2s}" y1="${lineY2}" x2="${x2e}" y2="${lineY2}" stroke="${col.text}" stroke-width="${strokeW}" stroke-linecap="round"/>
-  <line x1="${x2s}" y1="${lineY2 - tickH/2}" x2="${x2s}" y2="${lineY2 + tickH/2}" stroke="${col.text}" stroke-width="${strokeW}" stroke-linecap="round"/>
-  <line x1="${x2e}" y1="${lineY2 - tickH/2}" x2="${x2e}" y2="${lineY2 + tickH/2}" stroke="${col.text}" stroke-width="${strokeW}" stroke-linecap="round"/>
-  <text x="${lx2}" y="${lineY2 + 4}" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.text}">${label2}</text>
-</svg>`;
   }
 
+  function renderProportion(inputVal, inUnit, outputVal, outUnit, scale) {
+    let paperVal, paperUnit, realVal, realUnit;
+    if (direction === 'realPaper') {
+      realVal  = inputVal;  realUnit  = inUnit;
+      paperVal = outputVal; paperUnit = outUnit;
+    } else {
+      paperVal = inputVal;  paperUnit = inUnit;
+      realVal  = outputVal; realUnit  = outUnit;
+    }
+
+    const realInM  = realVal  * toM[realUnit];
+    const paperInM = paperVal * toM[paperUnit];
+
+    let paperPct, realPct;
+    if (realInM >= paperInM) {
+      realPct  = 100;
+      paperPct = realInM > 0 ? Math.max(2, (paperInM / realInM) * 100) : 100;
+    } else {
+      paperPct = 100;
+      realPct  = paperInM > 0 ? Math.max(2, (realInM / paperInM) * 100) : 100;
+    }
+
+    document.getElementById('rulerBar1').style.width   = paperPct + '%';
+    document.getElementById('rulerBar2').style.width   = realPct  + '%';
+    document.getElementById('rulerLabel1').textContent = formatResult(paperVal) + ' ' + paperUnit;
+    document.getElementById('rulerLabel2').textContent = formatResult(realVal)  + ' ' + realUnit;
+
+    setTicks('rulerTicks1', paperPct === 100 ? 9 : 0);
+    setTicks('rulerTicks2', realPct  === 100 ? 9 : 0);
+
+    document.getElementById('rulerWrap').classList.remove('hidden');
+  }
   function initSegControl(selector, onChange) {
     const btns = document.querySelectorAll(selector);
     btns.forEach(btn => {
