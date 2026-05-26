@@ -132,6 +132,7 @@
   .field-input::-webkit-inner-spin-button,
   .field-input::-webkit-outer-spin-button { display: none; }
   .field-input:focus { border-bottom-color: var(--text); }
+  .field-input.driven { color: var(--text-mid); border-bottom-style: dashed; }
 
   .field-unit {
     font-family: 'JetBrains Mono', monospace;
@@ -180,17 +181,33 @@
   }
   .seg-control button:hover:not(.active) { color: var(--text-mid); }
 
-  /* Tramos scrollable row */
-  .tramos-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+  /* Tramos input cell */
+  .tramos-input-cell {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    min-height: 36px;
+    transition: box-shadow 0.15s;
   }
-  .tramos-scroll::-webkit-scrollbar { display: none; }
-  .tramos-scroll .seg-control {
-    grid-template-columns: repeat(9, minmax(40px, 1fr));
-    min-width: 360px;
+  .tramos-input {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 9px 8px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(11px, 2vw, 13px);
+    text-align: center;
+    outline: none;
+    -moz-appearance: textfield;
+    transition: color 0.15s;
   }
+  .tramos-input::placeholder { color: var(--text-muted); opacity: 0.7; }
+  .tramos-input::-webkit-inner-spin-button,
+  .tramos-input::-webkit-outer-spin-button { display: none; }
+  .tramos-input-cell.active { box-shadow: inset 0 -2px 0 0 var(--text); }
+  .tramos-input-cell.active .tramos-input { color: var(--text); font-weight: 500; }
+  .tramos-input:focus { color: var(--text); }
 
   /* Slider */
   .pct-slider-row {
@@ -489,15 +506,20 @@
 
       <div class="section-head"><span class="num-mark">01</span>parámetros</div>
       <div class="input-stack">
-        <div class="field">
+        <div class="field" id="field-L">
           <span class="field-label">Longitud disponible</span>
-          <input type="number" class="field-input" id="inp-L" value="22.09" step="0.01" min="0" oninput="calc()">
+          <input type="number" class="field-input" id="inp-L" value="22.09" step="0.01" min="0" oninput="onParamInput('L')">
           <span class="field-unit">metros</span>
         </div>
-        <div class="field">
+        <div class="field" id="field-dh">
           <span class="field-label">Desnivel a salvar</span>
-          <input type="number" class="field-input" id="inp-dh" value="1.399" step="0.001" min="0" oninput="calc()">
+          <input type="number" class="field-input" id="inp-dh" value="1.399" step="0.001" min="0" oninput="onParamInput('dh')">
           <span class="field-unit">metros</span>
+        </div>
+        <div class="field" id="field-p" style="display:none">
+          <span class="field-label">Pendiente</span>
+          <input type="number" class="field-input" id="inp-p" step="0.01" min="0" max="100" oninput="onParamInput('p')">
+          <span class="field-unit">%</span>
         </div>
       </div>
 
@@ -518,17 +540,10 @@
 
         <div id="tramos-block" class="toggle-block">
           <span class="toggle-label">Tramos</span>
-          <div class="tramos-scroll">
-            <div class="seg-control" id="tramos-control">
-              <button class="active" data-val="auto">auto</button>
-              <button data-val="1">1</button>
-              <button data-val="2">2</button>
-              <button data-val="3">3</button>
-              <button data-val="4">4</button>
-              <button data-val="5">5</button>
-              <button data-val="6">6</button>
-              <button data-val="7">7</button>
-              <button data-val="8">8</button>
+          <div class="seg-control cols-2" id="tramos-control">
+            <button class="active" data-val="auto">auto</button>
+            <div class="tramos-input-cell">
+              <input type="number" id="inp-tramos" min="1" max="10" step="1" placeholder="n.º" class="tramos-input">
             </div>
           </div>
         </div>
@@ -579,6 +594,21 @@ let app = 'general';
 let modoCalculo = 'verificar';
 let pendienteObj = 6.00;
 let estado = null;
+let libreOrder = ['L', 'dh', 'p'];  /* first = most recent edited; last = computed */
+
+function formatLibre(val, name) {
+  if (!isFinite(val)) return '';
+  if (name === 'p')  return (Math.round(val * 100) / 100).toString();
+  if (name === 'dh') return (Math.round(val * 1000) / 1000).toString();
+  return (Math.round(val * 100) / 100).toString();
+}
+
+function onParamInput(name) {
+  if (modoCalculo === 'libre') {
+    libreOrder = [name, ...libreOrder.filter(x => x !== name)];
+  }
+  calc();
+}
 
 function initSegControl(selector, onChange) {
   const btns = document.querySelectorAll(selector);
@@ -592,9 +622,32 @@ function initSegControl(selector, onChange) {
   });
 }
 
-initSegControl('#tramos-control button', v => {
-  modo = v === 'auto' ? 'auto' : parseInt(v);
+/* Tramos: auto button + numeric input cell */
+const tramosAutoBtn = document.querySelector('#tramos-control button[data-val="auto"]');
+const tramosInput   = document.getElementById('inp-tramos');
+const tramosCell    = tramosInput.closest('.tramos-input-cell');
+
+tramosAutoBtn.addEventListener('click', () => {
+  modo = 'auto';
+  tramosAutoBtn.classList.add('active');
+  tramosCell.classList.remove('active');
+  tramosInput.value = '';
   calc();
+  saveState();
+});
+tramosInput.addEventListener('input', () => {
+  const v = parseInt(tramosInput.value);
+  if (Number.isFinite(v) && v >= 1) {
+    modo = Math.min(MAX_TRAMOS, v);
+    tramosAutoBtn.classList.remove('active');
+    tramosCell.classList.add('active');
+  } else {
+    modo = 'auto';
+    tramosAutoBtn.classList.add('active');
+    tramosCell.classList.remove('active');
+  }
+  calc();
+  saveState();
 });
 initSegControl('#tipo-control button', v => { tipo = v; calc(); });
 initSegControl('#app-control button', v => { app = v; calc(); });
@@ -669,11 +722,17 @@ function aplicarModoCalculo() {
   const esLibre = modoCalculo === 'libre';
   const esCalc = modoCalculo === 'calcular';
   document.getElementById('inp-L').closest('.field').style.display = esCalc ? 'none' : '';
+  document.getElementById('field-p').style.display = esLibre ? '' : 'none';
   document.getElementById('tramos-block').style.display = (esCalc || esLibre) ? 'none' : '';
   document.getElementById('pendiente-obj-block').style.display = esCalc ? '' : 'none';
   document.getElementById('tipo-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
   document.getElementById('app-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
   document.getElementById('norm-ref-section').style.display = esLibre ? 'none' : '';
+  if (!esLibre) {
+    document.getElementById('inp-L').classList.remove('driven');
+    document.getElementById('inp-dh').classList.remove('driven');
+    document.getElementById('inp-p').classList.remove('driven');
+  }
   if (esCalc) setTimeout(() => updateSliderUI(pendienteObj), 0);
   calc();
 }
@@ -687,6 +746,8 @@ function saveState() {
     localStorage.setItem('pendientes_app',          app);
     localStorage.setItem('pendientes_modoCalculo',  modoCalculo);
     localStorage.setItem('pendientes_pendienteObj', pendienteObj.toFixed(2));
+    localStorage.setItem('pendientes_p',            document.getElementById('inp-p').value);
+    localStorage.setItem('pendientes_libreOrder',   libreOrder.join(','));
   } catch (e) {}
 }
 
@@ -702,9 +763,20 @@ function loadState() {
     if (sL)  document.getElementById('inp-L').value  = sL;
     if (sDh) document.getElementById('inp-dh').value = sDh;
     if (sModo) {
-      modo = sModo === 'auto' ? 'auto' : parseInt(sModo);
-      document.querySelectorAll('#tramos-control button').forEach(b =>
-        b.classList.toggle('active', b.dataset.val === sModo));
+      if (sModo === 'auto') {
+        modo = 'auto';
+        tramosAutoBtn.classList.add('active');
+        tramosCell.classList.remove('active');
+        tramosInput.value = '';
+      } else {
+        const n = parseInt(sModo);
+        if (Number.isFinite(n) && n >= 1) {
+          modo = Math.min(MAX_TRAMOS, n);
+          tramosAutoBtn.classList.remove('active');
+          tramosCell.classList.add('active');
+          tramosInput.value = String(modo);
+        }
+      }
     }
     if (sTipo) {
       tipo = sTipo;
@@ -722,6 +794,13 @@ function loadState() {
         b.classList.toggle('active', b.dataset.val === modoCalculo));
     }
     if (sPendienteObj) pendienteObj = parseFloat(sPendienteObj);
+    const sP          = localStorage.getItem('pendientes_p');
+    const sLibreOrder = localStorage.getItem('pendientes_libreOrder');
+    if (sP !== null) document.getElementById('inp-p').value = sP;
+    if (sLibreOrder) {
+      const arr = sLibreOrder.split(',').filter(x => ['L','dh','p'].includes(x));
+      if (arr.length === 3 && new Set(arr).size === 3) libreOrder = arr;
+    }
   } catch (e) {}
   aplicarModoCalculo();
 }
@@ -867,15 +946,60 @@ function calc() {
   }
 
   if (modoCalculo === 'libre') {
-    const L = parseFloat(document.getElementById('inp-L').value) || 0;
-    const dh = parseFloat(document.getElementById('inp-dh').value) || 0;
-    if (L <= 0 || dh < 0) {
+    const inpL  = document.getElementById('inp-L');
+    const inpDh = document.getElementById('inp-dh');
+    const inpP  = document.getElementById('inp-p');
+    const driven = libreOrder[libreOrder.length - 1];
+
+    let L  = parseFloat(inpL.value);
+    let dh = parseFloat(inpDh.value);
+    let p  = parseFloat(inpP.value);
+
+    /* Compute the driven (least-recently-edited) field from the other two */
+    if (driven === 'p') {
+      if (!(L > 0) || isNaN(dh) || dh < 0) {
+        inpP.value = '';
+        document.getElementById('result-zone').innerHTML = '';
+        document.getElementById('diagrams-zone').innerHTML = '';
+        document.getElementById('hint-zone').innerHTML = '';
+        return;
+      }
+      p = (dh / L) * 100;
+      inpP.value = formatLibre(p, 'p');
+    } else if (driven === 'L') {
+      if (!(p > 0) || isNaN(dh) || dh < 0) {
+        inpL.value = '';
+        document.getElementById('result-zone').innerHTML = '';
+        document.getElementById('diagrams-zone').innerHTML = '';
+        document.getElementById('hint-zone').innerHTML = '';
+        return;
+      }
+      L = dh / (p / 100);
+      inpL.value = formatLibre(L, 'L');
+    } else if (driven === 'dh') {
+      if (!(L > 0) || !(p >= 0)) {
+        inpDh.value = '';
+        document.getElementById('result-zone').innerHTML = '';
+        document.getElementById('diagrams-zone').innerHTML = '';
+        document.getElementById('hint-zone').innerHTML = '';
+        return;
+      }
+      dh = L * p / 100;
+      inpDh.value = formatLibre(dh, 'dh');
+    }
+
+    inpL.classList.toggle('driven',  driven === 'L');
+    inpDh.classList.toggle('driven', driven === 'dh');
+    inpP.classList.toggle('driven',  driven === 'p');
+
+    if (!(L > 0) || !(dh >= 0)) {
       document.getElementById('result-zone').innerHTML = '';
       document.getElementById('diagrams-zone').innerHTML = '';
       document.getElementById('hint-zone').innerHTML = '';
       return;
     }
-    const pendiente = (dh / L) * 100;
+
+    const pendiente = p;
     const lInclinada = Math.sqrt(L*L + dh*dh);
     const angulo = Math.atan(dh / L) * 180 / Math.PI;
     document.getElementById('result-zone').innerHTML = `
