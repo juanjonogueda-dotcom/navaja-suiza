@@ -3,17 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Escalímetro — Navaja Suiza</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:           #000000;
     --surface:      #0d0d0d;
-    --border:       rgba(255,255,255,0.1);
-    --border-hover: rgba(255,255,255,0.25);
+    --border:       rgba(255,255,255,0.55);
+    --border-hover: #ffffff;
     --text:         #ffffff;
-    --text-mid:     rgba(255,255,255,0.6);
-    --text-muted:   rgba(255,255,255,0.3);
+    --text-mid:     rgba(255,255,255,0.88);
+    --text-muted:   rgba(255,255,255,0.75);
     --accent:       #ffffff;
     --warn:         #ff6b6b;
   }
@@ -99,7 +101,7 @@
 
   .section-head {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
     letter-spacing: 0.1em;
     text-transform: lowercase;
@@ -128,26 +130,23 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: clamp(11px, 2vw, 13px);
     cursor: pointer;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s;
     text-align: center;
     line-height: 1.2;
     min-height: 36px;
   }
   .seg-control button:last-child { border-right: none; }
   .seg-control button.active {
-    background: transparent;
-    color: var(--text);
-    box-shadow: inset 0 -2px 0 0 var(--text);
+    background: #ffffff;
+    color: #000000;
     font-weight: 500;
   }
-  .seg-control button:hover:not(.active) { color: var(--text-mid); }
+  .seg-control button:hover:not(.active) { color: var(--text); }
 
-  /* row divider for 2-row presets grid */
   .seg-control.cols-3 > button:nth-child(-n+3) {
     border-bottom: 1px solid var(--border);
   }
 
-  /* Scale input */
   .scale-row {
     display: flex;
     align-items: baseline;
@@ -157,7 +156,7 @@
   .scale-prefix {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1.1rem;
-    color: var(--text-muted);
+    color: var(--text);
     white-space: nowrap;
     line-height: 1;
     flex-shrink: 0;
@@ -180,135 +179,97 @@
   .scale-input::-webkit-outer-spin-button { display: none; }
   .scale-input:focus { border-bottom-color: var(--text); }
 
-  /* Entrada input */
-  .entrada-input {
+  .measure-input {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.1rem;
+    font-size: 1.4rem;
     color: var(--text);
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--border);
     outline: none;
     width: 100%;
-    padding: 2px 0 4px;
+    padding: 4px 0 6px;
     -moz-appearance: textfield;
     transition: border-color 0.15s;
+    font-feature-settings: 'tnum' 1;
+    letter-spacing: -0.02em;
   }
-  .entrada-input::-webkit-inner-spin-button,
-  .entrada-input::-webkit-outer-spin-button { display: none; }
-  .entrada-input:focus { border-bottom-color: var(--text); }
+  .measure-input::-webkit-inner-spin-button,
+  .measure-input::-webkit-outer-spin-button { display: none; }
+  .measure-input:focus { border-bottom-color: var(--text); }
+  .measure-input.driven { color: var(--text-mid); }
 
-  /* Result */
-  .result-block { margin-bottom: 32px; }
-  .result-value-row {
+  .measure-block { margin-bottom: 32px; }
+  .measure-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .measure-source-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .measure-source-tag.show { opacity: 1; }
+  .measure-row {
     display: flex;
     align-items: baseline;
     gap: 10px;
     margin-bottom: 12px;
     cursor: pointer;
-    user-select: none;
   }
-  .result-value-row:active { opacity: 0.55; }
-  .result-number {
+  .measure-row:active .measure-input { opacity: 0.6; }
+  .copy-hint {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.4rem;
-    font-weight: 400;
-    color: var(--text);
-    letter-spacing: -0.02em;
-    font-feature-settings: 'tnum' 1;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
   }
-  .result-unit-label {
+
+  /* Solid bar chart */
+  .bars-wrap { display: flex; flex-direction: column; gap: 22px; }
+  .bars-wrap.hidden { visibility: hidden; }
+  .bar-row { display: flex; flex-direction: column; gap: 8px; }
+  .bar-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .bar-name {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     color: var(--text-muted);
-    letter-spacing: 0.06em;
-  }
-
-  /* Ruler proportion */
-  .ruler-wrap { display: flex; flex-direction: column; gap: 28px; }
-  .ruler-wrap.hidden { visibility: hidden; }
-
-  .ruler-row { display: flex; flex-direction: column; gap: 7px; }
-
-  .ruler-label-top {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    color: rgba(255,255,255,0.35);
     letter-spacing: 0.1em;
     text-transform: lowercase;
   }
-
-  .ruler-bar-area {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .ruler-bar-wrap {
-    flex: 1;
-    min-width: 0;
-    position: relative;
-    height: 10px;
-    display: flex;
-    align-items: center;
-  }
-
-  .ruler-bar {
-    height: 1.5px;
-    position: relative;
-    transition: width 300ms ease;
-    min-width: 0;
-  }
-
-  .ruler-bar::before,
-  .ruler-bar::after {
-    content: '';
-    position: absolute;
-    width: 1.5px;
-    height: 10px;
-    top: -4px;
-    background: currentColor;
-  }
-  .ruler-bar::before { left: 0; }
-  .ruler-bar::after  { right: 0; }
-
-  .ruler-row--papel .ruler-bar {
-    color: rgba(255,255,255,0.55);
-    background: rgba(255,255,255,0.55);
-  }
-  .ruler-row--real .ruler-bar {
-    color: rgba(255,255,255,1);
-    background: rgba(255,255,255,1);
-  }
-
-  .ruler-ticks {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-  .ruler-tick {
-    position: absolute;
-    width: 1px;
-    height: 5px;
-    top: -2px;
-    background: currentColor;
-    opacity: 0.25;
-  }
-
-  .ruler-label-value {
+  .bar-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.73rem;
-    white-space: nowrap;
-    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: var(--text);
+    font-feature-settings: 'tnum' 1;
   }
-  .ruler-row--papel .ruler-label-value { color: rgba(255,255,255,0.55); }
-  .ruler-row--real  .ruler-label-value { color: rgba(255,255,255,1); }
-
-  @media (max-width: 480px) {
-    .ruler-bar-area { flex-direction: column; align-items: flex-start; gap: 4px; }
-    .ruler-bar-wrap { width: 100%; }
-    .ruler-label-value { padding-left: 0; }
+  .bar-track {
+    width: 100%;
+    height: 22px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
   }
+  .bar-fill {
+    height: 100%;
+    background: var(--text);
+    transition: width 350ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .bar-row--plano .bar-fill { background: rgba(255,255,255,0.65); }
 
   /* Toast */
   .toast {
@@ -349,15 +310,7 @@
   <div class="layout">
     <aside class="sidebar">
 
-      <div class="section-head"><span class="num-mark">01</span>dirección</div>
-      <div class="toggle-block">
-        <div class="seg-control cols-2" id="dir-control">
-          <button class="active" data-val="realPaper">Real → Papel</button>
-          <button data-val="paperReal">Papel → Real</button>
-        </div>
-      </div>
-
-      <div class="section-head"><span class="num-mark">02</span>escala</div>
+      <div class="section-head"><span class="num-mark">01</span>escala</div>
       <div class="toggle-block">
         <div class="scale-row">
           <span class="scale-prefix">1 :</span>
@@ -373,10 +326,19 @@
         </div>
       </div>
 
-      <div class="section-head"><span class="num-mark">03</span>entrada</div>
-      <div class="toggle-block">
-        <input type="number" class="entrada-input" id="inputValue" value="1" step="any" placeholder="0">
-        <div class="seg-control cols-5" id="input-unit-control">
+    </aside>
+
+    <div class="main-area">
+
+      <div class="measure-block">
+        <div class="measure-head-row">
+          <div class="section-head" style="margin-bottom:0"><span class="num-mark">02</span>tamaño real</div>
+          <span class="measure-source-tag" id="realSourceTag">editando</span>
+        </div>
+        <div class="measure-row" id="realRow" title="Clic para copiar">
+          <input type="number" class="measure-input" id="realValue" value="1" step="any" placeholder="0">
+        </div>
+        <div class="seg-control cols-5" id="real-unit-control">
           <button data-val="km">km</button>
           <button class="active" data-val="m">m</button>
           <button data-val="cm">cm</button>
@@ -385,17 +347,15 @@
         </div>
       </div>
 
-    </aside>
-
-    <div class="main-area">
-
-      <div class="section-head"><span class="num-mark">04</span>resultado</div>
-      <div class="result-block">
-        <div class="result-value-row" id="copyTrigger" title="Clic para copiar">
-          <span class="result-number" id="resultValue">—</span>
-          <span class="result-unit-label" id="resultUnit">mm</span>
+      <div class="measure-block">
+        <div class="measure-head-row">
+          <div class="section-head" style="margin-bottom:0"><span class="num-mark">03</span>tamaño en plano</div>
+          <span class="measure-source-tag" id="planoSourceTag">editando</span>
         </div>
-        <div class="seg-control cols-5" id="output-unit-control">
+        <div class="measure-row" id="planoRow" title="Clic para copiar">
+          <input type="number" class="measure-input" id="planoValue" step="any" placeholder="0">
+        </div>
+        <div class="seg-control cols-5" id="plano-unit-control">
           <button data-val="km">km</button>
           <button data-val="m">m</button>
           <button data-val="cm">cm</button>
@@ -404,29 +364,21 @@
         </div>
       </div>
 
-      <div class="section-head" style="margin-top:32px"><span class="num-mark">05</span>proporción</div>
-      <div class="ruler-wrap hidden" id="rulerWrap">
-        <div class="ruler-row ruler-row--papel" id="rulerRow1">
-          <div class="ruler-label-top" id="rulerDesc1">papel</div>
-          <div class="ruler-bar-area">
-            <div class="ruler-bar-wrap">
-              <div class="ruler-bar" id="rulerBar1" style="width:100%">
-                <div class="ruler-ticks" id="rulerTicks1"></div>
-              </div>
-            </div>
-            <div class="ruler-label-value" id="rulerLabel1">—</div>
+      <div class="section-head" style="margin-top:8px"><span class="num-mark">04</span>proporción</div>
+      <div class="bars-wrap hidden" id="barsWrap">
+        <div class="bar-row bar-row--real">
+          <div class="bar-label-row">
+            <span class="bar-name">real</span>
+            <span class="bar-value" id="barRealLabel">—</span>
           </div>
+          <div class="bar-track"><div class="bar-fill" id="barRealFill" style="width:100%"></div></div>
         </div>
-        <div class="ruler-row ruler-row--real" id="rulerRow2">
-          <div class="ruler-label-top" id="rulerDesc2">real</div>
-          <div class="ruler-bar-area">
-            <div class="ruler-bar-wrap">
-              <div class="ruler-bar" id="rulerBar2" style="width:100%">
-                <div class="ruler-ticks" id="rulerTicks2"></div>
-              </div>
-            </div>
-            <div class="ruler-label-value" id="rulerLabel2">—</div>
+        <div class="bar-row bar-row--plano">
+          <div class="bar-label-row">
+            <span class="bar-name">plano</span>
+            <span class="bar-value" id="barPlanoLabel">—</span>
           </div>
+          <div class="bar-track"><div class="bar-fill" id="barPlanoFill" style="width:100%"></div></div>
         </div>
       </div>
 
@@ -441,35 +393,15 @@
   const toM   = { km:1000, m:1, cm:0.01, mm:0.001, in:0.0254 };
   const fromM = { km:0.001, m:1, cm:100, mm:1000, in:39.3701 };
 
-  let direction  = 'realPaper';
-  let inputUnit  = 'm';
-  let outputUnit = 'mm';
+  let realUnit  = 'm';
+  let planoUnit = 'mm';
+  let lastEdited = 'real';
 
-  function calc() {
-    const v = parseFloat(document.getElementById('inputValue').value);
-    const s = parseFloat(document.getElementById('scaleFactor').value) || 1;
-    const resultEl = document.getElementById('resultValue');
-    const unitEl   = document.getElementById('resultUnit');
-
-    if (isNaN(v) || s <= 0) {
-      resultEl.textContent = '—';
-      document.getElementById('rulerWrap').classList.add('hidden');
-      return;
-    }
-
-    let result;
-    if (direction === 'realPaper') {
-      result = (v * toM[inputUnit] / s) * fromM[outputUnit];
-    } else {
-      result = (v * toM[inputUnit] * s) * fromM[outputUnit];
-    }
-
-    resultEl.textContent = formatResult(result);
-    unitEl.textContent   = outputUnit;
-
-    renderProportion(v, inputUnit, result, outputUnit, s);
-    saveState();
-  }
+  const realEl   = document.getElementById('realValue');
+  const planoEl  = document.getElementById('planoValue');
+  const scaleEl  = document.getElementById('scaleFactor');
+  const realTag  = document.getElementById('realSourceTag');
+  const planoTag = document.getElementById('planoSourceTag');
 
   function formatResult(val) {
     if (val === 0) return '0';
@@ -483,49 +415,53 @@
     return val.toPrecision(4);
   }
 
-  function setTicks(containerId, count) {
-    const el = document.getElementById(containerId);
-    el.innerHTML = '';
-    for (let i = 1; i <= count; i++) {
-      const d = document.createElement('div');
-      d.className = 'ruler-tick';
-      d.style.left = (i / (count + 1) * 100) + '%';
-      el.appendChild(d);
+  function calc() {
+    const s = parseFloat(scaleEl.value) || 1;
+
+    realEl.classList.toggle('driven',  lastEdited !== 'real');
+    planoEl.classList.toggle('driven', lastEdited !== 'plano');
+    realTag.classList.toggle('show',   lastEdited === 'real');
+    planoTag.classList.toggle('show',  lastEdited === 'plano');
+
+    if (lastEdited === 'real') {
+      const v = parseFloat(realEl.value);
+      if (isNaN(v) || s <= 0) { planoEl.value = ''; renderBars(null); return; }
+      const planoVal = (v * toM[realUnit] / s) * fromM[planoUnit];
+      planoEl.value = formatResult(planoVal);
+      renderBars({ realVal: v, planoVal });
+    } else {
+      const v = parseFloat(planoEl.value);
+      if (isNaN(v) || s <= 0) { realEl.value = ''; renderBars(null); return; }
+      const realVal = (v * toM[planoUnit] * s) * fromM[realUnit];
+      realEl.value = formatResult(realVal);
+      renderBars({ realVal, planoVal: v });
     }
+    saveState();
   }
 
-  function renderProportion(inputVal, inUnit, outputVal, outUnit, scale) {
-    let paperVal, paperUnit, realVal, realUnit;
-    if (direction === 'realPaper') {
-      realVal  = inputVal;  realUnit  = inUnit;
-      paperVal = outputVal; paperUnit = outUnit;
-    } else {
-      paperVal = inputVal;  paperUnit = inUnit;
-      realVal  = outputVal; realUnit  = outUnit;
-    }
-
+  function renderBars(data) {
+    const wrap = document.getElementById('barsWrap');
+    if (!data) { wrap.classList.add('hidden'); return; }
+    const { realVal, planoVal } = data;
     const realInM  = realVal  * toM[realUnit];
-    const paperInM = paperVal * toM[paperUnit];
+    const planoInM = planoVal * toM[planoUnit];
 
-    let paperPct, realPct;
-    if (realInM >= paperInM) {
+    let realPct, planoPct;
+    if (realInM >= planoInM) {
       realPct  = 100;
-      paperPct = realInM > 0 ? Math.max(2, (paperInM / realInM) * 100) : 100;
+      planoPct = realInM > 0 ? Math.max(2, (planoInM / realInM) * 100) : 100;
     } else {
-      paperPct = 100;
-      realPct  = paperInM > 0 ? Math.max(2, (realInM / paperInM) * 100) : 100;
+      planoPct = 100;
+      realPct  = planoInM > 0 ? Math.max(2, (realInM / planoInM) * 100) : 100;
     }
 
-    document.getElementById('rulerBar1').style.width   = paperPct + '%';
-    document.getElementById('rulerBar2').style.width   = realPct  + '%';
-    document.getElementById('rulerLabel1').textContent = formatResult(paperVal) + ' ' + paperUnit;
-    document.getElementById('rulerLabel2').textContent = formatResult(realVal)  + ' ' + realUnit;
-
-    setTicks('rulerTicks1', paperPct === 100 ? 9 : 0);
-    setTicks('rulerTicks2', realPct  === 100 ? 9 : 0);
-
-    document.getElementById('rulerWrap').classList.remove('hidden');
+    document.getElementById('barRealFill').style.width  = realPct  + '%';
+    document.getElementById('barPlanoFill').style.width = planoPct + '%';
+    document.getElementById('barRealLabel').textContent  = formatResult(realVal)  + ' ' + realUnit;
+    document.getElementById('barPlanoLabel').textContent = formatResult(planoVal) + ' ' + planoUnit;
+    wrap.classList.remove('hidden');
   }
+
   function initSegControl(selector, onChange) {
     const btns = document.querySelectorAll(selector);
     btns.forEach(btn => {
@@ -537,30 +473,30 @@
     });
   }
 
-  initSegControl('#dir-control button', v => { direction = v; calc(); });
-  initSegControl('#input-unit-control button', v => { inputUnit = v; calc(); });
-  initSegControl('#output-unit-control button', v => { outputUnit = v; calc(); });
+  initSegControl('#real-unit-control button',  v => { realUnit  = v; calc(); });
+  initSegControl('#plano-unit-control button', v => { planoUnit = v; calc(); });
 
   document.querySelectorAll('#presets button').forEach(btn =>
     btn.addEventListener('click', () => {
-      document.getElementById('scaleFactor').value = btn.dataset.val;
+      scaleEl.value = btn.dataset.val;
       document.querySelectorAll('#presets button').forEach(b =>
         b.classList.toggle('active', b.dataset.val === btn.dataset.val));
       calc();
     }));
 
-  document.getElementById('scaleFactor').addEventListener('input', () => {
-    const v = document.getElementById('scaleFactor').value;
+  scaleEl.addEventListener('input', () => {
+    const v = scaleEl.value;
     document.querySelectorAll('#presets button').forEach(b =>
       b.classList.toggle('active', b.dataset.val == v));
     calc();
   });
 
-  document.getElementById('inputValue').addEventListener('input', calc);
+  realEl.addEventListener('input',  () => { lastEdited = 'real';  calc(); });
+  planoEl.addEventListener('input', () => { lastEdited = 'plano'; calc(); });
 
-  document.getElementById('copyTrigger').addEventListener('click', () => {
-    const txt = document.getElementById('resultValue').textContent;
-    if (txt === '—') return;
+  function copyVal(input) {
+    const txt = input.value;
+    if (!txt) return;
     navigator.clipboard.writeText(txt).catch(() => {
       const ta = Object.assign(document.createElement('textarea'),
         { value: txt, style: 'position:fixed;left:-9999px' });
@@ -569,46 +505,47 @@
     const t = document.getElementById('toast');
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 1400);
-  });
+  }
+  document.getElementById('realRow').addEventListener('dblclick',  () => copyVal(realEl));
+  document.getElementById('planoRow').addEventListener('dblclick', () => copyVal(planoEl));
 
   function saveState() {
     try {
-      localStorage.setItem('escalimetro_direction',  direction);
-      localStorage.setItem('escalimetro_inputUnit',  inputUnit);
-      localStorage.setItem('escalimetro_outputUnit', outputUnit);
-      localStorage.setItem('escalimetro_scale',      document.getElementById('scaleFactor').value);
-      localStorage.setItem('escalimetro_value',      document.getElementById('inputValue').value);
+      localStorage.setItem('escalimetro_realUnit',   realUnit);
+      localStorage.setItem('escalimetro_planoUnit',  planoUnit);
+      localStorage.setItem('escalimetro_scale',      scaleEl.value);
+      localStorage.setItem('escalimetro_lastEdited', lastEdited);
+      localStorage.setItem('escalimetro_realValue',  realEl.value);
+      localStorage.setItem('escalimetro_planoValue', planoEl.value);
     } catch(e) {}
   }
 
   function loadState() {
     try {
-      const sDir   = localStorage.getItem('escalimetro_direction');
-      const sIU    = localStorage.getItem('escalimetro_inputUnit');
-      const sOU    = localStorage.getItem('escalimetro_outputUnit');
+      const sRU    = localStorage.getItem('escalimetro_realUnit');
+      const sPU    = localStorage.getItem('escalimetro_planoUnit');
       const sScale = localStorage.getItem('escalimetro_scale');
-      const sVal   = localStorage.getItem('escalimetro_value');
-      if (sDir) {
-        direction = sDir;
-        document.querySelectorAll('#dir-control button').forEach(b =>
-          b.classList.toggle('active', b.dataset.val === sDir));
+      const sLast  = localStorage.getItem('escalimetro_lastEdited');
+      const sReal  = localStorage.getItem('escalimetro_realValue');
+      const sPlano = localStorage.getItem('escalimetro_planoValue');
+      if (sRU) {
+        realUnit = sRU;
+        document.querySelectorAll('#real-unit-control button').forEach(b =>
+          b.classList.toggle('active', b.dataset.val === sRU));
       }
-      if (sIU) {
-        inputUnit = sIU;
-        document.querySelectorAll('#input-unit-control button').forEach(b =>
-          b.classList.toggle('active', b.dataset.val === sIU));
-      }
-      if (sOU) {
-        outputUnit = sOU;
-        document.querySelectorAll('#output-unit-control button').forEach(b =>
-          b.classList.toggle('active', b.dataset.val === sOU));
+      if (sPU) {
+        planoUnit = sPU;
+        document.querySelectorAll('#plano-unit-control button').forEach(b =>
+          b.classList.toggle('active', b.dataset.val === sPU));
       }
       if (sScale) {
-        document.getElementById('scaleFactor').value = sScale;
+        scaleEl.value = sScale;
         document.querySelectorAll('#presets button').forEach(b =>
           b.classList.toggle('active', b.dataset.val == sScale));
       }
-      if (sVal) document.getElementById('inputValue').value = sVal;
+      if (sLast === 'real' || sLast === 'plano') lastEdited = sLast;
+      if (lastEdited === 'real'  && sReal  !== null) realEl.value  = sReal;
+      if (lastEdited === 'plano' && sPlano !== null) planoEl.value = sPlano;
     } catch(e) {}
     calc();
   }

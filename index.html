@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
 <title>Navaja Suiza</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
@@ -27,25 +29,20 @@
     cursor: grab;
     touch-action: none;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
-  .shape.dragging {
-    cursor: grabbing;
-  }
-  .shape.dragging svg {
-    pointer-events: none;
-    transform: none !important;
-  }
+  .shape.dragging { cursor: grabbing; }
+  .shape.dragging svg { pointer-events: none; }
 
   .shape svg {
     display: block;
-    opacity: 0.9;
+    opacity: 1;
     transition: transform 0.25s ease;
   }
 
-  .shape:not(.dragging):hover svg {
-    transform: scale(1.06);
-  }
+  .shape:not(.dragging):hover svg { transform: scale(1.06); }
 
   .shape-label {
     font-family: 'JetBrains Mono', monospace;
@@ -58,28 +55,14 @@
     white-space: nowrap;
   }
 
-  .shape:not(.dragging):hover .shape-label {
-    opacity: 1;
-  }
+  .shape:not(.dragging):hover .shape-label { opacity: 1; }
 
   /* Default positions — JS reads these and normalizes to left/top % */
-  .shape-escalimetro {
-    top: 12%;
-    left: 6%;
-    transform: rotate(-8deg);
-  }
-  .shape-rampa {
-    top: 38%;
-    right: 8%;
-    transform: rotate(5deg);
-  }
-  .shape-escalera {
-    bottom: 12%;
-    left: 18%;
-    transform: rotate(-4deg);
-  }
+  .shape-escalimetro { top: 12%;    left: 6%; }
+  .shape-rampa       { top: 38%;    right: 8%; }
+  .shape-escalera    { bottom: 12%; left: 18%; }
 
-  @media (max-width: 480px) {
+  @media (max-width: 760px) {
     .shape-escalimetro { top: 8%;    left: 4%; }
     .shape-rampa       { top: 45%;   right: 5%; }
     .shape-escalera    { bottom: 8%; left: 10%; }
@@ -91,17 +74,40 @@
     bottom: 20px;
     right: 20px;
     background: none;
-    border: none;
-    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 8px 14px;
+    border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.75);
     cursor: pointer;
-    transition: color 0.15s;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
     z-index: 100;
   }
-  #resetBtn:hover { color: rgba(255,255,255,0.5); }
+  #resetBtn:hover {
+    color: #000;
+    background: #fff;
+    border-color: #fff;
+  }
+
+  /* Mobile hint */
+  #mobileHint {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.5;
+    z-index: 100;
+    pointer-events: none;
+    display: none;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    #mobileHint { display: block; }
+  }
 </style>
 </head>
 <body>
@@ -109,7 +115,6 @@
   <!-- Escalímetro: long ruler with scale marks -->
   <a class="shape shape-escalimetro" href="escalimetro.html" aria-label="Escalímetro">
     <svg width="320" height="44" viewBox="0 0 320 44" xmlns="http://www.w3.org/2000/svg">
-      <!-- Major ticks every 40px (3px wide × 14px tall) -->
       <rect x="0"   y="0" width="3" height="14" fill="white"/>
       <rect x="40"  y="0" width="3" height="14" fill="white"/>
       <rect x="80"  y="0" width="3" height="14" fill="white"/>
@@ -119,7 +124,6 @@
       <rect x="240" y="0" width="3" height="14" fill="white"/>
       <rect x="280" y="0" width="3" height="14" fill="white"/>
       <rect x="317" y="0" width="3" height="14" fill="white"/>
-      <!-- Minor ticks every 10px (2px wide × 7px tall) -->
       <rect x="10"  y="7" width="2" height="7" fill="white"/>
       <rect x="20"  y="7" width="2" height="7" fill="white"/>
       <rect x="30"  y="7" width="2" height="7" fill="white"/>
@@ -144,13 +148,11 @@
       <rect x="290" y="7" width="2" height="7" fill="white"/>
       <rect x="300" y="7" width="2" height="7" fill="white"/>
       <rect x="310" y="7" width="2" height="7" fill="white"/>
-      <!-- Ruler body -->
       <rect x="0" y="14" width="320" height="30" fill="white"/>
     </svg>
     <span class="shape-label">escalímetro</span>
   </a>
 
-  <!-- Rampa: triangular ramp profile -->
   <a class="shape shape-rampa" href="pendientes.html" aria-label="Rampa">
     <svg width="200" height="120" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
       <path d="M 0,120 L 200,120 L 200,0 Z" fill="white"/>
@@ -158,7 +160,6 @@
     <span class="shape-label">rampa</span>
   </a>
 
-  <!-- Escalera: staircase profile with 4 steps -->
   <a class="shape shape-escalera" href="escaleras.html" aria-label="Escalera">
     <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
       <path d="M 0,0 L 40,0 L 40,30 L 80,30 L 80,60 L 120,60 L 120,90 L 160,90 L 160,120 L 0,120 Z" fill="white"/>
@@ -166,13 +167,14 @@
     <span class="shape-label">escalera</span>
   </a>
 
+  <span id="mobileHint">arrastra · 2 dedos rotan</span>
   <button id="resetBtn">reset</button>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const NAMES = ['escalimetro', 'rampa', 'escalera'];
-  const ROTS  = { escalimetro: -8, rampa: 5, escalera: -4 };
-  const KEYS  = { escalimetro: 'ns-pos-escalimetro', rampa: 'ns-pos-rampa', escalera: 'ns-pos-escalera' };
+  const ROTS_DEFAULT = { escalimetro: -8, rampa: 5, escalera: -4 };
+  const KEYS = { escalimetro: 'ns-pos-escalimetro', rampa: 'ns-pos-rampa', escalera: 'ns-pos-escalera' };
 
   const els = {
     escalimetro: document.querySelector('.shape-escalimetro'),
@@ -181,8 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const defaults = {};
+  const rotation = { ...ROTS_DEFAULT };
   let active = null, startX = 0, startY = 0, origLeft = 0, origTop = 0;
   let hasDragged = false;
+  let rotateState = null;  // { name, startAngle, baseRot }
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -192,32 +196,56 @@ document.addEventListener('DOMContentLoaded', () => {
     el.style.right  = 'auto';
     el.style.bottom = 'auto';
   }
-
   function getPos(el) {
     const r = el.getBoundingClientRect();
     return { left: r.left / window.innerWidth * 100, top: r.top / window.innerHeight * 100 };
   }
+  function applyRot(name) {
+    els[name].style.transform = `rotate(${rotation[name]}deg)`;
+  }
+  function save(name) {
+    try {
+      const pos = getPos(els[name]);
+      localStorage.setItem(KEYS[name], JSON.stringify({ left: pos.left, top: pos.top, rot: rotation[name] }));
+    } catch (e) {}
+  }
+  function angleBetween(t0, t1) {
+    return Math.atan2(t1.clientY - t0.clientY, t1.clientX - t0.clientX) * 180 / Math.PI;
+  }
 
-  // Initialize positions
+  // Initialize positions + rotations
   NAMES.forEach(name => {
     const el = els[name];
-    // Override to rotation-only transform (removes translateY etc.)
-    el.style.transform = `rotate(${ROTS[name]}deg)`;
-    // Capture CSS default position before any saved positions are applied
+    applyRot(name);
     const r = el.getBoundingClientRect();
     defaults[name] = { left: r.left / window.innerWidth * 100, top: r.top / window.innerHeight * 100 };
-    // Apply saved position if available
     try {
       const saved = localStorage.getItem(KEYS[name]);
       if (saved) {
-        const { left, top } = JSON.parse(saved);
-        setPos(el, left, top);
+        const d = JSON.parse(saved);
+        if (typeof d.left === 'number' && typeof d.top === 'number') setPos(el, d.left, d.top);
+        if (typeof d.rot  === 'number') { rotation[name] = d.rot; applyRot(name); }
       }
     } catch (e) {}
   });
 
-  // Drag start
+  // Drag/rotate start
   function onDown(e, name) {
+    // Two-finger pinch-rotate
+    if (e.touches && e.touches.length >= 2) {
+      e.preventDefault();
+      rotateState = {
+        name,
+        startAngle: angleBetween(e.touches[0], e.touches[1]),
+        baseRot:    rotation[name]
+      };
+      active = null;
+      hasDragged = true;
+      els[name].classList.add('dragging');
+      els[name].style.zIndex = '10';
+      els[name].style.transition = 'none';
+      return;
+    }
     if (e.button !== undefined && e.button !== 0) return;
     if (!e.touches) e.preventDefault();
     const t = e.touches ? e.touches[0] : e;
@@ -240,8 +268,15 @@ document.addEventListener('DOMContentLoaded', () => {
     els[name].addEventListener('click', e => { if (hasDragged) { e.preventDefault(); hasDragged = false; } });
   });
 
-  // Drag move
+  // Move handler — handles both drag and rotate
   function onMove(e) {
+    if (rotateState && e.touches && e.touches.length >= 2) {
+      e.preventDefault();
+      const cur = angleBetween(e.touches[0], e.touches[1]);
+      rotation[rotateState.name] = rotateState.baseRot + (cur - rotateState.startAngle);
+      applyRot(rotateState.name);
+      return;
+    }
     if (!active) return;
     const t  = e.touches ? e.touches[0] : e;
     if (!hasDragged && Math.hypot(t.clientX - startX, t.clientY - startY) > 12) hasDragged = true;
@@ -262,23 +297,37 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('mousemove',  onMove);
   document.addEventListener('touchmove',  onMove, { passive: false });
 
-  // Drag end
-  function onUp() {
-    if (!active) return;
-    const name = active;
-    const el   = els[name];
-    active = null;
-    const pos = getPos(el);
-    setPos(el, pos.left, pos.top);
+  function endShape(name) {
+    const el = els[name];
     el.style.zIndex     = '';
     el.style.transition = '';
     el.classList.remove('dragging');
     document.body.style.cursor = '';
-    try { localStorage.setItem(KEYS[name], JSON.stringify(pos)); } catch (e) {}
+  }
+
+  function onUp() {
+    if (!active) return;
+    const name = active;
+    active = null;
+    const el = els[name];
+    const pos = getPos(el);
+    setPos(el, pos.left, pos.top);
+    endShape(name);
+    save(name);
   }
 
   document.addEventListener('mouseup',  onUp);
   document.addEventListener('touchend', e => {
+    if (rotateState) {
+      if (!e.touches || e.touches.length < 2) {
+        const name = rotateState.name;
+        rotateState = null;
+        endShape(name);
+        save(name);
+        hasDragged = false;
+      }
+      return;
+    }
     const wasDragging = hasDragged;
     const name = active;
     onUp();
@@ -292,8 +341,10 @@ document.addEventListener('DOMContentLoaded', () => {
     NAMES.forEach(name => {
       try { localStorage.removeItem(KEYS[name]); } catch (e) {}
       const el = els[name];
-      el.style.transition = 'left 300ms ease, top 300ms ease';
+      rotation[name] = ROTS_DEFAULT[name];
+      el.style.transition = 'left 300ms ease, top 300ms ease, transform 300ms ease';
       setPos(el, defaults[name].left, defaults[name].top);
+      applyRot(name);
       setTimeout(() => { el.style.transition = ''; }, 350);
     });
   });
