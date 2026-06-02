@@ -6,15 +6,34 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Navaja Suiza</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<meta name="description" content="Navaja Suiza: calculadoras simples para arquitectura y construcción — escalímetro, escaleras y rampas.">
+<meta property="og:title" content="Navaja Suiza">
+<meta property="og:description" content="Calculadoras simples para arquitectura y construcción: escalímetro, escaleras y rampas.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 22h4v4H7zM7 16h4v6h6v4H7zM7 10h4v6h6v6h6v4H7z' fill='%23fff'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg:           #000000;
+    --surface:      #0d0d0d;
+    --border:       rgba(255,255,255,0.55);
+    --border-hover: #ffffff;
+    --text:         #ffffff;
+    --text-mid:     rgba(255,255,255,0.88);
+    --text-muted:   rgba(255,255,255,0.75);
+    --accent:       #ffffff;
+    --warn:         #ff6b6b;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: #000000;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   body { position: relative; }
@@ -49,7 +68,7 @@
     font-size: 13px;
     letter-spacing: 0.1em;
     text-transform: lowercase;
-    color: #ffffff;
+    color: var(--text);
     opacity: 0;
     transition: opacity 0.25s ease;
     white-space: nowrap;
@@ -74,21 +93,21 @@
     bottom: 20px;
     right: 20px;
     background: none;
-    border: 1px solid rgba(255,255,255,0.4);
+    border: 1px solid var(--border);
     padding: 8px 14px;
     border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.75);
+    color: var(--text-muted);
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s, background 0.15s;
     z-index: 100;
   }
   #resetBtn:hover {
-    color: #000;
-    background: #fff;
-    border-color: #fff;
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--border-hover);
   }
 
   /* Mobile hint */
@@ -99,7 +118,7 @@
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem;
     letter-spacing: 0.06em;
-    color: rgba(255,255,255,0.55);
+    color: var(--text-muted);
     line-height: 1.5;
     z-index: 100;
     pointer-events: none;

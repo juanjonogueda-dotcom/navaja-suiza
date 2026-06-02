@@ -6,6 +6,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Rampa — Navaja Suiza</title>
+<meta name="description" content="Calculadora de rampas y pendientes: verifica o calcula pendiente, longitud y desnivel, con descansos y límites normativos.">
+<meta property="og:title" content="Rampa — Navaja Suiza">
+<meta property="og:description" content="Verifica o calcula pendiente, longitud y desnivel de una rampa, con descansos y límites normativos.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 22h4v4H7zM7 16h4v6h6v4H7zM7 10h4v6h6v6h6v4H7z' fill='%23fff'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -164,22 +170,21 @@
     border-right: 1px solid var(--border);
     padding: 9px 4px;
     color: var(--text-muted);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'JetBrains Mono', monospace;
     font-size: clamp(11px, 2vw, 13px);
     cursor: pointer;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s;
     text-align: center;
     line-height: 1.2;
     min-height: 36px;
   }
   .seg-control button:last-child { border-right: none; }
   .seg-control button.active {
-    background: transparent;
-    color: var(--text);
-    box-shadow: inset 0 -2px 0 0 var(--text);
+    background: #ffffff;
+    color: #000000;
     font-weight: 500;
   }
-  .seg-control button:hover:not(.active) { color: var(--text-mid); }
+  .seg-control button:hover:not(.active) { color: var(--text); }
 
   /* Tramos input cell */
   .tramos-input-cell {
@@ -508,17 +513,17 @@
       <div class="input-stack">
         <div class="field" id="field-L">
           <span class="field-label">Longitud disponible</span>
-          <input type="number" class="field-input" id="inp-L" value="22.09" step="0.01" min="0" oninput="onParamInput('L')">
+          <input type="number" class="field-input" id="inp-L" value="22.09" step="0.01" min="0" oninput="onParamInput('L')" aria-label="Longitud disponible en metros">
           <span class="field-unit">metros</span>
         </div>
         <div class="field" id="field-dh">
           <span class="field-label">Desnivel a salvar</span>
-          <input type="number" class="field-input" id="inp-dh" value="1.399" step="0.001" min="0" oninput="onParamInput('dh')">
+          <input type="number" class="field-input" id="inp-dh" value="1.399" step="0.001" min="0" oninput="onParamInput('dh')" aria-label="Desnivel a salvar en metros">
           <span class="field-unit">metros</span>
         </div>
         <div class="field" id="field-p" style="display:none">
           <span class="field-label">Pendiente</span>
-          <input type="number" class="field-input" id="inp-p" step="0.01" min="0" max="100" oninput="onParamInput('p')">
+          <input type="number" class="field-input" id="inp-p" step="0.01" min="0" max="100" oninput="onParamInput('p')" aria-label="Pendiente en porcentaje">
           <span class="field-unit">%</span>
         </div>
       </div>
@@ -1022,7 +1027,13 @@ function calc() {
   }
 
   const L = parseFloat(document.getElementById('inp-L').value) || 0;
-  if (!L || dh < 0) return;
+  if (!(L > 0) || !(dh > 0)) {
+    document.getElementById('result-zone').innerHTML = '';
+    document.getElementById('hint-zone').innerHTML = '';
+    document.getElementById('diagrams-zone').innerHTML = '';
+    estado = null;
+    return;
+  }
   if (dh > L) {
     document.getElementById('result-zone').innerHTML = `<div class="result-display fail">
       <div class="result-tag">error de entrada</div>

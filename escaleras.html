@@ -6,6 +6,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Escaleras — Navaja Suiza</title>
+<meta name="description" content="Calculadora de escaleras: peralte, contrahuella, número de escalones y verificación de la fórmula de Blondel y normativa.">
+<meta property="og:title" content="Escaleras — Navaja Suiza">
+<meta property="og:description" content="Calcula peralte, contrahuella y número de escalones, con verificación de Blondel y normativa.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 22h4v4H7zM7 16h4v6h6v4H7zM7 10h4v6h6v6h6v4H7z' fill='%23fff'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -378,17 +384,17 @@
       <div class="input-stack">
         <div class="field">
           <span class="field-label">Peralte (h)</span>
-          <input type="number" class="field-input" id="inp-h" placeholder="17.5" step="0.5" min="0" oninput="calc()">
+          <input type="number" class="field-input" id="inp-h" placeholder="17.5" step="0.5" min="0" oninput="calc()" aria-label="Peralte (altura de escalón) en centímetros">
           <span class="field-unit" id="unit-h">cm</span>
         </div>
         <div class="field">
           <span class="field-label">Contrahuella (a)</span>
-          <input type="number" class="field-input" id="inp-a" placeholder="28" step="0.5" min="0" oninput="calc()">
+          <input type="number" class="field-input" id="inp-a" placeholder="28" step="0.5" min="0" oninput="calc()" aria-label="Contrahuella (profundidad de escalón) en centímetros">
           <span class="field-unit" id="unit-a">cm</span>
         </div>
         <div class="field">
           <span class="field-label">Altura total (H)</span>
-          <input type="number" class="field-input" id="inp-H" placeholder="2.80" step="0.01" min="0" oninput="calc()">
+          <input type="number" class="field-input" id="inp-H" placeholder="2.80" step="0.01" min="0" oninput="calc()" aria-label="Altura total a salvar en metros">
           <span class="field-unit" id="unit-H">m</span>
         </div>
       </div>
@@ -398,13 +404,13 @@
 
         <div class="toggle-block">
           <span class="toggle-label">Longitud disponible</span>
-          <input type="number" class="field-input" id="inp-L" placeholder="— calcula auto" step="0.1" min="0" oninput="calc()" style="font-size:18px">
+          <input type="number" class="field-input" id="inp-L" placeholder="— calcula auto" step="0.1" min="0" oninput="calc()" style="font-size:18px" aria-label="Longitud disponible en metros (opcional)">
           <span class="field-unit" id="unit-L">m · opcional</span>
         </div>
 
         <div class="toggle-block">
           <span class="toggle-label">Ancho de escalera</span>
-          <input type="number" class="field-input" id="inp-ancho" value="1.20" step="0.05" min="0.5" oninput="calc()" style="font-size:18px">
+          <input type="number" class="field-input" id="inp-ancho" value="1.20" step="0.05" min="0.5" oninput="calc()" style="font-size:18px" aria-label="Ancho de la escalera en metros">
           <span class="field-unit">m</span>
         </div>
 
@@ -762,8 +768,8 @@ function renderDiagrams(st) {
         <div class="diagram-title">Perfil <em>en corte</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">escala real</div>
-          <button class="export-btn" onclick="exportSVG('svg-corte','escaleras-perfil-corte')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <button class="export-btn" onclick="exportSVG('svg-corte','escaleras-perfil-corte')" aria-label="Exportar perfil en corte como PNG">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
         </div>
@@ -775,8 +781,8 @@ function renderDiagrams(st) {
         <div class="diagram-title">Vista <em>en planta</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">${plantaMeta}</div>
-          <button class="export-btn" onclick="exportSVG('svg-planta','escaleras-planta')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <button class="export-btn" onclick="exportSVG('svg-planta','escaleras-planta')" aria-label="Exportar vista en planta como PNG">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
         </div>
@@ -787,8 +793,8 @@ function renderDiagrams(st) {
       <div class="diagram-head">
         <div class="diagram-title">Detalle <em>de escalón</em></div>
         <div class="diagram-head-right">
-          <button class="export-btn" onclick="exportSVG('svg-detalle','escaleras-detalle-escalon')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <button class="export-btn" onclick="exportSVG('svg-detalle','escaleras-detalle-escalon')" aria-label="Exportar detalle de escalón como PNG">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
         </div>
