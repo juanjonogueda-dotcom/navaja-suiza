@@ -6,6 +6,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Escalímetro — Navaja Suiza</title>
+<meta name="description" content="Escalímetro digital: convierte medidas entre tamaño real y tamaño en plano para cualquier escala (1:50, 1:100, 1:200…).">
+<meta property="og:title" content="Escalímetro — Navaja Suiza">
+<meta property="og:description" content="Convierte medidas entre tamaño real y tamaño en plano para cualquier escala.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 22h4v4H7zM7 16h4v6h6v4H7zM7 10h4v6h6v6h6v4H7z' fill='%23fff'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -101,7 +107,7 @@
 
   .section-head {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     color: var(--text-muted);
     letter-spacing: 0.1em;
     text-transform: lowercase;
@@ -314,7 +320,7 @@
       <div class="toggle-block">
         <div class="scale-row">
           <span class="scale-prefix">1 :</span>
-          <input type="number" class="scale-input" id="scaleFactor" value="100" placeholder="100" min="1">
+          <input type="number" class="scale-input" id="scaleFactor" value="100" placeholder="100" min="1" aria-label="Factor de escala (denominador)">
         </div>
         <div class="seg-control cols-3" id="presets">
           <button data-val="50">1:50</button>
@@ -336,7 +342,7 @@
           <span class="measure-source-tag" id="realSourceTag">editando</span>
         </div>
         <div class="measure-row" id="realRow" title="Clic para copiar">
-          <input type="number" class="measure-input" id="realValue" value="1" step="any" placeholder="0">
+          <input type="number" class="measure-input" id="realValue" value="1" step="any" placeholder="0" aria-label="Tamaño real">
         </div>
         <div class="seg-control cols-5" id="real-unit-control">
           <button data-val="km">km</button>
@@ -353,7 +359,7 @@
           <span class="measure-source-tag" id="planoSourceTag">editando</span>
         </div>
         <div class="measure-row" id="planoRow" title="Clic para copiar">
-          <input type="number" class="measure-input" id="planoValue" step="any" placeholder="0">
+          <input type="number" class="measure-input" id="planoValue" value="" step="any" placeholder="0" aria-label="Tamaño en plano">
         </div>
         <div class="seg-control cols-5" id="plano-unit-control">
           <button data-val="km">km</button>
@@ -365,7 +371,7 @@
       </div>
 
       <div class="section-head" style="margin-top:8px"><span class="num-mark">04</span>proporción</div>
-      <div class="bars-wrap hidden" id="barsWrap">
+      <div class="bars-wrap hidden" id="barsWrap" aria-live="polite">
         <div class="bar-row bar-row--real">
           <div class="bar-label-row">
             <span class="bar-name">real</span>
@@ -404,6 +410,7 @@
   const planoTag = document.getElementById('planoSourceTag');
 
   function formatResult(val) {
+    if (!isFinite(val)) return '';
     if (val === 0) return '0';
     const abs = Math.abs(val);
     if (abs >= 10000) return val.toFixed(0);
@@ -425,13 +432,13 @@
 
     if (lastEdited === 'real') {
       const v = parseFloat(realEl.value);
-      if (isNaN(v) || s <= 0) { planoEl.value = ''; renderBars(null); return; }
+      if (isNaN(v) || v < 0 || s <= 0) { planoEl.value = ''; renderBars(null); return; }
       const planoVal = (v * toM[realUnit] / s) * fromM[planoUnit];
       planoEl.value = formatResult(planoVal);
       renderBars({ realVal: v, planoVal });
     } else {
       const v = parseFloat(planoEl.value);
-      if (isNaN(v) || s <= 0) { realEl.value = ''; renderBars(null); return; }
+      if (isNaN(v) || v < 0 || s <= 0) { realEl.value = ''; renderBars(null); return; }
       const realVal = (v * toM[planoUnit] * s) * fromM[realUnit];
       realEl.value = formatResult(realVal);
       renderBars({ realVal, planoVal: v });
