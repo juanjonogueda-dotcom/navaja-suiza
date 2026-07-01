@@ -565,7 +565,6 @@ function calc() {
   const n = Math.max(1, Math.round(H * 100 / h));
   const hReal = (H * 100) / n;
   const L = n * a / 100;
-  const zanca = Math.sqrt(H * H + L * L);
   const angulo = Math.atan2(H, L) * 180 / Math.PI;
   const pendiente = (H / L) * 100;
   const b = blondel(hReal, a);
@@ -590,6 +589,12 @@ function calc() {
     descansoAdjusted = true;
   }
   const tramosData = { t: tCount, tramos: tArr, nDescansos, descansoMin: descansoSize };
+
+  /* cada tramo tiene su propia zanca (larguero); los descansos son planos
+     y no forman parte de ninguna zanca, así que no se promedian juntos */
+  const aPm = a / 100, hPmReal = hReal / 100;
+  tramosData.zancas = tramosData.tramos.map(nT => Math.sqrt((nT * aPm) ** 2 + (nT * hPmReal) ** 2));
+  tramosData.zancaMax = Math.max(...tramosData.zancas);
 
   const maxPerTramo = Math.max(...tramosData.tramos);
   const hInNorma  = hReal >= norma.hMin  && hReal <= norma.hMax;
@@ -630,9 +635,9 @@ function calc() {
     }
   }
 
-  renderResult({ h: hReal, a, H, n, b, L, totalL, zanca, angulo, pendiente, tramosData, cumple, warn, norma, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo });
+  renderResult({ h: hReal, a, H, n, b, L, totalL, angulo, pendiente, tramosData, cumple, warn, norma, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo });
   renderHint({ h: hReal, a, H, n, b, cumple, warn, bOptimo, maxPerTramo, norma, lHint, nMaxOk, LOk, totalL, nDescansos: tramosData.nDescansos });
-  renderDiagrams({ h: hReal, a, H, n, L, totalL, zanca, angulo, tramosData, cumple, ancho });
+  renderDiagrams({ h: hReal, a, H, n, L, totalL, angulo, tramosData, cumple, ancho });
   renderNormTable({ hReal, a, maxPerTramo }, norma);
   saveState();
 }
@@ -666,7 +671,7 @@ function renderPartial(res, norma) {
 
 function renderResult(st) {
   const zone = document.getElementById('result-zone');
-  const { h, a, H, n, b, L, totalL, zanca, angulo, pendiente, tramosData, cumple, warn, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo } = st;
+  const { h, a, H, n, b, L, totalL, angulo, pendiente, tramosData, cumple, warn, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo } = st;
 
   const hInLimits = h >= 5 && h <= 30;
   const aInLimits = a >= 15;
@@ -695,15 +700,20 @@ function renderResult(st) {
     ? 'tramo único, sin descansos'
     : `${tramosData.t} tramos (${tramosData.tramos.join('+')} escalones) con ${tramosData.nDescansos} descanso${tramosData.nDescansos > 1 ? 's' : ''} de ${tramosData.descansoMin.toFixed(2)} m`;
 
+  const zancaLabel = tramosData.t > 1 ? 'Zanca (tramo mayor)' : 'Zanca';
+  const zancaStr = tramosData.t > 1
+    ? tramosData.zancas.map(z => z.toFixed(2)).join(' + ') + ' m'
+    : tramosData.zancaMax.toFixed(2) + ' m';
+
   zone.innerHTML = `<div class="result-display ${cls}">
     <div class="result-tag">${tagText}</div>
     <div class="result-big"><span class="num">${n}</span><span class="unit-sm"> escalones</span></div>
     <div class="result-line">${nEscStr} · ${tramosStr}</div>
-    <div class="result-cat">Blondel <b style="color:${bColor}">${b.toFixed(1)} cm</b> <span style="color:${bColor}">${bLabel}</span> · pendiente <b>${pendiente.toFixed(1)}%</b></div>
+    <div class="result-cat">Blondel <b style="color:${bColor}">${b.toFixed(1)} cm</b> <span style="color:${bColor}">${bLabel}</span> · pendiente <b>${pendiente.toFixed(1)}%</b>${tramosData.t > 1 ? ` · zancas por tramo <b>${zancaStr}</b>` : ''}</div>
     <div class="metrics-row">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Peralte real</div><div class="metric-value num">${h.toFixed(2)}<span class="unit">cm</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Long. total</div><div class="metric-value num">${totalL.toFixed(2)}<span class="unit">m</span></div></div>
-      <div class="metric-cell"><div class="metric-num-mark">03</div><div class="metric-label">Zanca</div><div class="metric-value num">${zanca.toFixed(2)}<span class="unit">m</span></div></div>
+      <div class="metric-cell"><div class="metric-num-mark">03</div><div class="metric-label">${zancaLabel}</div><div class="metric-value num">${tramosData.zancaMax.toFixed(2)}<span class="unit">m</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">04</div><div class="metric-label">Ángulo</div><div class="metric-value num">${angulo.toFixed(1)}<span class="unit">°</span></div></div>
     </div>
   </div>`;
@@ -861,7 +871,7 @@ function adaptScale(totalL) {
 }
 
 function svgCorte(st) {
-  const { h, a, H, n, L, totalL, zanca, angulo, tramosData, cumple } = st;
+  const { h, a, H, n, totalL, angulo, tramosData, cumple } = st;
   const col = getColors();
   const stroke = cumple ? col.accent : col.warn;
 
@@ -933,12 +943,20 @@ function svgCorte(st) {
     }
   }
 
-  /* zanca — diagonal of stair section only (no descansos) */
-  const zanX1 = toX(0), zanY1 = toY(0), zanX2 = toX(L), zanY2 = toY(H);
-  parts.push(`<line x1="${zanX1}" y1="${zanY1}" x2="${zanX2}" y2="${zanY2}" stroke="${col.muted}" stroke-width="1" stroke-dasharray="5 4"/>`);
-  const zanMx = (zanX1 + zanX2) / 2, zanMy = (zanY1 + zanY2) / 2;
-  const zanAng = Math.atan2(zanY2 - zanY1, zanX2 - zanX1) * 180 / Math.PI;
-  parts.push(`<text x="${zanMx}" y="${zanMy - 8}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="${col.muted}" transform="rotate(${zanAng},${zanMx},${zanMy})">${zanca.toFixed(2)} m</text>`);
+  /* zanca — one stringer per tramo; descansos are flat and sit outside any zanca,
+     so each diagonal reference stops at the landing instead of running through it */
+  let zcx = 0, zcy = 0;
+  tramosData.tramos.forEach((nT, idx) => {
+    const runI = nT * aPm, riseI = nT * hPm;
+    const zanX1 = toX(zcx), zanY1 = toY(zcy);
+    const zanX2 = toX(zcx + runI), zanY2 = toY(zcy + riseI);
+    parts.push(`<line x1="${zanX1}" y1="${zanY1}" x2="${zanX2}" y2="${zanY2}" stroke="${col.muted}" stroke-width="1" stroke-dasharray="5 4"/>`);
+    const zanMx = (zanX1 + zanX2) / 2, zanMy = (zanY1 + zanY2) / 2;
+    const zanAng = Math.atan2(zanY2 - zanY1, zanX2 - zanX1) * 180 / Math.PI;
+    parts.push(`<text x="${zanMx}" y="${zanMy - 8}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="${col.muted}" transform="rotate(${zanAng},${zanMx},${zanMy})">${tramosData.zancas[idx].toFixed(2)} m</text>`);
+    zcx += runI; zcy += riseI;
+    if (idx < tramosData.tramos.length - 1) zcx += descansoMin;
+  });
 
   /* H cota — left side */
   parts.push(`<line x1="${padL - 40}" y1="${toY(0)}" x2="${padL - 40}" y2="${toY(H)}" stroke="${col.muted}" stroke-width="1" marker-end="url(#arr)" marker-start="url(#arr)"/>`);
