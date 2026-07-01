@@ -6,9 +6,9 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Escaleras — Navaja Suiza</title>
-<meta name="description" content="Calculadora de escaleras: peralte, contrahuella, número de escalones y verificación de la fórmula de Blondel y normativa.">
+<meta name="description" content="Calculadora de escaleras: contrahuella, huella, número de escalones y verificación de la fórmula de Blondel y normativa.">
 <meta property="og:title" content="Escaleras — Navaja Suiza">
-<meta property="og:description" content="Calcula peralte, contrahuella y número de escalones, con verificación de Blondel y normativa.">
+<meta property="og:description" content="Calcula contrahuella, huella y número de escalones, con verificación de Blondel y normativa.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 22h4v4H7zM7 16h4v6h6v4H7zM7 10h4v6h6v6h6v4H7z' fill='%23fff'/%3E%3C/svg%3E">
@@ -383,13 +383,13 @@
       <div class="section-head"><span class="num-mark">01</span>parámetros</div>
       <div class="input-stack">
         <div class="field">
-          <span class="field-label">Peralte (h)</span>
-          <input type="number" class="field-input" id="inp-h" placeholder="17.5" step="0.5" min="0" oninput="calc()" aria-label="Peralte (altura de escalón) en centímetros">
+          <span class="field-label">Contrahuella (h)</span>
+          <input type="number" class="field-input" id="inp-h" placeholder="17.5" step="0.5" min="0" oninput="calc()" aria-label="Contrahuella (altura vertical del escalón) en centímetros">
           <span class="field-unit" id="unit-h">cm</span>
         </div>
         <div class="field">
-          <span class="field-label">Contrahuella (a)</span>
-          <input type="number" class="field-input" id="inp-a" placeholder="28" step="0.5" min="0" oninput="calc()" aria-label="Contrahuella (profundidad de escalón) en centímetros">
+          <span class="field-label">Huella (a)</span>
+          <input type="number" class="field-input" id="inp-a" placeholder="28" step="0.5" min="0" oninput="calc()" aria-label="Huella (profundidad horizontal del escalón, donde se pisa) en centímetros">
           <span class="field-unit" id="unit-a">cm</span>
         </div>
         <div class="field">
@@ -579,7 +579,7 @@ function calc() {
 
   /* el descanso es la variable libre: si hay L objetivo y margen, se reparte
      el excedente entre los descansos para cuadrar exactamente esa longitud
-     sin tocar peralte ni contrahuella (que ya cumplen norma) */
+     sin tocar contrahuella ni huella (que ya cumplen norma) */
   let totalL = L + nDescansos * DESCANSO_MIN;
   let descansoSize = DESCANSO_MIN;
   let descansoAdjusted = false;
@@ -622,7 +622,7 @@ function calc() {
   if (LOk) {
     if (descansoAdjusted) {
       if (Math.abs(descansoSize - DESCANSO_MIN) > 0.005) {
-        lHint = `<div class="hint">Descanso ajustado a <b>${descansoSize.toFixed(2)} m</b> (mínimo normativo ${DESCANSO_MIN.toFixed(2)} m) para cubrir exactamente los <b>${LRaw.toFixed(2)} m</b> disponibles, sin tocar peralte ni contrahuella.</div>`;
+        lHint = `<div class="hint">Descanso ajustado a <b>${descansoSize.toFixed(2)} m</b> (mínimo normativo ${DESCANSO_MIN.toFixed(2)} m) para cubrir exactamente los <b>${LRaw.toFixed(2)} m</b> disponibles, sin tocar contrahuella ni huella.</div>`;
       }
     } else {
       const diff = totalL - LRaw;
@@ -648,17 +648,17 @@ function renderPartial(res, norma) {
 
   if (!res.hOk && !res.aOk && !res.HOk) {
     zone.innerHTML = '';
-    hint.innerHTML = `<div class="hint-block"><div class="hint-label">instrucciones</div><div class="hint">Introduce dos de los tres parámetros — <b>peralte</b>, <b>contrahuella</b> o <b>altura total</b> — para calcular el faltante y verificar normativa.</div></div>`;
+    hint.innerHTML = `<div class="hint-block"><div class="hint-label">instrucciones</div><div class="hint">Introduce dos de los tres parámetros — <b>contrahuella</b>, <b>huella</b> o <b>altura total</b> — para calcular el faltante y verificar normativa.</div></div>`;
     return;
   }
 
   let hintText = '';
   if (res.hOk && !res.aOk && !res.HOk) {
     const aSug = 63 - 2 * res.hRaw;
-    hintText = `Con peralte h=${res.hRaw} cm, Blondel sugiere una contrahuella de <b>${aSug.toFixed(1)} cm</b>. Introduce H para calcular escalones.`;
+    hintText = `Con contrahuella h=${res.hRaw} cm, Blondel sugiere una huella de <b>${aSug.toFixed(1)} cm</b>. Introduce H para calcular escalones.`;
   } else if (!res.hOk && res.aOk && !res.HOk) {
     const hSug = (63 - res.aRaw) / 2;
-    hintText = `Con contrahuella a=${res.aRaw} cm, Blondel sugiere un peralte de <b>${hSug.toFixed(1)} cm</b>. Introduce H para calcular escalones.`;
+    hintText = `Con huella a=${res.aRaw} cm, Blondel sugiere una contrahuella de <b>${hSug.toFixed(1)} cm</b>. Introduce H para calcular escalones.`;
   } else if (!res.hOk && !res.aOk && res.HOk) {
     hintText = `Con H=${res.HRaw} m, un punto de partida clásico es <b>h=17.5 cm</b> y <b>a=28 cm</b> (Blondel=63 cm ✓).`;
   }
@@ -677,10 +677,10 @@ function renderResult(st) {
   const aInLimits = a >= 15;
   if (!hInLimits || !aInLimits || n === 0) {
     let msg = '';
-    if (h < 5)  msg = 'Peralte demasiado pequeño (mínimo 5 cm).';
-    else if (h > 30) msg = 'Peralte excesivo (máximo 30 cm).';
-    else if (a < 15) msg = 'Contrahuella insuficiente para el pie (mínimo 15 cm).';
-    else if (n === 0) msg = 'Altura menor a un peralte — no se requiere escalera. Considera una rampa o un escalón.';
+    if (h < 5)  msg = 'Contrahuella demasiado pequeña (mínimo 5 cm).';
+    else if (h > 30) msg = 'Contrahuella excesiva (máximo 30 cm).';
+    else if (a < 15) msg = 'Huella insuficiente para el pie (mínimo 15 cm).';
+    else if (n === 0) msg = 'Altura menor a una contrahuella — no se requiere escalera. Considera una rampa o un escalón.';
     zone.innerHTML = `<div class="result-display fail">
       <div class="result-tag">error de diseño</div>
       <div class="result-big">&mdash;</div>
@@ -711,7 +711,7 @@ function renderResult(st) {
     <div class="result-line">${nEscStr} · ${tramosStr}</div>
     <div class="result-cat">Blondel <b style="color:${bColor}">${b.toFixed(1)} cm</b> <span style="color:${bColor}">${bLabel}</span> · pendiente <b>${pendiente.toFixed(1)}%</b>${tramosData.t > 1 ? ` · zancas por tramo <b>${zancaStr}</b>` : ''}</div>
     <div class="metrics-row">
-      <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Peralte real</div><div class="metric-value num">${h.toFixed(2)}<span class="unit">cm</span></div></div>
+      <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Contrahuella real</div><div class="metric-value num">${h.toFixed(2)}<span class="unit">cm</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Long. total</div><div class="metric-value num">${totalL.toFixed(2)}<span class="unit">m</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">03</div><div class="metric-label">${zancaLabel}</div><div class="metric-value num">${tramosData.zancaMax.toFixed(2)}<span class="unit">m</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">04</div><div class="metric-label">Ángulo</div><div class="metric-value num">${angulo.toFixed(1)}<span class="unit">°</span></div></div>
@@ -761,11 +761,11 @@ function renderNormTable(vals, norma) {
     <div class="head">Mínimo</div>
     <div class="head">Máximo</div>
     <div class="head">Tu valor</div>
-    <div class="norm-row-label">Peralte h</div>
+    <div class="norm-row-label">Contrahuella h</div>
     <div class="${a(hOk)}">${norma.hMin} cm</div>
     <div class="${a(hOk)}">${norma.hMax} cm</div>
     <div class="${a(hOk)}">${h  !== undefined ? h.toFixed(2)   + ' cm' : '—'}</div>
-    <div class="norm-row-label">Contrahuella a</div>
+    <div class="norm-row-label">Huella a</div>
     <div class="${a(aOk)}">${norma.aMin} cm</div>
     <div class="${a(aOk)}">${norma.aMax} cm</div>
     <div class="${a(aOk)}">${ped !== undefined ? ped.toFixed(2) + ' cm' : '—'}</div>
