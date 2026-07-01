@@ -576,7 +576,20 @@ function calc() {
   const tBase = Math.floor(n / tCount), tExtra = n % tCount;
   const tArr = [];
   for (let i = 0; i < tCount; i++) tArr.push(tBase + (i < tExtra ? 1 : 0));
-  const tramosData = { t: tCount, tramos: tArr, nDescansos: tCount - 1, descansoMin: DESCANSO_MIN };
+  const nDescansos = tCount - 1;
+
+  /* el descanso es la variable libre: si hay L objetivo y margen, se reparte
+     el excedente entre los descansos para cuadrar exactamente esa longitud
+     sin tocar peralte ni contrahuella (que ya cumplen norma) */
+  let totalL = L + nDescansos * DESCANSO_MIN;
+  let descansoSize = DESCANSO_MIN;
+  let descansoAdjusted = false;
+  if (LOk && nDescansos > 0 && LRaw >= totalL - 0.001) {
+    descansoSize = DESCANSO_MIN + (LRaw - totalL) / nDescansos;
+    totalL = LRaw;
+    descansoAdjusted = true;
+  }
+  const tramosData = { t: tCount, tramos: tArr, nDescansos, descansoMin: descansoSize };
 
   const maxPerTramo = Math.max(...tramosData.tramos);
   const hInNorma  = hReal >= norma.hMin  && hReal <= norma.hMax;
@@ -585,8 +598,6 @@ function calc() {
   const cumple    = hInNorma && aInNorma && nMaxOk;
   const bOptimo   = b >= 63 && b <= 65;
   const warn      = cumple && maxPerTramo >= norma.nMax - 2;
-
-  const totalL = L + tramosData.nDescansos * DESCANSO_MIN;
 
   const inpL = document.getElementById('inp-L');
   const unitL = document.getElementById('unit-L');
@@ -604,13 +615,18 @@ function calc() {
 
   let lHint = '';
   if (LOk) {
-    const diff = totalL - LRaw;
-    if (diff > 0.01) {
-      lHint = `<div class="hint warn">Faltan <b>${diff.toFixed(2)} m</b> de longitud. La escalera necesita <b>${totalL.toFixed(2)} m</b> pero hay ${LRaw.toFixed(2)} m disponibles.</div>`;
-    } else if (LRaw - totalL > 0.5) {
-      const margen = LRaw - totalL;
-      const aMax2 = Math.min(norma.aMax, a + margen * 100 / n);
-      lHint = `<div class="hint">Tienes <b>${margen.toFixed(2)} m</b> de margen — podrías aumentar la contrahuella hasta <b>${aMax2.toFixed(1)} cm</b>.</div>`;
+    if (descansoAdjusted) {
+      if (Math.abs(descansoSize - DESCANSO_MIN) > 0.005) {
+        lHint = `<div class="hint">Descanso ajustado a <b>${descansoSize.toFixed(2)} m</b> (mínimo normativo ${DESCANSO_MIN.toFixed(2)} m) para cubrir exactamente los <b>${LRaw.toFixed(2)} m</b> disponibles, sin tocar peralte ni contrahuella.</div>`;
+      }
+    } else {
+      const diff = totalL - LRaw;
+      if (diff > 0.01) {
+        const faltaTxt = nDescansos > 0
+          ? `El descanso ya está en su mínimo normativo (<b>${DESCANSO_MIN.toFixed(2)} m</b>) y aun así faltan <b>${diff.toFixed(2)} m</b>. La escalera necesita <b>${totalL.toFixed(2)} m</b> pero hay ${LRaw.toFixed(2)} m disponibles.`
+          : `Faltan <b>${diff.toFixed(2)} m</b> de longitud. La escalera necesita <b>${totalL.toFixed(2)} m</b> pero hay ${LRaw.toFixed(2)} m disponibles.`;
+        lHint = `<div class="hint warn">${faltaTxt}</div>`;
+      }
     }
   }
 
