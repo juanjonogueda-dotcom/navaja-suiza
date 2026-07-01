@@ -564,9 +564,10 @@ function calc() {
   const { h, a, H } = res;
   const n = Math.max(1, Math.round(H * 100 / h));
   const hReal = (H * 100) / n;
-  const L = n * a / 100;
-  const angulo = Math.atan2(H, L) * 180 / Math.PI;
-  const pendiente = (H / L) * 100;
+  /* pendiente e inclinación = pitch de la línea de narices: relación
+     contrahuella/huella por escalón (no depende de tramos ni descansos) */
+  const pendiente = (hReal / a) * 100;
+  const angulo = Math.atan2(hReal, a) * 180 / Math.PI;
   const b = blondel(hReal, a);
 
   /* tramos: auto, ceil(n/15), balanced distribution */
@@ -577,10 +578,16 @@ function calc() {
   for (let i = 0; i < tCount; i++) tArr.push(tBase + (i < tExtra ? 1 : 0));
   const nDescansos = tCount - 1;
 
+  /* nº de huellas = nº de contrahuellas − 1 por tramo: el último escalón
+     de cada tramo remata en el descanso (o en la llegada), que hace de
+     huella superior — por eso no se cuenta una huella extra ahí. El
+     desarrollo horizontal escalonado suma (kᵢ − 1) huellas por tramo. */
+  const goingStepped = tArr.reduce((s, nT) => s + (nT - 1) * a, 0) / 100;
+
   /* el descanso es la variable libre: si hay L objetivo y margen, se reparte
      el excedente entre los descansos para cuadrar exactamente esa longitud
      sin tocar contrahuella ni huella (que ya cumplen norma) */
-  let totalL = L + nDescansos * DESCANSO_MIN;
+  let totalL = goingStepped + nDescansos * DESCANSO_MIN;
   let descansoSize = DESCANSO_MIN;
   let descansoAdjusted = false;
   if (LOk && nDescansos > 0 && LRaw >= totalL - 0.001) {
@@ -590,10 +597,12 @@ function calc() {
   }
   const tramosData = { t: tCount, tramos: tArr, nDescansos, descansoMin: descansoSize };
 
-  /* cada tramo tiene su propia zanca (larguero); los descansos son planos
+  /* cada tramo tiene su propia zanca (larguero): recorre nT contrahuellas
+     de subida y (nT − 1) huellas de avance horizontal (el remate superior
+     es el descanso o la llegada, no una huella). Los descansos son planos
      y no forman parte de ninguna zanca, así que no se promedian juntos */
   const aPm = a / 100, hPmReal = hReal / 100;
-  tramosData.zancas = tramosData.tramos.map(nT => Math.sqrt((nT * aPm) ** 2 + (nT * hPmReal) ** 2));
+  tramosData.zancas = tramosData.tramos.map(nT => Math.sqrt(((nT - 1) * aPm) ** 2 + (nT * hPmReal) ** 2));
   tramosData.zancaMax = Math.max(...tramosData.zancas);
 
   const maxPerTramo = Math.max(...tramosData.tramos);
@@ -635,9 +644,9 @@ function calc() {
     }
   }
 
-  renderResult({ h: hReal, a, H, n, b, L, totalL, angulo, pendiente, tramosData, cumple, warn, norma, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo });
+  renderResult({ h: hReal, a, H, n, b, totalL, angulo, pendiente, tramosData, cumple, warn, norma, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo });
   renderHint({ h: hReal, a, H, n, b, cumple, warn, bOptimo, maxPerTramo, norma, lHint, nMaxOk, LOk, totalL, nDescansos: tramosData.nDescansos });
-  renderDiagrams({ h: hReal, a, H, n, L, totalL, angulo, tramosData, cumple, ancho });
+  renderDiagrams({ h: hReal, a, H, n, totalL, angulo, tramosData, cumple, ancho });
   renderNormTable({ hReal, a, maxPerTramo }, norma);
   saveState();
 }
@@ -671,7 +680,7 @@ function renderPartial(res, norma) {
 
 function renderResult(st) {
   const zone = document.getElementById('result-zone');
-  const { h, a, H, n, b, L, totalL, angulo, pendiente, tramosData, cumple, warn, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo } = st;
+  const { h, a, H, n, b, totalL, angulo, pendiente, tramosData, cumple, warn, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo } = st;
 
   const hInLimits = h >= 5 && h <= 30;
   const aInLimits = a >= 15;
@@ -864,6 +873,7 @@ const MIN_DRAW_W  = 600;
 const MAX_DRAW_W  = 1100;
 
 function adaptScale(totalL) {
+  if (!(totalL > 0)) return IDEAL_SCALE;   /* escalón único: desarrollo 0 */
   const ideal = totalL * IDEAL_SCALE;
   if (ideal < MIN_DRAW_W) return MIN_DRAW_W / totalL;
   if (ideal > MAX_DRAW_W) return MAX_DRAW_W / totalL;
@@ -903,7 +913,7 @@ function svgCorte(st) {
     let cx = 0, cy = 0;
     for (let t = 0; t < tramosData.t; t++) {
       const nT = tramosData.tramos[t];
-      const tL = nT * aPm;
+      const tL = (nT - 1) * aPm;   /* (nT − 1) huellas por tramo */
       const tH = nT * hPm;
       const x1 = toX(cx), y1 = toY(cy);
       const x2 = toX(cx + tL), y2 = toY(cy + tH);
@@ -925,12 +935,15 @@ function svgCorte(st) {
     for (let t = 0; t < tramosData.t; t++) {
       const nT = tramosData.tramos[t];
       for (let i = 0; i < nT; i++) {
-        /* riser */
+        /* riser (contrahuella): siempre nT por tramo */
         parts.push(`<line class="ramp-seg" x1="${toX(cx)}" y1="${toY(cy)}" x2="${toX(cx)}" y2="${toY(cy + hPm)}" stroke="${stroke}" stroke-width="0.8" stroke-linecap="round"/>`);
-        /* tread */
-        parts.push(`<line class="ramp-seg" x1="${toX(cx)}" y1="${toY(cy + hPm)}" x2="${toX(cx + aPm)}" y2="${toY(cy + hPm)}" stroke="${stroke}" stroke-width="0.8" stroke-linecap="round"/>`);
-        cx += aPm;
         cy += hPm;
+        /* tread (huella): sólo (nT − 1); el último escalón remata en el
+           descanso o la llegada, sin huella propia */
+        if (i < nT - 1) {
+          parts.push(`<line class="ramp-seg" x1="${toX(cx)}" y1="${toY(cy)}" x2="${toX(cx + aPm)}" y2="${toY(cy)}" stroke="${stroke}" stroke-width="0.8" stroke-linecap="round"/>`);
+          cx += aPm;
+        }
       }
       if (t < tramosData.t - 1) {
         const dx = descansoMin;
@@ -947,7 +960,7 @@ function svgCorte(st) {
      so each diagonal reference stops at the landing instead of running through it */
   let zcx = 0, zcy = 0;
   tramosData.tramos.forEach((nT, idx) => {
-    const runI = nT * aPm, riseI = nT * hPm;
+    const runI = (nT - 1) * aPm, riseI = nT * hPm;
     const zanX1 = toX(zcx), zanY1 = toY(zcy);
     const zanX2 = toX(zcx + runI), zanY2 = toY(zcy + riseI);
     parts.push(`<line x1="${zanX1}" y1="${zanY1}" x2="${zanX2}" y2="${zanY2}" stroke="${col.muted}" stroke-width="1" stroke-dasharray="5 4"/>`);
@@ -981,7 +994,7 @@ function svgCorte(st) {
 }
 
 function svgPlanta(st) {
-  const { a, n, L, totalL, tramosData, cumple, ancho } = st;
+  const { a, n, totalL, tramosData, cumple, ancho } = st;
   const col = getColors();
   const stroke = cumple ? col.accent : col.warn;
 
@@ -1010,15 +1023,17 @@ function svgPlanta(st) {
   let cx = 0;
   for (let t = 0; t < tramosData.t; t++) {
     const nT = tramosData.tramos[t];
-    for (let i = 0; i < nT; i++) {
-      const stepNum = tramosData.tramos.slice(0, t).reduce((s, v) => s + v, 0) + i + 1;
+    const stepOffset = tramosData.tramos.slice(0, t).reduce((s, v) => s + v, 0);
+    const nTreads = nT - 1;   /* (nT − 1) huellas por tramo */
+    for (let i = 0; i < nTreads; i++) {
+      const stepNum = stepOffset + i + 1;
       const xMid = toX(cx + aPm / 2);
       if (n <= 30 || stepNum % 5 === 0 || stepNum === 1 || stepNum === n) {
         const fs = anchoPx < 35 ? 8 : 10;
         parts.push(`<text x="${xMid}" y="${yMid + fs / 3}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="${fs}" fill="${col.mid}">${stepNum}</text>`);
       }
       cx += aPm;
-      if (i < nT - 1) {
+      if (i < nTreads - 1) {
         parts.push(`<line x1="${toX(cx)}" y1="${yTop}" x2="${toX(cx)}" y2="${yBot}" stroke="${stroke}" stroke-width="1" stroke-opacity="0.85"/>`);
       }
     }
