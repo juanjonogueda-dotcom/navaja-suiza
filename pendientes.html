@@ -812,7 +812,7 @@ function loadState() {
 
 function getConstantes() {
   return {
-    descansoMin:  1.20,
+    descansoMin:  app === 'cablebus' ? 1.50 : 1.20,
     anchoMin:     app === 'cablebus' ? 1.50 : 1.00,
     maxLong6pct:  app === 'cablebus' ? 8.00 : 10.00,
     maxLong8pct:  app === 'cablebus' ? 6.00 : 6.00,
