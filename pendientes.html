@@ -553,6 +553,17 @@
           </div>
         </div>
 
+        <div id="descanso-block" class="toggle-block">
+          <span class="toggle-label">Descanso</span>
+          <div class="seg-control cols-2" id="descanso-control">
+            <button class="active" data-val="auto">mínimo</button>
+            <div class="tramos-input-cell">
+              <input type="number" id="inp-descanso" min="1.20" step="0.05" placeholder="m" class="tramos-input">
+            </div>
+          </div>
+          <span class="toggle-note" id="descanso-note">Mínimo normativo: 1.20 m. Auméntalo para descansos con cambio de dirección u otras necesidades de giro.</span>
+        </div>
+
         <div class="toggle-block">
           <span class="toggle-label">Tipo de proyecto</span>
           <div class="seg-control cols-2" id="tipo-control">
@@ -598,6 +609,8 @@ let tipo = 'nuevo';
 let app = 'general';
 let modoCalculo = 'verificar';
 let pendienteObj = 6.00;
+let descansoModo = 'auto';
+let descansoCustom = null;
 let estado = null;
 let libreOrder = ['L', 'dh', 'p'];  /* first = most recent edited; last = computed */
 
@@ -654,8 +667,59 @@ tramosInput.addEventListener('input', () => {
   calc();
   saveState();
 });
+/* Descanso: auto button (mínimo normativo) + numeric input cell (largo personalizado) */
+function descansoMinimoNormativo() { return app === 'cablebus' ? 1.50 : 1.20; }
+
+const descansoAutoBtn = document.querySelector('#descanso-control button[data-val="auto"]');
+const descansoInput   = document.getElementById('inp-descanso');
+const descansoCell    = descansoInput.closest('.tramos-input-cell');
+const descansoNote    = document.getElementById('descanso-note');
+
+function syncDescansoUI() {
+  const min = descansoMinimoNormativo();
+  descansoInput.min = min.toFixed(2);
+  descansoInput.placeholder = min.toFixed(2);
+  if (descansoModo === 'custom' && descansoCustom !== null && descansoCustom < min) {
+    descansoCustom = min;
+    descansoInput.value = min.toFixed(2);
+  }
+  descansoNote.textContent = descansoModo === 'custom'
+    ? `Mínimo normativo: ${min.toFixed(2)} m. Se respeta ese piso aunque escribas un valor menor.`
+    : `Mínimo normativo: ${min.toFixed(2)} m. Auméntalo para descansos con cambio de dirección u otras necesidades de giro.`;
+}
+
+descansoAutoBtn.addEventListener('click', () => {
+  descansoModo = 'auto';
+  descansoCustom = null;
+  descansoAutoBtn.classList.add('active');
+  descansoCell.classList.remove('active');
+  descansoInput.value = '';
+  syncDescansoUI();
+  calc();
+  saveState();
+});
+descansoInput.addEventListener('input', () => {
+  const v = parseFloat(descansoInput.value);
+  if (Number.isFinite(v) && v > 0) {
+    descansoModo = 'custom';
+    descansoCustom = v;
+    descansoAutoBtn.classList.remove('active');
+    descansoCell.classList.add('active');
+  } else {
+    descansoModo = 'auto';
+    descansoCustom = null;
+    descansoAutoBtn.classList.add('active');
+    descansoCell.classList.remove('active');
+  }
+  calc();
+  saveState();
+});
+descansoInput.addEventListener('blur', () => {
+  if (descansoModo === 'custom') { syncDescansoUI(); saveState(); }
+});
+
 initSegControl('#tipo-control button', v => { tipo = v; calc(); });
-initSegControl('#app-control button', v => { app = v; calc(); });
+initSegControl('#app-control button', v => { app = v; syncDescansoUI(); calc(); });
 initSegControl('#modo-calc-control button', v => {
   modoCalculo = v;
   aplicarModoCalculo();
@@ -729,6 +793,7 @@ function aplicarModoCalculo() {
   document.getElementById('inp-L').closest('.field').style.display = esCalc ? 'none' : '';
   document.getElementById('field-p').style.display = esLibre ? '' : 'none';
   document.getElementById('tramos-block').style.display = (esCalc || esLibre) ? 'none' : '';
+  document.getElementById('descanso-block').style.display = esLibre ? 'none' : '';
   document.getElementById('pendiente-obj-block').style.display = esCalc ? '' : 'none';
   document.getElementById('tipo-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
   document.getElementById('app-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
@@ -753,6 +818,8 @@ function saveState() {
     localStorage.setItem('pendientes_pendienteObj', pendienteObj.toFixed(2));
     localStorage.setItem('pendientes_p',            document.getElementById('inp-p').value);
     localStorage.setItem('pendientes_libreOrder',   libreOrder.join(','));
+    localStorage.setItem('pendientes_descansoModo', descansoModo);
+    localStorage.setItem('pendientes_descansoCustom', descansoCustom !== null ? String(descansoCustom) : '');
   } catch (e) {}
 }
 
@@ -793,6 +860,19 @@ function loadState() {
       document.querySelectorAll('#app-control button').forEach(b =>
         b.classList.toggle('active', b.dataset.val === sApp));
     }
+    const sDescansoModo   = localStorage.getItem('pendientes_descansoModo');
+    const sDescansoCustom = localStorage.getItem('pendientes_descansoCustom');
+    if (sDescansoModo === 'custom' && sDescansoCustom) {
+      const v = parseFloat(sDescansoCustom);
+      if (Number.isFinite(v) && v > 0) {
+        descansoModo = 'custom';
+        descansoCustom = v;
+        descansoAutoBtn.classList.remove('active');
+        descansoCell.classList.add('active');
+        descansoInput.value = String(v);
+      }
+    }
+    syncDescansoUI();
     if (sModoCalculo) {
       modoCalculo = sModoCalculo;
       document.querySelectorAll('#modo-calc-control button').forEach(b =>
@@ -811,8 +891,11 @@ function loadState() {
 }
 
 function getConstantes() {
+  const descansoMin = descansoMinimoNormativo();
   return {
-    descansoMin:  app === 'cablebus' ? 1.50 : 1.20,
+    descansoMin,
+    descanso:     descansoModo === 'custom' && descansoCustom !== null
+      ? Math.max(descansoMin, descansoCustom) : descansoMin,
     anchoMin:     app === 'cablebus' ? 1.50 : 1.00,
     maxLong6pct:  app === 'cablebus' ? 8.00 : 10.00,
     maxLong8pct:  app === 'cablebus' ? 6.00 : 6.00,
@@ -845,14 +928,14 @@ function calcularLongitudMinima(dh, p, k) {
   const n = Math.max(1, Math.ceil(lUtil / tramoMax));
   const nDesc = n - 1;
   const lTramo = lUtil / n;
-  const lTotal = lUtil + nDesc * k.descansoMin;
+  const lTotal = lUtil + nDesc * k.descanso;
 
   const impracticable = n > 10 || lTotal > 200;
 
   return {
     n, nDescansos: nDesc, lTotal, lUtil, lTramo,
     limite, pendiente: p, categoria,
-    descansoMin: k.descansoMin, anchoMin: k.anchoMin,
+    descanso: k.descanso, anchoMin: k.anchoMin,
     impracticable
   };
 }
@@ -868,7 +951,7 @@ function categoriaTramo(lTramo, k) {
 
 function calcularConfig(L, dh, n, k) {
   const nDescansos = Math.max(0, n - 1);
-  const lUtil = L - nDescansos * k.descansoMin;
+  const lUtil = L - nDescansos * k.descanso;
   if (lUtil <= 0) return { error: 'no-cabe', n };
   const lTramo = lUtil / n;
   const cat = categoriaTramo(lTramo, k);
@@ -882,7 +965,7 @@ function calcularConfig(L, dh, n, k) {
   const cumple = pendiente <= cat.limite + 0.001;
   return { n, nDescansos, lUtil, lTramo, pendiente, limite: cat.limite,
     categoria: cat.categoria, rangoTexto: cat.rangoTexto, cumple,
-    dhTramo: dh / n, descansoMin: k.descansoMin, anchoMin: k.anchoMin };
+    dhTramo: dh / n, descanso: k.descanso, anchoMin: k.anchoMin };
 }
 
 function buscarAuto(L, dh, k) {
@@ -913,7 +996,7 @@ function longitudMinima(dh, k) {
       const lUtilMin = dh / (cand.lim / 100);
       const lTramo = lUtilMin / n;
       if (lTramo < cand.minL || lTramo > cand.maxL + 0.001) continue;
-      const lTotal = lUtilMin + nDesc * k.descansoMin;
+      const lTotal = lUtilMin + nDesc * k.descanso;
       if (!mejor || lTotal < mejor.lTotal)
         mejor = { n, lTotal, lUtilMin, lTramo, limite: cand.lim, categoria: cand.cat };
     }
@@ -1102,7 +1185,7 @@ function renderResultCalc(st) {
     : '';
   const lineHtml = r.n === 1
     ? `Tramo único de <em>${r.lTramo.toFixed(2)} m</em>, sin descansos.`
-    : `<em>${r.n} tramos</em> de <em>${r.lTramo.toFixed(2)} m</em> con <em>${r.nDescansos} descanso${r.nDescansos > 1 ? 's' : ''}</em> de <em>${r.descansoMin.toFixed(2)} m</em>.`;
+    : `<em>${r.n} tramos</em> de <em>${r.lTramo.toFixed(2)} m</em> con <em>${r.nDescansos} descanso${r.nDescansos > 1 ? 's' : ''}</em> de <em>${r.descanso.toFixed(2)} m</em>.`;
   const lInclinada = r.lTramo * Math.sqrt(1 + (r.pendiente / 100) ** 2);
   zone.innerHTML = `<div class="result-display ok">
     <div class="result-tag">longitud mínima necesaria</div>
@@ -1142,7 +1225,7 @@ function renderResult(st) {
   const ok = c.cumple;
   const lineHtml = c.n === 1
     ? `Tramo único de <em>${c.lTramo.toFixed(2)} m</em>, sin descansos.`
-    : `<em>${c.n} tramos</em> de <em>${c.lTramo.toFixed(2)} m</em> con <em>${c.nDescansos} descanso${c.nDescansos > 1 ? 's' : ''}</em> de <em>${c.descansoMin.toFixed(2)} m</em>.`;
+    : `<em>${c.n} tramos</em> de <em>${c.lTramo.toFixed(2)} m</em> con <em>${c.nDescansos} descanso${c.nDescansos > 1 ? 's' : ''}</em> de <em>${c.descanso.toFixed(2)} m</em>.`;
   const excesoHtml = !ok
     ? `<br/><span style="color:var(--warn)">Excede ${(c.pendiente - c.limite).toFixed(2)} puntos porcentuales.</span>` : '';
   const lInclinada = c.lTramo * Math.sqrt(1 + (c.pendiente / 100) ** 2);
@@ -1208,7 +1291,9 @@ function renderNormTable(st, k) {
     <div class="${a(cat8)}">${appLabel}</div>
     <div></div>
     <div class="norm-row-label">Descanso</div>
-    <div>${k.descansoMin.toFixed(2)} m mínimo</div>
+    <div>${k.descanso > k.descansoMin + 0.001
+      ? `${k.descansoMin.toFixed(2)} m mínimo · usando ${k.descanso.toFixed(2)} m`
+      : `${k.descansoMin.toFixed(2)} m mínimo`}</div>
     <div>—</div>
     <div></div>
     <div class="norm-row-label">Ancho libre</div>
@@ -1289,7 +1374,7 @@ function svgCorte(st) {
   const pxPerM_V = pxPerM_H * 5;
   const dhPx = st.dh * pxPerM_V;
   const tramoPx = c.lTramo * pxPerM_H;
-  const descansoPx = c.descansoMin * pxPerM_H;
+  const descansoPx = c.descanso * pxPerM_H;
   const dhTramoPx = c.dhTramo * pxPerM_V;
   const yTop = 70, yBase = yTop + dhPx, totalH = yBase + 100;
   const segs = [];
@@ -1348,7 +1433,7 @@ function svgPlanta(st) {
   const drawW = W - padL - padR;
   const pxPerM = drawW / st.L;
   const tramoPx = c.lTramo * pxPerM;
-  const descansoPx = c.descansoMin * pxPerM;
+  const descansoPx = c.descanso * pxPerM;
   const ancho = c.anchoMin * pxPerM;
   const yTop = 60, yBot = yTop + ancho, yMid = yTop + ancho / 2, totalH = yBot + 90;
   let parts = [];
