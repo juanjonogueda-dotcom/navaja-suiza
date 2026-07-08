@@ -179,7 +179,7 @@
   .type-btn:hover { color: var(--text-mid); }
   .type-btn.active { color: var(--bg); background: var(--text); }
 
-  .sentido-toggle { display: flex; gap: 8px; }
+  .sentido-toggle { display: flex; gap: 8px; flex-wrap: wrap; }
   .sentido-btn {
     background: none;
     border: 1px solid var(--border);
@@ -433,7 +433,7 @@
           <input type="number" class="field-input" id="inp-h" placeholder="17.5" step="0.5" min="0" oninput="calc()" aria-label="Contrahuella (altura vertical del escalón) en centímetros">
           <span class="field-unit" id="unit-h">cm</span>
         </div>
-        <div class="field">
+        <div class="field" id="field-a-block">
           <span class="field-label" id="label-a">Huella (a)</span>
           <input type="number" class="field-input" id="inp-a" placeholder="28" step="0.5" min="0" oninput="calc()" aria-label="Huella (profundidad horizontal del escalón, donde se pisa) en centímetros">
           <span class="field-unit" id="unit-a">cm</span>
@@ -454,16 +454,35 @@
           <span class="field-unit" id="unit-L">m · opcional</span>
         </div>
 
-        <div class="toggle-block" id="block-ri" style="display:none">
-          <span class="toggle-label">Radio interior (Ri)</span>
-          <input type="number" class="field-input" id="inp-ri" value="0" step="0.05" min="0" oninput="calc()" style="font-size:18px" aria-label="Radio interior del ojo o poste central, en metros">
-          <span class="field-unit">m · 0 = poste central</span>
-        </div>
-
-        <div class="toggle-block">
+        <div class="toggle-block" id="block-ancho">
           <span class="toggle-label" id="label-ancho">Ancho de escalera</span>
           <input type="number" class="field-input" id="inp-ancho" value="1.20" step="0.05" min="0.5" oninput="calc()" style="font-size:18px" aria-label="Ancho de la escalera en metros">
           <span class="field-unit" id="unit-ancho">m</span>
+        </div>
+
+        <div class="toggle-block" id="block-diam-ext" style="display:none">
+          <span class="toggle-label">Diámetro exterior (Ø)</span>
+          <input type="number" class="field-input" id="inp-diam-ext" value="1.20" step="0.05" min="0.3" oninput="calc()" style="font-size:18px" aria-label="Diámetro exterior de la escalera, en metros">
+          <span class="field-unit">m</span>
+        </div>
+
+        <div class="toggle-block" id="block-diam-int" style="display:none">
+          <span class="toggle-label">Diámetro del poste central</span>
+          <input type="number" class="field-input" id="inp-diam-int" value="0.10" step="0.05" min="0" oninput="calc()" style="font-size:18px" aria-label="Diámetro del poste u ojo central, en metros">
+          <span class="field-unit">m · 0 = sin poste</span>
+        </div>
+
+        <div class="toggle-block" id="block-giro" style="display:none">
+          <span class="toggle-label">Ángulo de giro</span>
+          <input type="number" class="field-input" id="inp-giro" value="360" step="5" min="45" max="1080" oninput="calc()" style="font-size:18px" aria-label="Ángulo de giro total de la escalera, en grados">
+          <span class="field-unit">°</span>
+          <div class="sentido-toggle" id="giro-presets" style="margin-top:6px">
+            <button type="button" class="sentido-btn" data-giro="180" onclick="setGiro(180)">180°</button>
+            <button type="button" class="sentido-btn" data-giro="270" onclick="setGiro(270)">270°</button>
+            <button type="button" class="sentido-btn active" data-giro="360" onclick="setGiro(360)">360°</button>
+            <button type="button" class="sentido-btn" data-giro="450" onclick="setGiro(450)">450°</button>
+            <button type="button" class="sentido-btn" data-giro="540" onclick="setGiro(540)">540°</button>
+          </div>
         </div>
 
         <div class="toggle-block" id="block-sentido" style="display:none">
@@ -501,33 +520,39 @@ let sentidoGiro = 'horario';
 
 function saveState() {
   try {
-    localStorage.setItem('escaleras_h',       document.getElementById('inp-h').value);
-    localStorage.setItem('escaleras_a',       document.getElementById('inp-a').value);
-    localStorage.setItem('escaleras_H',       document.getElementById('inp-H').value);
-    localStorage.setItem('escaleras_L',       document.getElementById('inp-L').value);
-    localStorage.setItem('escaleras_ancho',   document.getElementById('inp-ancho').value);
-    localStorage.setItem('escaleras_ri',      document.getElementById('inp-ri').value);
-    localStorage.setItem('escaleras_tipo',    tipoEscalera);
-    localStorage.setItem('escaleras_sentido', sentidoGiro);
+    localStorage.setItem('escaleras_h',         document.getElementById('inp-h').value);
+    localStorage.setItem('escaleras_a',         document.getElementById('inp-a').value);
+    localStorage.setItem('escaleras_H',         document.getElementById('inp-H').value);
+    localStorage.setItem('escaleras_L',         document.getElementById('inp-L').value);
+    localStorage.setItem('escaleras_ancho',     document.getElementById('inp-ancho').value);
+    localStorage.setItem('escaleras_diamExt',   document.getElementById('inp-diam-ext').value);
+    localStorage.setItem('escaleras_diamInt',   document.getElementById('inp-diam-int').value);
+    localStorage.setItem('escaleras_giro',      document.getElementById('inp-giro').value);
+    localStorage.setItem('escaleras_tipo',      tipoEscalera);
+    localStorage.setItem('escaleras_sentido',   sentidoGiro);
   } catch (e) {}
 }
 
 function loadState() {
   try {
-    const sh      = localStorage.getItem('escaleras_h');
-    const sa      = localStorage.getItem('escaleras_a');
-    const sH      = localStorage.getItem('escaleras_H');
-    const sL      = localStorage.getItem('escaleras_L');
-    const sAncho  = localStorage.getItem('escaleras_ancho');
-    const sRi     = localStorage.getItem('escaleras_ri');
-    const sTipo   = localStorage.getItem('escaleras_tipo');
+    const sh       = localStorage.getItem('escaleras_h');
+    const sa       = localStorage.getItem('escaleras_a');
+    const sH       = localStorage.getItem('escaleras_H');
+    const sL       = localStorage.getItem('escaleras_L');
+    const sAncho   = localStorage.getItem('escaleras_ancho');
+    const sDiamExt = localStorage.getItem('escaleras_diamExt');
+    const sDiamInt = localStorage.getItem('escaleras_diamInt');
+    const sGiro    = localStorage.getItem('escaleras_giro');
+    const sTipo    = localStorage.getItem('escaleras_tipo');
     const sSentido = localStorage.getItem('escaleras_sentido');
-    if (sh)     document.getElementById('inp-h').value     = sh;
-    if (sa)     document.getElementById('inp-a').value     = sa;
-    if (sH)     document.getElementById('inp-H').value     = sH;
-    if (sL)     document.getElementById('inp-L').value     = sL;
-    if (sAncho) document.getElementById('inp-ancho').value = sAncho;
-    if (sRi)    document.getElementById('inp-ri').value    = sRi;
+    if (sh)       document.getElementById('inp-h').value        = sh;
+    if (sa)       document.getElementById('inp-a').value        = sa;
+    if (sH)       document.getElementById('inp-H').value        = sH;
+    if (sL)       document.getElementById('inp-L').value         = sL;
+    if (sAncho)   document.getElementById('inp-ancho').value     = sAncho;
+    if (sDiamExt) document.getElementById('inp-diam-ext').value  = sDiamExt;
+    if (sDiamInt) document.getElementById('inp-diam-int').value  = sDiamInt;
+    if (sGiro)    document.getElementById('inp-giro').value      = sGiro;
     if (sTipo === 'helicoidal' || sTipo === 'recta') tipoEscalera = sTipo;
     if (sSentido === 'horario' || sSentido === 'antihorario') sentidoGiro = sSentido;
   } catch (e) {}
@@ -554,6 +579,19 @@ function setSentido(s) {
   saveState();
 }
 
+function syncGiroChips(deg) {
+  document.querySelectorAll('#giro-presets .sentido-btn').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.giro) === Number(deg));
+  });
+}
+
+function setGiro(deg) {
+  document.getElementById('inp-giro').value = deg;
+  syncGiroChips(deg);
+  calc();
+  saveState();
+}
+
 function updateTipoUI() {
   const esHelicoidal = tipoEscalera === 'helicoidal';
   document.getElementById('btn-tipo-recta').classList.toggle('active', !esHelicoidal);
@@ -561,30 +599,22 @@ function updateTipoUI() {
   document.getElementById('btn-tipo-helicoidal').classList.toggle('active', esHelicoidal);
   document.getElementById('btn-tipo-helicoidal').setAttribute('aria-selected', String(esHelicoidal));
 
+  document.getElementById('field-a-block').style.display = esHelicoidal ? 'none' : '';
   document.getElementById('block-L').style.display = esHelicoidal ? 'none' : '';
-  document.getElementById('block-ri').style.display = esHelicoidal ? '' : 'none';
+  document.getElementById('block-ancho').style.display = esHelicoidal ? 'none' : '';
+  document.getElementById('block-diam-ext').style.display = esHelicoidal ? '' : 'none';
+  document.getElementById('block-diam-int').style.display = esHelicoidal ? '' : 'none';
+  document.getElementById('block-giro').style.display = esHelicoidal ? '' : 'none';
   document.getElementById('block-sentido').style.display = esHelicoidal ? '' : 'none';
 
-  document.getElementById('label-a').textContent = esHelicoidal ? 'Huella en línea de huella (a)' : 'Huella (a)';
-  document.getElementById('inp-a').setAttribute('aria-label', esHelicoidal
-    ? 'Huella medida sobre la línea de huella, a 50 cm del borde interior, en centímetros'
-    : 'Huella (profundidad horizontal del escalón, donde se pisa) en centímetros');
-  document.getElementById('label-ancho').textContent = esHelicoidal ? 'Ancho de escalera (Re − Ri)' : 'Ancho de escalera';
-
   syncSentidoButtons(sentidoGiro);
+  syncGiroChips(document.getElementById('inp-giro').value);
 
-  document.getElementById('norm-ref-title').textContent = esHelicoidal ? 'norma aplicada · CTE DB-SUA (trazado curvo)' : 'norma aplicada · RCDF';
-  document.getElementById('norm-ref-desc').textContent = esHelicoidal
-    ? 'Límites normativos para escaleras de trazado curvo/helicoidal, medidos sobre la línea de huella (50 cm desde el borde interior).'
-    : 'Límites normativos para diseño de escaleras.';
+  document.getElementById('norm-ref-section').style.display = esHelicoidal ? 'none' : '';
 }
 
 function getNorma() {
   return { hMin: 15, hMax: 20, aMin: 25, aMax: 32, nMax: 15 };
-}
-
-function getNormaHelicoidal() {
-  return { hMin: 15, hMax: 20, aMin: 28, aMaxExt: 44 };
 }
 
 function blondel(h, a) { return 2 * h + a; }
@@ -778,99 +808,63 @@ function calcRecta() {
 }
 
 function calcHelicoidal() {
-  const res = resolveInputs();
-  const normaH = getNormaHelicoidal();
   const inpH = document.getElementById('inp-h');
-  const inpA = document.getElementById('inp-a');
   const unitH = document.getElementById('unit-h');
-  const unitA = document.getElementById('unit-a');
+  inpH.classList.remove('computed');
+  unitH.className = 'field-unit'; unitH.textContent = 'cm';
 
-  inpH.classList.remove('computed'); inpA.classList.remove('computed');
-  unitH.className = 'field-unit'; unitA.className = 'field-unit';
-  unitH.textContent = 'cm'; unitA.textContent = 'cm';
+  const hRaw = parseFloat(inpH.value);
+  const HRaw = parseFloat(document.getElementById('inp-H').value);
+  const hOk = !isNaN(hRaw) && hRaw > 0;
+  const HOk = !isNaN(HRaw) && HRaw > 0;
 
-  if (res.state === 'partial') {
-    renderPartial(res, normaH);
+  if (!hOk || !HOk) {
+    document.getElementById('result-zone').innerHTML = '';
+    document.getElementById('hint-zone').innerHTML = `<div class="hint-block"><div class="hint-label">instrucciones</div><div class="hint">Introduce la <b>contrahuella</b> y la <b>altura total</b>. El diámetro y el ángulo de giro definen la huella automáticamente — no hace falta calcularla a mano.</div></div>`;
     document.getElementById('diagrams-zone').innerHTML = '';
-    renderNormTableHelicoidal(null, normaH);
     saveState();
     return;
   }
 
-  if (res.state === 'partial-ha') {
-    const b = blondel(res.h, res.a);
-    const bOk = b >= 63 && b <= 65;
-    document.getElementById('result-zone').innerHTML = `
-      <div class="result-display ok">
-        <div class="result-tag">blondel · introduce H para calcular escalones</div>
-        <div class="result-big"><span class="num">${b.toFixed(1)}</span><span class="unit-sm">cm</span></div>
-        <div class="result-line">2h + a = 2×${res.h.toFixed(1)} + ${res.a.toFixed(1)} = <em>${b.toFixed(1)} cm</em> ${bOk ? '· confort óptimo ✓' : '· fuera del rango cómodo (63–65 cm)'}</div>
-      </div>`;
-    document.getElementById('hint-zone').innerHTML = `<div class="hint-block"><div class="hint-label">siguiente paso</div><div class="hint">Introduce la <b>altura total H</b> para calcular el número de escalones.</div></div>`;
-    document.getElementById('diagrams-zone').innerHTML = '';
-    renderNormTableHelicoidal(null, normaH);
-    saveState();
-    return;
-  }
-
-  if (res.computed === 'a') {
-    inpA.classList.add('computed');
-    inpA.placeholder = '→ ' + res.a.toFixed(2);
-    unitA.className = 'field-unit computed-label';
-    unitA.textContent = 'calculado';
-  }
-  if (res.computed === 'h') {
-    inpH.classList.add('computed');
-    inpH.placeholder = '→ ' + res.h.toFixed(2);
-    unitH.className = 'field-unit computed-label';
-    unitH.textContent = 'calculado';
-  }
-
-  const { h, a, H } = res;
+  const h = hRaw, H = HRaw;
   const n = Math.max(1, Math.round(H * 100 / h));
   const hReal = (H * 100) / n;
-  const pendiente = (hReal / a) * 100;
-  const angulo = Math.atan2(hReal, a) * 180 / Math.PI;
-  const b = blondel(hReal, a);
 
-  const riRaw = parseFloat(document.getElementById('inp-ri').value);
-  const ri = (!isNaN(riRaw) && riRaw >= 0) ? riRaw : 0;
-  const ancho = parseFloat(document.getElementById('inp-ancho').value) || 1.20;
-  const re = ri + ancho;
+  const diamExtRaw = parseFloat(document.getElementById('inp-diam-ext').value);
+  const diamIntRaw = parseFloat(document.getElementById('inp-diam-int').value);
+  const giroRaw = parseFloat(document.getElementById('inp-giro').value);
+  const diamExt = (!isNaN(diamExtRaw) && diamExtRaw > 0) ? diamExtRaw : 1.20;
+  const diamInt = (!isNaN(diamIntRaw) && diamIntRaw >= 0) ? diamIntRaw : 0;
+  const giroTotalDeg = (!isNaN(giroRaw) && giroRaw > 0) ? giroRaw : 360;
 
-  /* línea de huella: CTE DB-SUA exige medir la huella a 50 cm del borde
-     interior en tramos curvos; si el ancho es menor a 50 cm no hay margen
-     para esa línea completa, así que se limita al radio exterior */
-  const rLinea = Math.min(ri + 0.5, re);
-  const anguloPasoRad = (a / 100) / rLinea;
-  const anguloPasoDeg = anguloPasoRad * 180 / Math.PI;
-  const giroTotalDeg = n * anguloPasoDeg;
+  const re = diamExt / 2;
+  const ri = Math.min(Math.max(diamInt / 2, 0), Math.max(re - 0.05, 0));
+  const anguloPasoDeg = giroTotalDeg / n;
+  const anguloPasoRad = anguloPasoDeg * Math.PI / 180;
   const vueltas = giroTotalDeg / 360;
-  const huellaExtCm = anguloPasoRad * re * 100;
-  const huellaIntCm = anguloPasoRad * ri * 100;
 
-  /* zanca helicoidal: desarrollo a lo largo de la línea de huella —
-     (n − 1) huellas de avance (el último escalón remata en el rellano
-     superior) y n contrahuellas de subida, igual que en tramo recto */
-  const aPm = a / 100, hPmReal = hReal / 100;
+  /* la huella ya no se pide como dato: sale del ángulo de giro repartido entre
+     los escalones, medida donde se prefiera mirar — borde exterior, centro del
+     ancho (referencia para Blondel/pendiente) o junto al poste */
+  const huellaExtCm = anguloPasoRad * re * 100;
+  const huellaMedCm = anguloPasoRad * ((ri + re) / 2) * 100;
+  const huellaIntCm = anguloPasoRad * ri * 100;
+  const b = blondel(hReal, huellaMedCm);
+
+  const pendiente = (hReal / huellaMedCm) * 100;
+  const angulo = Math.atan2(hReal, huellaMedCm) * 180 / Math.PI;
+
+  const aPm = huellaMedCm / 100, hPmReal = hReal / 100;
   const run = Math.max(0, n - 1) * aPm;
   const zancaLen = Math.sqrt(run * run + (n * hPmReal) * (n * hPmReal));
-  const totalDevelop = run;
 
   const tramosData = { t: 1, tramos: [n], nDescansos: 0, descansoMin: 0, zancas: [zancaLen], zancaMax: zancaLen };
 
-  const hInNorma = hReal >= normaH.hMin && hReal <= normaH.hMax;
-  const aInNorma = a >= normaH.aMin;
-  const extOk = huellaExtCm <= normaH.aMaxExt;
-  const cumple = hInNorma && aInNorma && extOk;
-  const bOptimo = b >= 63 && b <= 65;
-  const anchoWarn = ancho < 0.5;
-  const warn = cumple && (huellaExtCm > normaH.aMaxExt - 3 || anchoWarn);
+  const angosto = huellaIntCm < 8; /* aviso suave junto al poste, no bloqueante */
 
-  renderResultHelicoidal({ h: hReal, a, H, n, b, angulo, pendiente, ri, re, rLinea, giroTotalDeg, vueltas, huellaExtCm, huellaIntCm, zancaLen, cumple, warn, hInNorma, aInNorma, extOk, bOptimo });
-  renderHintHelicoidal({ h: hReal, a, n, b, cumple, bOptimo, hInNorma, aInNorma, extOk, huellaExtCm, normaH, anchoWarn, ancho, vueltas, giroTotalDeg });
-  renderDiagramsHelicoidal({ h: hReal, a, H, n, totalL: totalDevelop, angulo, tramosData, cumple, ancho, ri, re, rLinea, anguloPasoDeg, giroTotalDeg, vueltas });
-  renderNormTableHelicoidal({ hReal, a, huellaExtCm }, normaH);
+  renderResultHelicoidal({ h: hReal, H, n, b, angulo, pendiente, re, giroTotalDeg, vueltas, huellaExtCm, huellaMedCm, huellaIntCm, zancaLen });
+  renderHintHelicoidal({ n, angosto, huellaIntCm, vueltas, giroTotalDeg });
+  renderDiagramsHelicoidal({ h: hReal, a: huellaMedCm, H, n, totalL: run, angulo, tramosData, cumple: true, ri, re, anguloPasoDeg, giroTotalDeg, vueltas });
   saveState();
 }
 
@@ -1010,39 +1004,26 @@ function renderNormTable(vals, norma) {
 
 function renderResultHelicoidal(st) {
   const zone = document.getElementById('result-zone');
-  const { h, a, n, b, angulo, pendiente, re, giroTotalDeg, vueltas, huellaExtCm, zancaLen, cumple, warn, extOk, bOptimo } = st;
+  const { h, n, b, angulo, pendiente, re, giroTotalDeg, vueltas, huellaExtCm, huellaMedCm, huellaIntCm, zancaLen } = st;
 
-  const hInLimits = h >= 5 && h <= 30;
-  const aInLimits = a >= 15;
-  if (!hInLimits || !aInLimits || n === 0) {
-    let msg = '';
-    if (h < 5)  msg = 'Contrahuella demasiado pequeña (mínimo 5 cm).';
-    else if (h > 30) msg = 'Contrahuella excesiva (máximo 30 cm).';
-    else if (a < 15) msg = 'Huella insuficiente para el pie en la línea de huella (mínimo 15 cm).';
-    else if (n === 0) msg = 'Altura menor a una contrahuella — no se requiere escalera.';
+  if (n === 0) {
     zone.innerHTML = `<div class="result-display fail">
       <div class="result-tag">error de diseño</div>
       <div class="result-big">&mdash;</div>
-      <div class="result-line"><em>${msg}</em></div>
+      <div class="result-line"><em>Altura menor a una contrahuella — no se requiere escalera.</em></div>
     </div>`;
     triggerShake(zone);
     return;
   }
 
-  const cls = cumple ? 'ok' : 'fail';
-  const tagText = cumple ? (warn ? 'cumple con observaciones' : 'cumple normativa') : 'no cumple normativa';
-  const bColor = bOptimo ? 'var(--text)' : 'var(--text-mid)';
-  const bLabel = bOptimo ? '✓ óptimo' : '· fuera de rango cómodo';
-  const extColor = extOk ? 'var(--text)' : 'var(--warn)';
-
   const nEscStr = n === 1 ? '1 escalón' : `${n} escalones`;
   const vueltasStr = `${giroTotalDeg.toFixed(0)}° (${vueltas.toFixed(2)} vueltas)`;
 
-  zone.innerHTML = `<div class="result-display ${cls}">
-    <div class="result-tag">${tagText}</div>
+  zone.innerHTML = `<div class="result-display ok">
+    <div class="result-tag">diseño helicoidal</div>
     <div class="result-big"><span class="num">${n}</span><span class="unit-sm"> escalones</span></div>
     <div class="result-line">${nEscStr} · giro total <em>${vueltasStr}</em></div>
-    <div class="result-cat">Blondel <b style="color:${bColor}">${b.toFixed(1)} cm</b> <span style="color:${bColor}">${bLabel}</span> · pendiente <b>${pendiente.toFixed(1)}%</b> · huella en borde ext. <b style="color:${extColor}">${huellaExtCm.toFixed(1)} cm</b>${extOk ? '' : ' (excede 44 cm)'}</div>
+    <div class="result-cat">Huella <b>${huellaIntCm.toFixed(1)}</b> · <b>${huellaMedCm.toFixed(1)}</b> · <b>${huellaExtCm.toFixed(1)} cm</b> (poste · centro · borde) · pendiente <b>${pendiente.toFixed(1)}%</b></div>
     <div class="metrics-row">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Contrahuella real</div><div class="metric-value num">${h.toFixed(2)}<span class="unit">cm</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Radio exterior</div><div class="metric-value num">${re.toFixed(2)}<span class="unit">m</span></div></div>
@@ -1050,53 +1031,20 @@ function renderResultHelicoidal(st) {
       <div class="metric-cell"><div class="metric-num-mark">04</div><div class="metric-label">Ángulo</div><div class="metric-value num">${angulo.toFixed(1)}<span class="unit">°</span></div></div>
     </div>
   </div>`;
-  if (!cumple) triggerShake(zone);
 }
 
 function renderHintHelicoidal(st) {
-  const { n, b, bOptimo, aInNorma, extOk, huellaExtCm, normaH, anchoWarn, ancho, vueltas, giroTotalDeg } = st;
+  const { n, angosto, huellaIntCm, vueltas, giroTotalDeg } = st;
   const zone = document.getElementById('hint-zone');
   const parts = [];
 
-  if (n === 1) parts.push('Escalón único — no requiere pasamanos según norma.');
-  if (!aInNorma) parts.push(`La huella en línea de huella es menor a <b>${normaH.aMin} cm</b> (mínimo CTE DB-SUA para trazado curvo).`);
-  if (!extOk) parts.push(`La huella en el borde exterior (<b>${huellaExtCm.toFixed(1)} cm</b>) excede el máximo de <b>${normaH.aMaxExt} cm</b> — reduce el ángulo por escalón o el radio exterior.`);
-  if (!bOptimo) parts.push(`Blondel = <b>${b.toFixed(1)} cm</b> está fuera del rango cómodo (63–65 cm) — la escalera es válida pero menos confortable al caminar.`);
-  if (anchoWarn) parts.push(`El ancho (<b>${ancho.toFixed(2)} m</b>) es menor a 50 cm — no hay margen completo para ubicar la línea de huella reglamentaria; se usó el radio exterior como referencia.`);
-  if (giroTotalDeg > 360) parts.push(`La escalera da <b>${vueltas.toFixed(2)} vueltas</b> completas (${giroTotalDeg.toFixed(0)}°) — en planta, los escalones de vueltas adicionales se superponen sobre los mismos radios.`);
+  if (n === 1) parts.push('Escalón único.');
+  if (angosto) parts.push(`Junto al poste la huella queda muy angosta (<b>${huellaIntCm.toFixed(1)} cm</b>) — si quieres más espacio de apoyo ahí, agranda el diámetro del poste o reduce el giro total.`);
+  if (giroTotalDeg > 360) parts.push(`La escalera da <b>${vueltas.toFixed(2)} vueltas</b> completas — en planta, los escalones de vueltas adicionales se superponen sobre los mismos radios (es normal en una hélice de más de 360°).`);
 
-  let html = `<div class="hint-block"><div class="hint-label">línea de huella</div><div class="hint">La huella (a) se mide sobre la <b>línea de huella</b>, situada a 50 cm del borde interior (CTE DB-SUA, tramos de trazado curvo) — la referencia habitual para dimensionar escaleras helicoidales.</div></div>`;
+  let html = `<div class="hint-block"><div class="hint-label">cómo funciona</div><div class="hint">La huella sale sola: se reparte el <b>ángulo de giro</b> entre los <b>escalones</b> que da la altura. Ajusta diámetro y giro con los botones y mira el resultado — no hace falta calcular nada a mano.</div></div>`;
   if (parts.length) html += `<div class="hint-block"><div class="hint-label">observaciones</div><div class="hint">${parts.join('<br>')}</div></div>`;
   zone.innerHTML = html;
-}
-
-function renderNormTableHelicoidal(vals, norma) {
-  const a = (active) => active ? 'cell-active' : '';
-  const v = vals || {};
-  const h = v.hReal, ped = v.a, ext = v.huellaExtCm;
-
-  const hOk   = h   !== undefined && h   >= norma.hMin && h <= norma.hMax;
-  const aOk   = ped !== undefined && ped >= norma.aMin;
-  const extOk = ext !== undefined && ext <= norma.aMaxExt;
-
-  document.getElementById('norm-table').innerHTML = `
-    <div class="head">Parámetro</div>
-    <div class="head">Mínimo</div>
-    <div class="head">Máximo</div>
-    <div class="head">Tu valor</div>
-    <div class="norm-row-label">Contrahuella h</div>
-    <div class="${a(hOk)}">${norma.hMin} cm</div>
-    <div class="${a(hOk)}">${norma.hMax} cm</div>
-    <div class="${a(hOk)}">${h   !== undefined ? h.toFixed(2)   + ' cm' : '—'}</div>
-    <div class="norm-row-label">Huella a 50cm del borde interior</div>
-    <div class="${a(aOk)}">${norma.aMin} cm</div>
-    <div class="${a(aOk)}">—</div>
-    <div class="${a(aOk)}">${ped !== undefined ? ped.toFixed(2) + ' cm' : '—'}</div>
-    <div class="norm-row-label">Huella en borde exterior</div>
-    <div class="${a(extOk)}">—</div>
-    <div class="${a(extOk)}">${norma.aMaxExt} cm</div>
-    <div class="${a(extOk)}">${ext !== undefined ? ext.toFixed(2) + ' cm' : '—'}</div>
-  `;
 }
 
 function renderDiagrams(st) {
@@ -1163,16 +1111,16 @@ function renderDiagramsHelicoidal(st) {
     <div class="section-head" style="margin-top:8px"><span class="num-mark">05</span>representación gráfica</div>
     <div class="diagram-block">
       <div class="diagram-head">
-        <div class="diagram-title">Alzado <em>desarrollado</em></div>
+        <div class="diagram-title">Alzado <em>helicoidal</em></div>
         <div class="diagram-head-right">
-          <div class="diagram-meta">desarrollo en línea de huella</div>
-          <button class="export-btn" onclick="exportSVG('svg-corte','escaleras-helicoidal-alzado')" aria-label="Exportar alzado desarrollado como PNG">
+          <div class="diagram-meta">envolvente vista de frente · ${st.vueltas.toFixed(2)} vueltas</div>
+          <button class="export-btn" onclick="exportSVG('svg-corte','escaleras-helicoidal-alzado')" aria-label="Exportar alzado helicoidal como PNG">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
         </div>
       </div>
-      <div class="diagram-svg" id="svg-corte">${svgCorte(st)}</div>
+      <div class="diagram-svg" id="svg-corte">${svgAlzadoHelicoidal(st)}</div>
     </div>
     <div class="diagram-block">
       <div class="diagram-head">
@@ -1431,10 +1379,111 @@ function svgPlanta(st) {
   return `<svg width="100%" viewBox="0 0 ${vbW} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid meet">${parts.join('\n')}</svg>`;
 }
 
-function svgPlantaHelicoidal(st) {
-  const { n, ri, re, rLinea, anguloPasoDeg, giroTotalDeg, vueltas, cumple } = st;
+function svgAlzadoHelicoidal(st) {
+  const { h, H, n, ri, re, anguloPasoDeg, cumple } = st;
   const col = getColors();
   const stroke = cumple ? col.accent : col.warn;
+  const dir = sentidoGiro === 'antihorario' ? -1 : 1;
+  const baseAngleDeg = -90; /* mismo origen angular que la planta: "salida" arriba */
+  const hPm = h / 100;
+
+  /* proyección frontal de la hélice: el borde a un radio r describe, visto de frente,
+     x(t) = r·cos(θ(t)) mientras sube z(t) = t·h — la misma hélice que en planta, aquí
+     aplanada sobre el plano de alzado. El signo de sin(θ) indica si ese tramo queda
+     al frente (visible) o detrás del eje (oculto), dando la lectura de profundidad */
+  const thetaAt = (t) => (baseAngleDeg + dir * t * anguloPasoDeg) * Math.PI / 180;
+  const zAt = (t) => t * hPm;
+
+  const IDEAL_SCALE_ALZ = 90;
+  const spanX = Math.max(2 * re, 0.4);
+  const spanY = Math.max(H, 0.4);
+  const maxSpan = Math.max(spanX, spanY);
+  let scaleAlz = IDEAL_SCALE_ALZ;
+  const idealPx = maxSpan * IDEAL_SCALE_ALZ;
+  if (idealPx < 260) scaleAlz = 260 / maxSpan;
+  else if (idealPx > 520) scaleAlz = 520 / maxSpan;
+
+  const rePx = re * scaleAlz;
+  const Hpx = H * scaleAlz;
+
+  const padL = 110, padR = 70, padT = 60, padB = 100;
+  const cx = padL + rePx;
+  const originY = padT + Hpx;
+  const vbW = padL + rePx * 2 + padR;
+  const vbH = padT + Hpx + padB;
+
+  const toX = (xM) => cx + xM * scaleAlz;
+  const toY = (zM) => originY - zM * scaleAlz;
+
+  let parts = [];
+  parts.push(`<defs><marker id="arr-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>`);
+
+  /* nivel de salida */
+  parts.push(`<line x1="${padL - 20}" y1="${toY(0)}" x2="${toX(re) + 20}" y2="${toY(0)}" stroke="${col.muted}" stroke-width="1" stroke-dasharray="2 3"/>`);
+
+  /* curvas guía (envolvente exterior e interior/eje) — continuas para que la forma
+     helicoidal se reconozca de inmediato aunque haya pocos escalones */
+  const drawEnvelope = (radius, dashBack, widthFront) => {
+    const samples = Math.max(80, Math.round(n * 5));
+    let runs = [];
+    let current = null;
+    for (let s = 0; s <= samples; s++) {
+      const t = (s / samples) * n;
+      const th = thetaAt(t);
+      const x = toX(radius * Math.cos(th));
+      const y = toY(zAt(t));
+      const front = Math.sin(th) > 0;
+      if (!current || current.front !== front) {
+        if (current) runs.push(current);
+        current = { front, pts: [] };
+      }
+      current.pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+    if (current) runs.push(current);
+    runs.forEach(run => {
+      if (run.pts.length < 2) return;
+      const strokeCol = run.front ? stroke : col.muted;
+      parts.push(`<polyline points="${run.pts.join(' ')}" fill="none" stroke="${strokeCol}" stroke-width="${run.front ? widthFront : widthFront * 0.75}" stroke-opacity="${run.front ? 1 : 0.55}" stroke-dasharray="${run.front ? 'none' : dashBack}" stroke-linecap="round" stroke-linejoin="round"/>`);
+    });
+  };
+
+  drawEnvelope(ri, '3 4', 0.6);
+  drawEnvelope(re, '5 4', 0.9);
+
+  /* escalones reales (contrahuella/huella) montados sobre la envolvente exterior */
+  for (let i = 1; i <= n; i++) {
+    const th0 = thetaAt(i - 1), th1 = thetaAt(i);
+    const x0 = toX(re * Math.cos(th0)), x1 = toX(re * Math.cos(th1));
+    const y0 = toY(zAt(i - 1)), y1 = toY(zAt(i));
+    const front = Math.sin((th0 + th1) / 2) > 0;
+    const strokeCol = front ? stroke : col.muted;
+    const op = front ? 1 : 0.65;
+    parts.push(`<line class="ramp-seg" x1="${x0}" y1="${y0}" x2="${x0}" y2="${y1}" stroke="${strokeCol}" stroke-opacity="${op}" stroke-width="1.1" stroke-linecap="round"/>`);
+    parts.push(`<line class="ramp-seg" x1="${x0}" y1="${y1}" x2="${x1}" y2="${y1}" stroke="${strokeCol}" stroke-opacity="${op}" stroke-width="1.1" stroke-linecap="round"/>`);
+  }
+
+  /* H cota */
+  parts.push(`<line x1="${padL - 40}" y1="${toY(0)}" x2="${padL - 40}" y2="${toY(H)}" stroke="${col.muted}" stroke-width="1" marker-end="url(#arr-ah)" marker-start="url(#arr-ah)"/>`);
+  parts.push(`<text x="${padL - 46}" y="${(toY(0) + toY(H)) / 2 + 4}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="${col.mid}">${H.toFixed(2)} m</text>`);
+
+  /* diámetro cota */
+  const yCota = originY + 60;
+  parts.push(`<line x1="${toX(-re)}" y1="${yCota}" x2="${toX(re)}" y2="${yCota}" stroke="${col.muted}" stroke-width="1" marker-end="url(#arr-ah)" marker-start="url(#arr-ah)"/>`);
+  parts.push(`<text x="${cx}" y="${yCota + 15}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="${col.mid}">Ø ${(2 * re).toFixed(2)} m</text>`);
+
+  /* salida / llegada */
+  const thStart = thetaAt(0), thEnd = thetaAt(n);
+  parts.push(`<text x="${toX(re * Math.cos(thStart))}" y="${toY(0) + 22}" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="12" fill="${col.text}">salida</text>`);
+  parts.push(`<text x="${toX(re * Math.cos(thEnd))}" y="${toY(H) - 14}" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="12" fill="${col.text}">llegada</text>`);
+
+  return `<svg width="100%" viewBox="0 0 ${vbW} ${vbH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMid meet">${parts.join('\n')}</svg>`;
+}
+
+function svgPlantaHelicoidal(st) {
+  const { n, ri, re, anguloPasoDeg, giroTotalDeg, vueltas, cumple } = st;
+  const col = getColors();
+  const stroke = cumple ? col.accent : col.warn;
+  const rMed = (ri + re) / 2;
 
   const targetRePx = 170;
   let scaleR = re > 0 ? targetRePx / re : targetRePx;
@@ -1442,7 +1491,7 @@ function svgPlantaHelicoidal(st) {
 
   const rePx = re * scaleR;
   const riPx = ri * scaleR;
-  const rLineaPx = rLinea * scaleR;
+  const rLineaPx = rMed * scaleR;
 
   const padL = 110, padR = 110, padT = 130, padB = 90;
   const cx = padL + rePx, cy = padT + rePx;
@@ -1467,7 +1516,7 @@ function svgPlantaHelicoidal(st) {
   } else {
     parts.push(`<circle cx="${cx}" cy="${cy}" r="4" fill="${col.mid}"/>`);
   }
-  /* línea de huella de referencia (a 50cm del borde interior) */
+  /* línea media de referencia, a mitad de camino entre poste y borde exterior */
   parts.push(`<circle cx="${cx}" cy="${cy}" r="${rLineaPx}" fill="none" stroke="${col.muted}" stroke-width="0.7" stroke-dasharray="3 4"/>`);
 
   /* líneas radiales de escalón — si hay muchas vueltas, se dibuja una de cada k para no saturar
