@@ -595,6 +595,7 @@
           <span class="toggle-note" id="app-note" style="display:none"></span>
           <span class="toggle-note" id="note-cablebus-existente" style="display:none">SEMOVI 2026 no contempla proyectos existentes. Los límites de 8% / 10% aplicados provienen de NTC 2025 §2.2.2.4.1 c), no de los Criterios Cablebús. Requiere justificación ante SEMOVI.</span>
           <span class="toggle-note" id="note-e17-fallback" style="display:none">Con este ancho, E 17 no aplica: se usan las bandas de ER 04 (≤6 m → 8% · ≤10 m → 6%).</span>
+          <span class="toggle-note" id="note-e17-existente" style="display:none">MNTA 2024 E 17 es una tabla fija y no distingue proyecto nuevo de existente. El ajuste de Existente no se aplica en este modo.</span>
         </div>
 
       </div>
@@ -825,6 +826,8 @@ function updateComboNotes() {
     ? Math.max(anchoMinimoNormativo(), anchoCustom) : anchoDefaultNormativo();
   document.getElementById('note-e17-fallback').style.display =
     (app === 'e17' && anchoActual < 1.50 - 0.001) ? '' : 'none';
+  document.getElementById('note-e17-existente').style.display =
+    (app === 'e17' && tipo === 'existente') ? '' : 'none';
 }
 
 initSegControl('#tipo-control button', v => { tipo = v; updateComboNotes(); calc(); });
@@ -1069,25 +1072,21 @@ function getConstantes() {
 function calcularLongitudMinima(dh, p, k) {
   if (p < 0.10) return { error: 'pendiente-baja', pct: p };
 
-  const extra = tipo === 'existente' ? 2 : 0;
-  const limA = 6 + extra;
-  const limB = 8 + extra;
+  const extra = tipo === 'existente' && app !== 'e17' ? 2 : 0; // ver Fix 2 — MNTA 2024 E 17 es tabla fija, no distingue existente
+  const limMax = Math.max(...k.bandas.map(b => b.lim)) + extra;
 
-  if (p > limB + 0.001) return { error: 'fuera-norma', pct: p, limMax: limB };
+  if (p > limMax + 0.001) return { error: 'fuera-norma', pct: p, limMax };
 
-  const banda6 = k.bandas.find(b => b.cat === '6%');
-  const banda8 = k.bandas.find(b => b.cat === '8%');
+  /* Igual criterio que categoriaTramo(): la primera banda (ordenada de menor a
+     mayor límite de pendiente) cuyo límite cubre la pendiente objetivo es la
+     aplicable, y su longitud máxima de tramo es el techo de diseño. */
+  const bandasOrdenadas = [...k.bandas].sort((a, b) => a.lim - b.lim);
+  const banda = bandasOrdenadas.find(b => p <= b.lim + extra + 0.001);
+  if (!banda) return { error: 'fuera-norma', pct: p, limMax };
 
-  let categoria, limite, tramoMax;
-  if (p <= limA + 0.001) {
-    categoria = '6%';
-    limite = limA;
-    tramoMax = banda6.maxL;
-  } else {
-    categoria = '8%';
-    limite = limB;
-    tramoMax = banda8.maxL;
-  }
+  const categoria = banda.cat;
+  const limite = Math.round((banda.lim + extra) * 100) / 100;
+  const tramoMax = banda.maxL;
 
   const lUtil = dh / (p / 100);
   const n = Math.max(1, Math.ceil(lUtil / tramoMax));
@@ -1110,7 +1109,7 @@ function calcularLongitudMinima(dh, p, k) {
    la categoría es consecuencia (§1.2, corrige que antes la longitud mandaba
    sobre la pendiente y un tramo de exactamente 6.00 m caía al 6% en vez del 8%). */
 function categoriaTramo(lTramo, k) {
-  const extra = tipo === 'existente' ? 2 : 0;
+  const extra = tipo === 'existente' && app !== 'e17' ? 2 : 0;
   for (const b of k.bandas) {
     if (lTramo <= b.maxL + 0.001) {
       return {
@@ -1157,7 +1156,7 @@ function buscarAuto(L, dh, k) {
 }
 
 function longitudMinima(dh, k) {
-  const extra = tipo === 'existente' ? 2 : 0;
+  const extra = tipo === 'existente' && app !== 'e17' ? 2 : 0;
   let mejor = null;
   for (let n = 1; n <= MAX_TRAMOS; n++) {
     const nDesc = n - 1;
@@ -1474,7 +1473,7 @@ function renderHint(st) {
 
 function renderNormTable(st, k) {
   const c = st.config;
-  const extra = tipo === 'existente' ? 2 : 0;
+  const extra = tipo === 'existente' && app !== 'e17' ? 2 : 0;
   const a = (active) => active ? 'cell-active' : '';
   const appLabel = app === 'cablebus' ? 'Cablebús' : (app === 'e17' ? 'Exterior E 17' : 'General');
   const letters = ['A', 'B', 'C'];
