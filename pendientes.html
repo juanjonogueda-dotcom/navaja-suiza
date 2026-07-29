@@ -163,6 +163,7 @@
   }
   .seg-control.cols-5 { grid-template-columns: repeat(5, 1fr); }
   .seg-control.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .seg-control.cols-3 { grid-template-columns: repeat(3, 1fr); }
   .seg-control.cols-2 { grid-template-columns: repeat(2, 1fr); }
   .seg-control button {
     background: none;
@@ -564,6 +565,17 @@
           <span class="toggle-note" id="descanso-note">Mínimo normativo: 1.20 m. Auméntalo para descansos con cambio de dirección u otras necesidades de giro.</span>
         </div>
 
+        <div id="ancho-block" class="toggle-block">
+          <span class="toggle-label">Ancho libre</span>
+          <div class="seg-control cols-2" id="ancho-control">
+            <button class="active" data-val="auto">mínimo</button>
+            <div class="tramos-input-cell">
+              <input type="number" id="inp-ancho" min="1.00" step="0.05" placeholder="m" class="tramos-input">
+            </div>
+          </div>
+          <span class="toggle-note" id="ancho-note"></span>
+        </div>
+
         <div class="toggle-block">
           <span class="toggle-label">Tipo de proyecto</span>
           <div class="seg-control cols-2" id="tipo-control">
@@ -575,10 +587,14 @@
 
         <div class="toggle-block">
           <span class="toggle-label">Aplicación</span>
-          <div class="seg-control cols-2" id="app-control">
+          <div class="seg-control cols-3" id="app-control">
             <button class="active" data-val="general">General</button>
             <button data-val="cablebus">Cablebús</button>
+            <button data-val="e17">Exterior E 17</button>
           </div>
+          <span class="toggle-note" id="app-note" style="display:none"></span>
+          <span class="toggle-note" id="note-cablebus-existente" style="display:none">SEMOVI 2026 no contempla proyectos existentes. Los límites de 8% / 10% aplicados provienen de NTC 2025 §2.2.2.4.1 c), no de los Criterios Cablebús. Requiere justificación ante SEMOVI.</span>
+          <span class="toggle-note" id="note-e17-fallback" style="display:none">Con este ancho, E 17 no aplica: se usan las bandas de ER 04 (≤6 m → 8% · ≤10 m → 6%).</span>
         </div>
 
       </div>
@@ -683,9 +699,12 @@ function syncDescansoUI() {
     descansoCustom = min;
     descansoInput.value = min.toFixed(2);
   }
+  /* E 17 hereda el descanso mínimo de ER 04 (MNTA 2024): 1.20 m, o 1.50 m con
+     cambio de dirección mayor a 10° — no hay campo dedicado, se deja como nota */
+  const giroNote = app === 'e17' ? ' (1.50 m si el cambio de dirección supera 10°).' : '';
   descansoNote.textContent = descansoModo === 'custom'
-    ? `Mínimo normativo: ${min.toFixed(2)} m. Se respeta ese piso aunque escribas un valor menor.`
-    : `Mínimo normativo: ${min.toFixed(2)} m. Auméntalo para descansos con cambio de dirección u otras necesidades de giro.`;
+    ? `Mínimo normativo: ${min.toFixed(2)} m.${giroNote} Se respeta ese piso aunque escribas un valor menor.`
+    : `Mínimo normativo: ${min.toFixed(2)} m.${giroNote} Auméntalo para descansos con cambio de dirección u otras necesidades de giro.`;
 }
 
 descansoAutoBtn.addEventListener('click', () => {
@@ -718,8 +737,98 @@ descansoInput.addEventListener('blur', () => {
   if (descansoModo === 'custom') { syncDescansoUI(); saveState(); }
 });
 
-initSegControl('#tipo-control button', v => { tipo = v; calc(); });
-initSegControl('#app-control button', v => { app = v; syncDescansoUI(); calc(); });
+/* Ancho libre: piso normativo por modo (mismo patrón que Descanso).
+   General: piso 1.00 m (rampa complementaria a otra circulación) — NTC 2025 §2.2.2.4.1 a);
+     valor por defecto 1.20 m asumiendo que es el único medio de circulación.
+   Cablebús: piso 1.20 m (solo casos complejos, con justificación ante SEMOVI) — SEMOVI 2026 punto 1;
+     valor por defecto 1.50 m — SEMOVI 2026 punto 6.
+   Exterior E 17: valor por defecto 1.50 m — MNTA 2024 E 17 (§1.10). Sin piso alto:
+     el ancho real de la banqueta puede ser menor, y de eso depende qué bandas
+     de pendiente/longitud aplican (E 17 completo, reducido, o cae a ER 04). */
+let anchoModo = 'auto';
+let anchoCustom = null;
+
+function anchoMinimoNormativo()  { return app === 'general' ? 1.00 : (app === 'cablebus' ? 1.20 : 1.00); }
+function anchoDefaultNormativo() { return app === 'general' ? 1.20 : 1.50; }
+
+const anchoAutoBtn = document.querySelector('#ancho-control button[data-val="auto"]');
+const anchoInput   = document.getElementById('inp-ancho');
+const anchoCell    = anchoInput.closest('.tramos-input-cell');
+const anchoNote    = document.getElementById('ancho-note');
+
+function syncAnchoUI() {
+  const min = anchoMinimoNormativo();
+  const def = anchoDefaultNormativo();
+  anchoInput.min = min.toFixed(2);
+  anchoInput.placeholder = def.toFixed(2);
+  if (anchoModo === 'custom' && anchoCustom !== null && anchoCustom < min) {
+    anchoCustom = min;
+    anchoInput.value = min.toFixed(2);
+  }
+  let txt;
+  if (app === 'cablebus') {
+    txt = `Mínimo normativo: ${def.toFixed(2)} m (SEMOVI 2026 punto 6). ${min.toFixed(2)} m solo en casos complejos, con justificación ante SEMOVI.`;
+  } else if (app === 'e17') {
+    txt = `Valor por defecto: ${def.toFixed(2)} m (MNTA 2024 E 17). El ancho real de banqueta define las bandas aplicables — ≥1.80 m, ≥1.50 m, o menor (cae a ER 04).`;
+  } else {
+    txt = `Mínimo normativo: ${min.toFixed(2)} m si es complementaria a otra circulación; ${def.toFixed(2)} m (usado por defecto) si es el único medio (NTC 2025 §2.2.2.4.1 a).`;
+  }
+  txt += ' El ancho libre se mide entre pasamanos.';
+  if (anchoModo === 'custom' && app !== 'e17') txt += ` Se respeta el piso de ${min.toFixed(2)} m aunque escribas un valor menor.`;
+  anchoNote.textContent = txt;
+}
+
+anchoAutoBtn.addEventListener('click', () => {
+  anchoModo = 'auto';
+  anchoCustom = null;
+  anchoAutoBtn.classList.add('active');
+  anchoCell.classList.remove('active');
+  anchoInput.value = '';
+  syncAnchoUI();
+  updateComboNotes();
+  calc();
+  saveState();
+});
+anchoInput.addEventListener('input', () => {
+  const v = parseFloat(anchoInput.value);
+  if (Number.isFinite(v) && v > 0) {
+    anchoModo = 'custom';
+    anchoCustom = v;
+    anchoAutoBtn.classList.remove('active');
+    anchoCell.classList.add('active');
+  } else {
+    anchoModo = 'auto';
+    anchoCustom = null;
+    anchoAutoBtn.classList.add('active');
+    anchoCell.classList.remove('active');
+  }
+  updateComboNotes();
+  calc();
+  saveState();
+});
+anchoInput.addEventListener('blur', () => {
+  if (anchoModo === 'custom') { syncAnchoUI(); updateComboNotes(); saveState(); }
+});
+
+/* Notas combinadas: Cablebús+Existente (§1.5) y modo Aplicación (E 17) */
+function updateComboNotes() {
+  const appNote = document.getElementById('app-note');
+  if (app === 'e17') {
+    appNote.style.display = '';
+    appNote.textContent = 'E 17 es una relajación condicionada a que las dimensiones de la banqueta no permitan cumplir ER 04. No es de libre elección.';
+  } else {
+    appNote.style.display = 'none';
+  }
+  document.getElementById('note-cablebus-existente').style.display =
+    (app === 'cablebus' && tipo === 'existente') ? '' : 'none';
+  const anchoActual = anchoModo === 'custom' && anchoCustom !== null
+    ? Math.max(anchoMinimoNormativo(), anchoCustom) : anchoDefaultNormativo();
+  document.getElementById('note-e17-fallback').style.display =
+    (app === 'e17' && anchoActual < 1.50 - 0.001) ? '' : 'none';
+}
+
+initSegControl('#tipo-control button', v => { tipo = v; updateComboNotes(); calc(); });
+initSegControl('#app-control button', v => { app = v; syncDescansoUI(); syncAnchoUI(); updateComboNotes(); calc(); });
 initSegControl('#modo-calc-control button', v => {
   modoCalculo = v;
   aplicarModoCalculo();
@@ -794,6 +903,7 @@ function aplicarModoCalculo() {
   document.getElementById('field-p').style.display = esLibre ? '' : 'none';
   document.getElementById('tramos-block').style.display = (esCalc || esLibre) ? 'none' : '';
   document.getElementById('descanso-block').style.display = esLibre ? 'none' : '';
+  document.getElementById('ancho-block').style.display = esLibre ? 'none' : '';
   document.getElementById('pendiente-obj-block').style.display = esCalc ? '' : 'none';
   document.getElementById('tipo-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
   document.getElementById('app-control').closest('.toggle-block').style.display = esLibre ? 'none' : '';
@@ -820,6 +930,8 @@ function saveState() {
     localStorage.setItem('pendientes_libreOrder',   libreOrder.join(','));
     localStorage.setItem('pendientes_descansoModo', descansoModo);
     localStorage.setItem('pendientes_descansoCustom', descansoCustom !== null ? String(descansoCustom) : '');
+    localStorage.setItem('pendientes_anchoModo',    anchoModo);
+    localStorage.setItem('pendientes_anchoCustom',  anchoCustom !== null ? String(anchoCustom) : '');
   } catch (e) {}
 }
 
@@ -873,6 +985,20 @@ function loadState() {
       }
     }
     syncDescansoUI();
+    const sAnchoModo   = localStorage.getItem('pendientes_anchoModo');
+    const sAnchoCustom = localStorage.getItem('pendientes_anchoCustom');
+    if (sAnchoModo === 'custom' && sAnchoCustom) {
+      const v = parseFloat(sAnchoCustom);
+      if (Number.isFinite(v) && v > 0) {
+        anchoModo = 'custom';
+        anchoCustom = v;
+        anchoAutoBtn.classList.remove('active');
+        anchoCell.classList.add('active');
+        anchoInput.value = String(v);
+      }
+    }
+    syncAnchoUI();
+    updateComboNotes();
     if (sModoCalculo) {
       modoCalculo = sModoCalculo;
       document.querySelectorAll('#modo-calc-control button').forEach(b =>
@@ -890,17 +1016,53 @@ function loadState() {
   aplicarModoCalculo();
 }
 
+/* Bandas de pendiente por longitud máxima de tramo:
+   General/Cablebús — SEMOVI 2026 punto 6 · NTC 2025 Tabla 2.2.2.4.1.
+   Exterior E 17 — MNTA 2024 ER 04 remite a E 17: el ancho compra longitud de tramo
+   (ver getBandas). Ninguna fuente fija una longitud MÍNIMA de tramo (§1.1) — SEMOVI
+   2026 punto 6 y NTC 2025 Tabla 2.2.2.4.1 hablan solo de distancia máxima entre
+   descansos, y MNTA 2024 p. 66 contempla tramos de 101–120 cm. */
+function getBandas(ancho) {
+  if (app === 'e17') {
+    if (ancho >= 1.80 - 0.001) {
+      return [
+        { cat: '8%',    lim: 8,    maxL: 15 },
+        { cat: '6%',    lim: 6,    maxL: 20 },
+        { cat: '5.99%', lim: 5.99, maxL: 24 }
+      ];
+    }
+    if (ancho >= 1.50 - 0.001) {
+      return [
+        { cat: '8%', lim: 8, maxL: 10 },
+        { cat: '6%', lim: 6, maxL: 15 }
+      ];
+    }
+    /* ancho < 1.50 m: E 17 no aplica — caen las bandas de ER 04 (MNTA 2024) */
+    return [
+      { cat: '8%', lim: 8, maxL: 6 },
+      { cat: '6%', lim: 6, maxL: 10 }
+    ];
+  }
+  return [
+    { cat: '8%', lim: 8, maxL: 6.00 },                                    // 6 m en ambos
+    { cat: '6%', lim: 6, maxL: app === 'cablebus' ? 8.00 : 10.00 }         // 8 m Cablebús · 10 m General
+  ];
+}
+
 function getConstantes() {
   const descansoMin = descansoMinimoNormativo();
+  const anchoMinNorm = anchoMinimoNormativo();
+  const anchoDefault = anchoDefaultNormativo();
+  const ancho = anchoModo === 'custom' && anchoCustom !== null
+    ? Math.max(anchoMinNorm, anchoCustom) : anchoDefault;
   return {
     descansoMin,
-    descanso:     descansoModo === 'custom' && descansoCustom !== null
+    descanso: descansoModo === 'custom' && descansoCustom !== null
       ? Math.max(descansoMin, descansoCustom) : descansoMin,
-    anchoMin:     app === 'cablebus' ? 1.50 : 1.00,
-    maxLong6pct:  app === 'cablebus' ? 8.00 : 10.00,
-    maxLong8pct:  app === 'cablebus' ? 6.00 : 6.00,
-    minLong6pct:  6.00,
-    minLong8pct:  3.00
+    anchoMinNorm,
+    anchoDefault,
+    ancho,
+    bandas: getBandas(ancho)
   };
 }
 
@@ -913,15 +1075,18 @@ function calcularLongitudMinima(dh, p, k) {
 
   if (p > limB + 0.001) return { error: 'fuera-norma', pct: p, limMax: limB };
 
+  const banda6 = k.bandas.find(b => b.cat === '6%');
+  const banda8 = k.bandas.find(b => b.cat === '8%');
+
   let categoria, limite, tramoMax;
   if (p <= limA + 0.001) {
     categoria = '6%';
     limite = limA;
-    tramoMax = k.maxLong6pct;
+    tramoMax = banda6.maxL;
   } else {
     categoria = '8%';
     limite = limB;
-    tramoMax = k.maxLong8pct;
+    tramoMax = banda8.maxL;
   }
 
   const lUtil = dh / (p / 100);
@@ -935,18 +1100,27 @@ function calcularLongitudMinima(dh, p, k) {
   return {
     n, nDescansos: nDesc, lTotal, lUtil, lTramo,
     limite, pendiente: p, categoria,
-    descanso: k.descanso, anchoMin: k.anchoMin,
+    descanso: k.descanso, ancho: k.ancho,
     impracticable
   };
 }
 
+/* Bandas evaluadas en orden ascendente de longitud máxima; la primera que acepta
+   el tramo define el límite de pendiente aplicable — la longitud es el techo,
+   la categoría es consecuencia (§1.2, corrige que antes la longitud mandaba
+   sobre la pendiente y un tramo de exactamente 6.00 m caía al 6% en vez del 8%). */
 function categoriaTramo(lTramo, k) {
   const extra = tipo === 'existente' ? 2 : 0;
-  if (lTramo >= k.minLong6pct - 0.001 && lTramo <= k.maxLong6pct + 0.001)
-    return { categoria: '6%', limite: 6 + extra, rangoTexto: `${k.minLong6pct.toFixed(2)}–${k.maxLong6pct.toFixed(2)} m` };
-  if (lTramo >= k.minLong8pct - 0.001 && lTramo < k.minLong6pct - 0.001)
-    return { categoria: '8%', limite: 8 + extra, rangoTexto: `${k.minLong8pct.toFixed(2)}–${(k.minLong6pct - 0.01).toFixed(2)} m` };
-  return null;
+  for (const b of k.bandas) {
+    if (lTramo <= b.maxL + 0.001) {
+      return {
+        categoria: b.cat,
+        limite: Math.round((b.lim + extra) * 100) / 100,
+        rangoTexto: `≤ ${b.maxL.toFixed(2)} m`
+      };
+    }
+  }
+  return null; // excede la banda más larga → tramo-largo
 }
 
 function calcularConfig(L, dh, n, k) {
@@ -956,16 +1130,14 @@ function calcularConfig(L, dh, n, k) {
   const lTramo = lUtil / n;
   const cat = categoriaTramo(lTramo, k);
   if (!cat) {
-    if (lTramo < k.minLong8pct)  return { error: 'tramo-corto', n, lTramo, min: k.minLong8pct };
-    if (lTramo > k.maxLong6pct)  return { error: 'tramo-largo', n, lTramo, max: k.maxLong6pct };
-    if (lTramo > k.maxLong8pct && lTramo < k.minLong6pct) return { error: 'zona-muerta', n, lTramo };
-    return { error: 'sin-categoria', n, lTramo };
+    const maxBanda = k.bandas[k.bandas.length - 1].maxL;
+    return { error: 'tramo-largo', n, lTramo, max: maxBanda };
   }
   const pendiente = dh > 0 ? (dh / lUtil) * 100 : 0;
   const cumple = pendiente <= cat.limite + 0.001;
   return { n, nDescansos, lUtil, lTramo, pendiente, limite: cat.limite,
     categoria: cat.categoria, rangoTexto: cat.rangoTexto, cumple,
-    dhTramo: dh / n, descanso: k.descanso, anchoMin: k.anchoMin };
+    dhTramo: dh / n, descanso: k.descanso, ancho: k.ancho };
 }
 
 function buscarAuto(L, dh, k) {
@@ -989,16 +1161,14 @@ function longitudMinima(dh, k) {
   let mejor = null;
   for (let n = 1; n <= MAX_TRAMOS; n++) {
     const nDesc = n - 1;
-    for (const cand of [
-      { lim: 6 + extra, minL: k.minLong6pct, maxL: k.maxLong6pct, cat: '6%' },
-      { lim: 8 + extra, minL: k.minLong8pct, maxL: k.maxLong8pct, cat: '8%' }
-    ]) {
-      const lUtilMin = dh / (cand.lim / 100);
+    for (const b of k.bandas) {
+      const lim = Math.round((b.lim + extra) * 100) / 100;
+      const lUtilMin = dh / (lim / 100);
       const lTramo = lUtilMin / n;
-      if (lTramo < cand.minL || lTramo > cand.maxL + 0.001) continue;
+      if (lTramo > b.maxL + 0.001) continue;
       const lTotal = lUtilMin + nDesc * k.descanso;
       if (!mejor || lTotal < mejor.lTotal)
-        mejor = { n, lTotal, lUtilMin, lTramo, limite: cand.lim, categoria: cand.cat };
+        mejor = { n, lTotal, lUtilMin, lTramo, limite: lim, categoria: b.cat };
     }
   }
   return mejor;
@@ -1013,11 +1183,7 @@ function calc() {
     const res = calcularLongitudMinima(dh, pendienteObj, k);
     estado = { mode: 'calcular', dh, res };
     renderResultCalc(estado);
-    let hintHtml = '';
-    if (dh < 0.30 && pendienteObj <= 4 + 0.001) {
-      hintHtml = `<div class="hint-block"><div class="hint-label">aviso</div><div class="hint">Este caso no se considera rampa sino pasillo según normativa — no requiere pasamanos.</div></div>`;
-    }
-    document.getElementById('hint-zone').innerHTML = hintHtml;
+    document.getElementById('hint-zone').innerHTML = pasilloAvisoHtml(dh, pendienteObj);
     if (res && !res.error) {
       const stCompat = { L: res.lTotal, dh, config: {
         ...res, cumple: true, pendiente: res.pendiente,
@@ -1194,7 +1360,7 @@ function renderResultCalc(st) {
       <span class="num">${r.lTotal.toFixed(2)}</span><span class="pct" style="font-size:0.5em"> m</span>
     </div>
     <div class="result-line">${lineHtml}</div>
-    <div class="result-cat">Categoría <b>${r.categoria === '6%' ? 'A' : 'B'}</b> · pendiente <b>${r.pendiente.toFixed(2)}%</b> ≤ <b>${r.limite}%</b></div>
+    <div class="result-cat">pendiente <b>${r.pendiente.toFixed(2)}%</b> · límite aplicable <b>${r.limite}%</b> (tramo de <b>${r.lTramo.toFixed(2)} m</b>)</div>
     <div class="metrics-row" style="grid-template-columns: repeat(4, 1fr)">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Tramos</div><div class="metric-value num">${r.n}</div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Descansos</div><div class="metric-value num">${r.nDescansos}</div></div>
@@ -1210,9 +1376,7 @@ function renderResult(st) {
   if (c.error) {
     const msgs = {
       'no-cabe':     `Con ${c.n} tramos los descansos exceden la longitud disponible.`,
-      'tramo-corto': `Tramos de ${c.lTramo.toFixed(2)} m son menores al mínimo normativo (${c.min.toFixed(2)} m).`,
       'tramo-largo': `Tramos de ${c.lTramo.toFixed(2)} m exceden el máximo normativo (${c.max.toFixed(2)} m).`,
-      'zona-muerta': `Tramos de ${c.lTramo.toFixed(2)} m caen entre las categorías 6% y 8%.`,
     };
     zone.innerHTML = `<div class="result-display fail">
       <div class="result-tag">no aplica</div>
@@ -1236,7 +1400,7 @@ function renderResult(st) {
       <span class="compare">${ok ? '≤' : '>'} ${c.limite}%</span>
     </div>
     <div class="result-line">${lineHtml}${excesoHtml}</div>
-    <div class="result-cat">Categoría <b>${c.categoria}</b> · tramos válidos <b>${c.rangoTexto}</b></div>
+    <div class="result-cat">pendiente <b>${c.pendiente.toFixed(2)}%</b> · límite aplicable <b>${c.limite}%</b> (tramo de <b>${c.lTramo.toFixed(2)} m</b>)</div>
     <div class="metrics-row" style="grid-template-columns: repeat(4, 1fr)">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Tramos</div><div class="metric-value num">${c.n}</div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Descansos</div><div class="metric-value num">${c.nDescansos}</div></div>
@@ -1245,6 +1409,25 @@ function renderResult(st) {
     </div>
   </div>`;
   if (!ok) triggerShake(zone);
+}
+
+/* §1.4 — Aviso rampa sin pasamanos / rampa en todo el ancho, según Aplicación.
+   General: MNTA 2024 RA 01 h) — desnivel ≤30 cm y pendiente ≤4% puede resolverse
+   sin pasamanos (sigue siendo rampa, no un pasillo como decía NTCPA 4.1.4 I).
+   Cablebús: SEMOVI 2026 punto 2 — desnivel ≤20 cm en acceso debe resolverse con
+   rampa en todo el ancho; no se ofrece la exención de pasamanos porque SEMOVI
+   punto 6 exige pasamanos a doble altura en rampas sin distinguir por desnivel. */
+function pasilloAvisoHtml(dh, pendienteActual) {
+  if (app === 'cablebus') {
+    if (dh <= 0.20 + 0.0005) {
+      return `<div class="hint-block"><div class="hint-label">aviso</div><div class="hint">Desnivel ≤20 cm en acceso debe resolverse con rampa en todo el ancho (SEMOVI 2026 punto 2). No aplica la exención de pasamanos: SEMOVI 2026 punto 6 exige pasamanos a doble altura en rampas sin distinguir por desnivel.</div></div>`;
+    }
+    return '';
+  }
+  if (dh <= 0.30 + 0.0005 && pendienteActual <= 4 + 0.001) {
+    return `<div class="hint-block"><div class="hint-label">aviso</div><div class="hint">Desnivel ≤30 cm y pendiente ≤4% puede resolverse sin pasamanos (MNTA 2024 RA 01 h). NTCPA 4.1.4 I no lo considera rampa, pero MNTA 2024 sí: sigue siendo rampa, solo exenta de pasamanos.</div></div>`;
+  }
+  return '';
 }
 
 function renderHint(st) {
@@ -1264,31 +1447,66 @@ function renderHint(st) {
     const margen = st.L - min.lTotal;
     hintText = `Tienes <b>${margen.toFixed(2)} m</b> de margen físico — la longitud mínima necesaria sería <b>${min.lTotal.toFixed(2)} m</b>.`;
   }
-  zone.innerHTML = hintText
-    ? `<div class="hint-block"><div class="hint-label">observación</div><div class="hint">${hintText}</div></div>`
-    : '';
+
+  const blocks = [];
+  if (hintText) blocks.push(`<div class="hint-block"><div class="hint-label">observación</div><div class="hint">${hintText}</div></div>`);
+
+  /* §1.1 — sin mínimo normativo de tramo, pero un tramo muy corto puede en
+     realidad ser un chaflán o un desnivel, no una rampa */
+  if (!c.error && c.lTramo !== undefined && c.lTramo < 1.00 - 0.001) {
+    blocks.push(`<div class="hint-block"><div class="hint-label">aviso</div><div class="hint">Tramo de <b>${c.lTramo.toFixed(2)} m</b> — a esta escala podría tratarse de un chaflán o un desnivel y no de una rampa. NTC 2025 §2.2.2.3.2 e)/f): desniveles ≤6 mm libres, o 6–15 mm con junta de pendiente máx. 2:1. MNTA 2024 RA 03 g): desniveles menores a 2 cm se salvan con chaflán.</div></div>`);
+  }
+
+  if (!c.error) {
+    const pasillo = pasilloAvisoHtml(st.dh, c.pendiente);
+    if (pasillo) blocks.push(pasillo);
+  }
+
+  /* §1.7-1.9 — aviso activo (no fila fija): pendiente > 8% exige barandal por
+     pendiente sin importar el vacío lateral (NTC 2025 §2.2.2.4.1 h) 2), y solo
+     puede darse con "Existente" activo (+2 pp de tolerancia) */
+  if (!c.error && tipo === 'existente' && c.pendiente > 8 + 0.001) {
+    blocks.push(`<div class="hint-block"><div class="hint-label">aviso</div><div class="hint">Pendiente de <b>${c.pendiente.toFixed(2)}%</b> — al superar 8% se requiere barandal por pendiente, independientemente del vacío lateral (NTC 2025 §2.2.2.4.1 h) 2).</div></div>`);
+  }
+
+  zone.innerHTML = blocks.join('');
 }
 
 function renderNormTable(st, k) {
   const c = st.config;
   const extra = tipo === 'existente' ? 2 : 0;
   const a = (active) => active ? 'cell-active' : '';
-  const cat6 = c.categoria === '6%';
-  const cat8 = c.categoria === '8%';
-  const appLabel = app === 'cablebus' ? 'Cablebús' : 'General';
+  const appLabel = app === 'cablebus' ? 'Cablebús' : (app === 'e17' ? 'Exterior E 17' : 'General');
+  const letters = ['A', 'B', 'C'];
+
+  const bandRows = k.bandas.map((b, i) => {
+    const active = c.categoria === b.cat;
+    return `
+    <div class="pct ${a(active)}">${letters[i] || (i + 1)}</div>
+    <div class="pct ${a(active)}">${Math.round((b.lim + extra) * 100) / 100}%</div>
+    <div class="${a(active)}">≤ ${b.maxL.toFixed(2)} m</div>
+    <div class="${a(active)}">${appLabel}</div>`;
+  }).join('');
+
+  const pendienteVal = c.pendiente !== undefined ? c.pendiente : null;
+  /* Pavimento táctil de advertencia ✱: General solo si pendiente > 5% (NTC 2025
+     §2.2.2.4.1 m) y §2.3.3.4.1 b) 2); MNTA 2024 ER 04/NTCPA 4.1.4 V) — Cablebús
+     siempre, sin condición de pendiente (SEMOVI 2026 punto 4) */
+  const tactilGeneral = pendienteVal !== null && pendienteVal > 5 + 0.001;
+  const tactilTexto = app === 'cablebus'
+    ? 'Siempre — piezas a 30 cm del inicio y término, en todo el ancho'
+    : (pendienteVal === null
+        ? 'Franja de 30 cm si pendiente > 5% — a 30 cm del arranque y la llegada'
+        : (tactilGeneral
+            ? 'Requerida — pendiente > 5%, franja de 30 cm a 30 cm del arranque y la llegada'
+            : 'No requerida — pendiente ≤ 5%, la guía de dirección continúa sobre la rampa'));
+
   document.getElementById('norm-table').innerHTML = `
     <div class="head">Cat.</div>
     <div class="head">Pendiente máx.</div>
     <div class="head">Long. tramo</div>
     <div class="head">Aplicación</div>
-    <div class="pct ${a(cat6)}">A</div>
-    <div class="pct ${a(cat6)}">${6 + extra}%</div>
-    <div class="${a(cat6)}">${k.minLong6pct.toFixed(2)} – ${k.maxLong6pct.toFixed(2)} m</div>
-    <div class="${a(cat6)}">${appLabel}</div>
-    <div class="pct ${a(cat8)}">B</div>
-    <div class="pct ${a(cat8)}">${8 + extra}%</div>
-    <div class="${a(cat8)}">${k.minLong8pct.toFixed(2)} – ${k.maxLong8pct.toFixed(2)} m</div>
-    <div class="${a(cat8)}">${appLabel}</div>
+    ${bandRows}
     <div></div>
     <div class="norm-row-label">Descanso</div>
     <div>${k.descanso > k.descansoMin + 0.001
@@ -1297,8 +1515,36 @@ function renderNormTable(st, k) {
     <div>—</div>
     <div></div>
     <div class="norm-row-label">Ancho libre</div>
-    <div>${k.anchoMin.toFixed(2)} m mínimo</div>
-    <div>${app === 'cablebus' ? 'Transporte' : 'General'}</div>
+    <div>${k.ancho.toFixed(2)} m · mínimo ${k.anchoMinNorm.toFixed(2)} m</div>
+    <div>medido entre pasamanos</div>
+    <div></div>
+    <div class="norm-row-label">Pasamanos ✱</div>
+    <div>${app === 'cablebus'
+      ? 'Doble altura 75 y 90 cm'
+      : '90 cm · doble altura 90/75 en educativas, guarderías, sanitarias y reuniones públicas'}</div>
+    <div>${app === 'cablebus'
+      ? 'Ambos lados · extensión 30 cm · despegado 4 cm del muro (SEMOVI 2026 punto 6 · Anexo 3)'
+      : 'Ambos lados · extensión ≥30 cm · separación 4 cm horiz. / 10 cm vert. (MNTA 2024 AC 01 · NTC 2025 §2.2.2.4.1 g)'}</div>
+    <div></div>
+    <div class="norm-row-label">Pavimento táctil ✱</div>
+    <div class="${a(app === 'cablebus' || tactilGeneral)}">${tactilTexto}</div>
+    <div>${app === 'cablebus' ? 'SEMOVI 2026 punto 4' : 'NTC 2025 §2.2.2.4.1 m) · MNTA 2024 ER 04'}</div>
+    <div></div>
+    <div class="norm-row-label">Pendiente transversal</div>
+    <div>máx. 2%</div>
+    <div>NTC 2025 §2.2.2.4.1 d) · MNTA 2024 ER 04 — resuelve el drenaje (§2.2.2.4.1 k)</div>
+    <div></div>
+    <div class="norm-row-label">Altura libre</div>
+    <div>220 cm</div>
+    <div>criterio conservador — MNTA 2024 ER 04 remite a RA 01 e); NTC 2025 pide 210 cm</div>
+    <div></div>
+    <div class="norm-row-label">Protección lateral</div>
+    <div>Guarnición ≥10 cm si vacío 3–30 cm</div>
+    <div>NTC 2025 §2.3.3.4.1 a) · MNTA 2024 ER 04</div>
+    <div></div>
+    <div></div>
+    <div>Barandal si vacío &gt; 30 cm</div>
+    <div>NTC 2025 §2.2.2.4.1 h) 1)</div>
   `;
 }
 
@@ -1325,7 +1571,7 @@ function renderDiagrams(st) {
       <div class="diagram-head">
         <div class="diagram-title">Vista <em>en planta</em></div>
         <div class="diagram-head-right">
-          <div class="diagram-meta">esc. real · ancho ${c.anchoMin.toFixed(2)} m</div>
+          <div class="diagram-meta">esc. real · ancho ${c.ancho.toFixed(2)} m</div>
           <button class="export-btn" onclick="exportSVG('svg-planta', 'rampa-planta')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
@@ -1434,7 +1680,7 @@ function svgPlanta(st) {
   const pxPerM = drawW / st.L;
   const tramoPx = c.lTramo * pxPerM;
   const descansoPx = c.descanso * pxPerM;
-  const ancho = c.anchoMin * pxPerM;
+  const ancho = c.ancho * pxPerM;
   const yTop = 60, yBot = yTop + ancho, yMid = yTop + ancho / 2, totalH = yBot + 90;
   let parts = [];
   parts.push(`<rect x="${padL}" y="${yTop}" width="${drawW}" height="${ancho}" fill="none" stroke="${stroke}" stroke-width="0.8"/>`);
@@ -1462,7 +1708,7 @@ function svgPlanta(st) {
     }
   }
   parts.push(`<line x1="${padL-22}" y1="${yTop}" x2="${padL-22}" y2="${yBot}" stroke="${col.muted}" stroke-width="1" marker-end="url(#arr-planta)" marker-start="url(#arr-planta)"/>`);
-  parts.push(`<text x="${padL-28}" y="${yMid+4}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="${col.mid}">${c.anchoMin.toFixed(2)} m</text>`);
+  parts.push(`<text x="${padL-28}" y="${yMid+4}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="${col.mid}">${c.ancho.toFixed(2)} m</text>`);
   parts.push(`<text x="${padL}" y="${yTop-22}" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="${col.text}">llegada</text>`);
   parts.push(`<text x="${W-padR}" y="${yTop-22}" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" fill="${col.text}">salida</text>`);
   const yCota = yBot + 38;
