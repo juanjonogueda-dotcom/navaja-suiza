@@ -503,9 +503,10 @@
       <div id="diagrams-zone"></div>
 
       <div class="norm-ref" id="norm-ref-section">
-        <div class="section-head"><span class="num-mark">06</span><span id="norm-ref-title">norma aplicada · RCDF</span></div>
+        <div class="section-head"><span class="num-mark">06</span><span id="norm-ref-title">norma aplicada · NTC 2025 · MNTA 2024</span></div>
         <p class="norm-desc" id="norm-ref-desc">Límites normativos para diseño de escaleras.</p>
         <div class="norm-table" id="norm-table"></div>
+        <p class="norm-desc" style="margin-top:16px;margin-bottom:0">Existe una variante de <b>360 cm</b> entre descansos para ocupaciones industriales, de almacenamiento y de acceso restringido o controlado — no aplica a este cálculo, que usa el límite de 270 cm de ocupaciones "otras" (NTC 2025 Tabla 2.2.2.5.1).</p>
       </div>
     </div>
   </div>
@@ -609,12 +610,22 @@ function updateTipoUI() {
 
   syncSentidoButtons(sentidoGiro);
   syncGiroChips(document.getElementById('inp-giro').value);
-
-  document.getElementById('norm-ref-section').style.display = esHelicoidal ? 'none' : '';
 }
 
 function getNorma() {
-  return { hMin: 15, hMax: 20, aMin: 25, aMax: 32, nMax: 15 };
+  return {
+    /* Cumplimiento — NTC 2025 Tabla 2.2.2.5.1, ocupaciones "otras" */
+    hMin: 10, hMax: 18,
+    aMin: 25, aMax: null,        // NTC no fija huella máxima
+    /* Indicador secundario, no bloqueante — MNTA 2024 ER 07,
+       escaleras en espacio público y exterior */
+    hPubMin: 15, hPubMax: 18,
+    aPubMin: 30, aPubMax: 33,
+    /* Límite físico absoluto — NTC 2025 §2.2.2.7.2 a) y Tabla 2.2.2.5.1 nota [1] */
+    hAbsMax: 30, aAbsMin: 12,
+    /* Altura máxima entre descansos — NTC 2025 Tabla 2.2.2.5.1, "otras" */
+    alturaMaxDescanso: 270
+  };
 }
 
 function blondel(h, a) { return 2 * h + a; }
@@ -630,7 +641,8 @@ function resolveInputs() {
 
   if (count < 2) return { state: 'partial', hOk, aOk, HOk, hRaw, aRaw, HRaw };
 
-  let h, a, H, computed = null;
+  const norma = getNorma();
+  let h, a, H, computed = null, ajustado = false;
 
   if (hOk && aOk && HOk) {
     h = hRaw; a = aRaw; H = HRaw;
@@ -640,17 +652,22 @@ function resolveInputs() {
     H = HRaw; h = hRaw;
     const n = Math.max(1, Math.round(H * 100 / h));
     h = (H * 100) / n;
-    a = Math.max(15, 63 - 2 * h);
+    const aBlondel = 63 - 2 * h;
+    /* Blondel puro; si cae bajo el mínimo normativo (NTC 2025 Tabla 2.2.2.5.1,
+       aMin 25 cm) se ajusta a ese mínimo y se etiqueta, en vez de mostrarse en silencio */
+    if (aBlondel < norma.aMin) { a = norma.aMin; ajustado = true; }
+    else a = aBlondel;
     computed = 'a';
   } else if (aOk && HOk) {
     H = HRaw; a = aRaw;
-    h = Math.max(5, (63 - a) / 2);
-    const n = Math.max(1, Math.round(H * 100 / h));
+    let hBlondel = (63 - a) / 2;
+    if (hBlondel < norma.hMin) { hBlondel = norma.hMin; ajustado = true; }
+    const n = Math.max(1, Math.round(H * 100 / hBlondel));
     h = (H * 100) / n;
     computed = 'h';
   }
 
-  return { state: 'solve', h, a, H, computed };
+  return { state: 'solve', h, a, H, computed, ajustado };
 }
 
 function calc() {
@@ -699,6 +716,7 @@ function calcRecta() {
       </div>`;
     document.getElementById('hint-zone').innerHTML = `<div class="hint-block"><div class="hint-label">siguiente paso</div><div class="hint">Introduce la <b>altura total H</b> para calcular el número de escalones.</div></div>`;
     document.getElementById('diagrams-zone').innerHTML = '';
+    norma.nMax = Math.max(1, Math.floor(norma.alturaMaxDescanso / res.h));
     renderNormTable(null, norma);
     saveState();
     return;
@@ -706,15 +724,15 @@ function calcRecta() {
 
   if (res.computed === 'a') {
     inpA.classList.add('computed');
-    inpA.placeholder = '→ ' + res.a.toFixed(2);
+    inpA.placeholder = res.ajustado ? `→ ${res.a.toFixed(2)} (mín. normativo)` : '→ ' + res.a.toFixed(2);
     unitA.className = 'field-unit computed-label';
-    unitA.textContent = 'calculado';
+    unitA.textContent = res.ajustado ? 'ajustado al mínimo normativo' : 'calculado';
   }
   if (res.computed === 'h') {
     inpH.classList.add('computed');
-    inpH.placeholder = '→ ' + res.h.toFixed(2);
+    inpH.placeholder = res.ajustado ? `→ ${res.h.toFixed(2)} (mín. normativo)` : '→ ' + res.h.toFixed(2);
     unitH.className = 'field-unit computed-label';
-    unitH.textContent = 'calculado';
+    unitH.textContent = res.ajustado ? 'ajustado al mínimo normativo' : 'calculado';
   }
 
   const { h, a, H } = res;
@@ -726,9 +744,14 @@ function calcRecta() {
   const angulo = Math.atan2(hReal, a) * 180 / Math.PI;
   const b = blondel(hReal, a);
 
-  /* tramos: auto, ceil(n/15), balanced distribution */
+  /* Altura máxima entre descansos: 270 cm (NTC 2025 Tabla 2.2.2.5.1, "otras") ÷
+     contrahuella real — sustituye la antigua constante de 15 escalones */
+  const nMax = Math.max(1, Math.floor(norma.alturaMaxDescanso / hReal));
+  norma.nMax = nMax;
+
+  /* tramos: auto, ceil(n/nMax), balanced distribution */
   const DESCANSO_MIN = 1.20;
-  const tCount = Math.max(1, Math.ceil(n / norma.nMax));
+  const tCount = Math.max(1, Math.ceil(n / nMax));
   const tBase = Math.floor(n / tCount), tExtra = n % tCount;
   const tArr = [];
   for (let i = 0; i < tCount; i++) tArr.push(tBase + (i < tExtra ? 1 : 0));
@@ -763,11 +786,13 @@ function calcRecta() {
 
   const maxPerTramo = Math.max(...tramosData.tramos);
   const hInNorma  = hReal >= norma.hMin  && hReal <= norma.hMax;
-  const aInNorma  = a    >= norma.aMin   && a    <= norma.aMax;
-  const nMaxOk    = maxPerTramo <= norma.nMax;
+  const aInNorma  = a    >= norma.aMin   && (norma.aMax === null || a <= norma.aMax);
+  const nMaxOk    = maxPerTramo <= nMax;
   const cumple    = hInNorma && aInNorma && nMaxOk;
   const bOptimo   = b >= 63 && b <= 65;
-  const warn      = cumple && maxPerTramo >= norma.nMax - 2;
+  const warn      = cumple && maxPerTramo >= nMax - 2;
+  const pubOk     = hReal >= norma.hPubMin && hReal <= norma.hPubMax &&
+                     a    >= norma.aPubMin && a    <= norma.aPubMax;
 
   const inpL = document.getElementById('inp-L');
   const unitL = document.getElementById('unit-L');
@@ -800,7 +825,7 @@ function calcRecta() {
     }
   }
 
-  renderResult({ h: hReal, a, H, n, b, totalL, angulo, pendiente, tramosData, cumple, warn, norma, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo });
+  renderResult({ h: hReal, a, H, n, b, totalL, angulo, pendiente, tramosData, cumple, warn, norma, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo, pubOk });
   renderHint({ h: hReal, a, H, n, b, cumple, warn, bOptimo, maxPerTramo, norma, lHint, nMaxOk, LOk, totalL, nDescansos: tramosData.nDescansos });
   renderDiagrams({ h: hReal, a, H, n, totalL, angulo, tramosData, cumple, ancho });
   renderNormTable({ hReal, a, maxPerTramo }, norma);
@@ -862,9 +887,21 @@ function calcHelicoidal() {
 
   const angosto = huellaIntCm < 8; /* aviso suave junto al poste, no bloqueante */
 
-  renderResultHelicoidal({ h: hReal, H, n, b, angulo, pendiente, re, giroTotalDeg, vueltas, huellaExtCm, huellaMedCm, huellaIntCm, zancaLen });
-  renderHintHelicoidal({ n, angosto, huellaIntCm, vueltas, giroTotalDeg });
-  renderDiagramsHelicoidal({ h: hReal, a: huellaMedCm, H, n, totalL: run, angulo, tramosData, cumple: true, ri, re, anguloPasoDeg, giroTotalDeg, vueltas });
+  /* NTC 2025 §2.2.2.6.2: las escaleras en caracol cumplen lo indicado en §2.2.2.5 —
+     misma contrahuella y mismo límite de 270 cm entre descansos que una escalera recta.
+     La huella se presenta como informativa (varía a lo ancho del escalón), no como
+     criterio de cumplimiento. */
+  const norma = getNorma();
+  const nMax = Math.max(1, Math.floor(norma.alturaMaxDescanso / hReal));
+  norma.nMax = nMax;
+  const hInNorma = hReal >= norma.hMin && hReal <= norma.hMax;
+  const nMaxOk = n <= nMax;
+  const cumple = hInNorma && nMaxOk;
+
+  renderResultHelicoidal({ h: hReal, H, n, b, angulo, pendiente, re, giroTotalDeg, vueltas, huellaExtCm, huellaMedCm, huellaIntCm, zancaLen, cumple, hInNorma, nMaxOk, norma });
+  renderHintHelicoidal({ n, angosto, huellaIntCm, vueltas, giroTotalDeg, hInNorma, nMaxOk, norma, hReal });
+  renderDiagramsHelicoidal({ h: hReal, a: huellaMedCm, H, n, totalL: run, angulo, tramosData, cumple, ri, re, anguloPasoDeg, giroTotalDeg, vueltas });
+  renderNormTable({ hReal, maxPerTramo: n }, norma);
   saveState();
 }
 
@@ -897,15 +934,16 @@ function renderPartial(res, norma) {
 
 function renderResult(st) {
   const zone = document.getElementById('result-zone');
-  const { h, a, H, n, b, totalL, angulo, pendiente, tramosData, cumple, warn, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo } = st;
+  const { h, a, H, n, b, totalL, angulo, pendiente, tramosData, cumple, warn, norma, hInNorma, aInNorma, nMaxOk, bOptimo, maxPerTramo, pubOk } = st;
 
-  const hInLimits = h >= 5 && h <= 30;
-  const aInLimits = a >= 15;
+  /* Compuertas de error de diseño: límite físico absoluto — NTC 2025 §2.2.2.7.2 a)
+     y Tabla 2.2.2.5.1 nota [1]. No hay mínimo absoluto de contrahuella en la norma. */
+  const hInLimits = h <= norma.hAbsMax;
+  const aInLimits = a >= norma.aAbsMin;
   if (!hInLimits || !aInLimits || n === 0) {
     let msg = '';
-    if (h < 5)  msg = 'Contrahuella demasiado pequeña (mínimo 5 cm).';
-    else if (h > 30) msg = 'Contrahuella excesiva (máximo 30 cm).';
-    else if (a < 15) msg = 'Huella insuficiente para el pie (mínimo 15 cm).';
+    if (h > norma.hAbsMax) msg = `Contrahuella excesiva (máximo físico absoluto ${norma.hAbsMax} cm).`;
+    else if (a < norma.aAbsMin) msg = `Huella insuficiente para el pie (mínimo físico absoluto ${norma.aAbsMin} cm).`;
     else if (n === 0) msg = 'Altura menor a una contrahuella — no se requiere escalera. Considera una rampa o un escalón.';
     zone.innerHTML = `<div class="result-display fail">
       <div class="result-tag">error de diseño</div>
@@ -919,6 +957,8 @@ function renderResult(st) {
   const cls = cumple ? 'ok' : 'fail';
   const tagText = cumple ? (warn ? 'cumple con observaciones' : 'cumple normativa') : 'no cumple normativa';
   const bColor = bOptimo ? 'var(--text)' : 'var(--text-mid)';
+  const pubColor = pubOk ? 'var(--text)' : 'var(--text-muted)';
+  const pubLabel = pubOk ? 'dentro de rango' : 'fuera de rango';
   const bLabel = bOptimo ? '✓ óptimo' : '· fuera de rango cómodo';
 
   const nEscStr = n === 1 ? '1 escalón' : `${n} escalones`;
@@ -935,7 +975,7 @@ function renderResult(st) {
     <div class="result-tag">${tagText}</div>
     <div class="result-big"><span class="num">${n}</span><span class="unit-sm"> escalones</span></div>
     <div class="result-line">${nEscStr} · ${tramosStr}</div>
-    <div class="result-cat">Blondel <b style="color:${bColor}">${b.toFixed(1)} cm</b> <span style="color:${bColor}">${bLabel}</span> · pendiente <b>${pendiente.toFixed(1)}%</b>${tramosData.t > 1 ? ` · zancas por tramo <b>${zancaStr}</b>` : ''}</div>
+    <div class="result-cat">Blondel <b style="color:${bColor}">${b.toFixed(1)} cm</b> <span style="color:${bColor}">${bLabel}</span> · pendiente <b>${pendiente.toFixed(1)}%</b>${tramosData.t > 1 ? ` · zancas por tramo <b>${zancaStr}</b>` : ''}<br>Espacio público <span style="color:var(--text-muted)">(MNTA 2024 ER 07)</span> <b style="color:${pubColor}">${pubLabel}</b></div>
     <div class="metrics-row">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Contrahuella real</div><div class="metric-value num">${h.toFixed(2)}<span class="unit">cm</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Long. total</div><div class="metric-value num">${totalL.toFixed(2)}<span class="unit">m</span></div></div>
@@ -979,8 +1019,9 @@ function renderNormTable(vals, norma) {
   const h = v.hReal, ped = v.a, np = v.maxPerTramo;
 
   const hOk  = h   !== undefined && h   >= norma.hMin  && h   <= norma.hMax;
-  const aOk  = ped !== undefined && ped >= norma.aMin   && ped <= norma.aMax;
-  const nOk  = np  !== undefined && np  <= norma.nMax;
+  const aOk  = ped !== undefined && ped >= norma.aMin  && (norma.aMax === null || ped <= norma.aMax);
+  const nMaxShown = norma.nMax !== undefined ? norma.nMax : '—';
+  const nOk  = np  !== undefined && norma.nMax !== undefined && np <= norma.nMax;
 
   document.getElementById('norm-table').innerHTML = `
     <div class="head">Parámetro</div>
@@ -993,18 +1034,18 @@ function renderNormTable(vals, norma) {
     <div class="${a(hOk)}">${h  !== undefined ? h.toFixed(2)   + ' cm' : '—'}</div>
     <div class="norm-row-label">Huella a</div>
     <div class="${a(aOk)}">${norma.aMin} cm</div>
-    <div class="${a(aOk)}">${norma.aMax} cm</div>
+    <div class="${a(aOk)}">${norma.aMax !== null ? norma.aMax + ' cm' : '— (sin máx.)'}</div>
     <div class="${a(aOk)}">${ped !== undefined ? ped.toFixed(2) + ' cm' : '—'}</div>
     <div class="norm-row-label">Escalones/tramo</div>
     <div class="${a(nOk)}">1</div>
-    <div class="${a(nOk)}">${norma.nMax}</div>
+    <div class="${a(nOk)}">${nMaxShown}</div>
     <div class="${a(nOk)}">${np  !== undefined ? np : '—'}</div>
   `;
 }
 
 function renderResultHelicoidal(st) {
   const zone = document.getElementById('result-zone');
-  const { h, n, b, angulo, pendiente, re, giroTotalDeg, vueltas, huellaExtCm, huellaMedCm, huellaIntCm, zancaLen } = st;
+  const { h, n, b, angulo, pendiente, re, giroTotalDeg, vueltas, huellaExtCm, huellaMedCm, huellaIntCm, zancaLen, cumple, hInNorma, nMaxOk, norma } = st;
 
   if (n === 0) {
     zone.innerHTML = `<div class="result-display fail">
@@ -1018,12 +1059,14 @@ function renderResultHelicoidal(st) {
 
   const nEscStr = n === 1 ? '1 escalón' : `${n} escalones`;
   const vueltasStr = `${giroTotalDeg.toFixed(0)}° (${vueltas.toFixed(2)} vueltas)`;
+  const cls = cumple ? 'ok' : 'fail';
+  const tagText = cumple ? 'diseño helicoidal · cumple normativa' : 'diseño helicoidal · no cumple normativa';
 
-  zone.innerHTML = `<div class="result-display ok">
-    <div class="result-tag">diseño helicoidal</div>
+  zone.innerHTML = `<div class="result-display ${cls}">
+    <div class="result-tag">${tagText}</div>
     <div class="result-big"><span class="num">${n}</span><span class="unit-sm"> escalones</span></div>
     <div class="result-line">${nEscStr} · giro total <em>${vueltasStr}</em></div>
-    <div class="result-cat">Huella <b>${huellaIntCm.toFixed(1)}</b> · <b>${huellaMedCm.toFixed(1)}</b> · <b>${huellaExtCm.toFixed(1)} cm</b> (poste · centro · borde) · pendiente <b>${pendiente.toFixed(1)}%</b></div>
+    <div class="result-cat">Huella <b>${huellaIntCm.toFixed(1)}</b> · <b>${huellaMedCm.toFixed(1)}</b> · <b>${huellaExtCm.toFixed(1)} cm</b> (poste · centro · borde, informativa) · pendiente <b>${pendiente.toFixed(1)}%</b></div>
     <div class="metrics-row">
       <div class="metric-cell"><div class="metric-num-mark">01</div><div class="metric-label">Contrahuella real</div><div class="metric-value num">${h.toFixed(2)}<span class="unit">cm</span></div></div>
       <div class="metric-cell"><div class="metric-num-mark">02</div><div class="metric-label">Radio exterior</div><div class="metric-value num">${re.toFixed(2)}<span class="unit">m</span></div></div>
@@ -1031,12 +1074,16 @@ function renderResultHelicoidal(st) {
       <div class="metric-cell"><div class="metric-num-mark">04</div><div class="metric-label">Ángulo</div><div class="metric-value num">${angulo.toFixed(1)}<span class="unit">°</span></div></div>
     </div>
   </div>`;
+  if (!cumple) triggerShake(zone);
 }
 
 function renderHintHelicoidal(st) {
-  const { n, angosto, huellaIntCm, vueltas, giroTotalDeg } = st;
+  const { n, angosto, huellaIntCm, vueltas, giroTotalDeg, hInNorma, nMaxOk, norma, hReal } = st;
   const zone = document.getElementById('hint-zone');
   const parts = [];
+
+  if (!hInNorma) parts.push(`Contrahuella <b>${hReal.toFixed(2)} cm</b> fuera del rango normativo (<b>${norma.hMin}–${norma.hMax} cm</b> — NTC 2025 Tabla 2.2.2.5.1).`);
+  if (!nMaxOk) parts.push(`<b>${n} escalones</b> sin descanso superan el límite de <b>${norma.nMax}</b> para una altura máxima de 270 cm entre descansos (NTC 2025 §2.2.2.6.2, remite a §2.2.2.5) — requeriría un descanso intermedio.`);
 
   if (n === 1) parts.push('Escalón único.');
   if (angosto) parts.push(`Junto al poste la huella queda muy angosta (<b>${huellaIntCm.toFixed(1)} cm</b>) — si quieres más espacio de apoyo ahí, agranda el diámetro del poste o reduce el giro total.`);
