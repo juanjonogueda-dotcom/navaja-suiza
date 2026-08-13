@@ -18,33 +18,42 @@
     --bg:           #000000;
     --surface:      #0d0d0d;
     --border:       rgba(255,255,255,0.55);
+    --border-soft:  rgba(255,255,255,0.22);
     --border-hover: #ffffff;
     --text:         #ffffff;
     --text-mid:     rgba(255,255,255,0.88);
     --text-muted:   rgba(255,255,255,0.75);
+    --text-faint:   rgba(255,255,255,0.45);
     --accent:       #ffffff;
-    --warn:         #ff6b6b;
+    --clr-real:     #8effc1;
+    --clr-plano:    #8fd0ff;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
-    height: 100%;
+    min-height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 15px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
   }
 
   .page {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    height: 100vh;
-    padding: clamp(20px, 2.5vh, 36px) clamp(24px, 4vw, 56px) 0;
-    gap: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(20px, 2.5vh, 36px) clamp(20px, 4vw, 56px) 80px;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(24px, 6vh, 64px) 0;
   }
 
   header {
@@ -53,8 +62,7 @@
     gap: 16px;
     padding-bottom: clamp(14px, 1.8vh, 22px);
     border-bottom: 1px solid var(--border);
-    margin-bottom: clamp(14px, 1.8vh, 22px);
-    flex-shrink: 0;
+    margin-bottom: clamp(28px, 5vh, 56px);
   }
 
   .back-link {
@@ -75,233 +83,134 @@
     line-height: 0.9;
   }
 
-  .layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: clamp(24px, 4vw, 56px);
-    min-height: 0;
-    overflow: hidden;
+  /* Cards */
+  .cards-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: clamp(28px, 5vw, 64px);
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
-  .sidebar {
-    overflow-y: auto;
-    padding-right: 8px;
-    padding-bottom: 48px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+  .card {
+    position: relative;
+    width: 380px;
+    max-width: 100%;
+    padding-top: 6px;
   }
-  .sidebar::-webkit-scrollbar { width: 4px; }
-  .sidebar::-webkit-scrollbar-track { background: transparent; }
-  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .main-area {
-    overflow-y: auto;
-    padding-bottom: 56px;
-    min-height: 0;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-  .main-area::-webkit-scrollbar { width: 4px; }
-  .main-area::-webkit-scrollbar-track { background: transparent; }
-  .main-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .section-head {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
-    margin-bottom: 16px;
-  }
-  .section-head .num-mark { color: var(--text-muted); margin-right: 8px; }
-
-  .toggle-block { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
-
-  .seg-control {
-    display: grid;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    width: 100%;
-  }
-  .seg-control.cols-5 { grid-template-columns: repeat(5, 1fr); }
-  .seg-control.cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .seg-control.cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .seg-control button {
+  .card-remove {
+    position: absolute;
+    top: -30px;
+    right: 0;
     background: none;
-    border: none;
-    border-right: 1px solid var(--border);
-    padding: 9px 4px;
-    color: var(--text-muted);
+    border: 1px solid var(--border-soft);
+    color: var(--text-faint);
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(11px, 2vw, 13px);
-    cursor: pointer;
-    transition: color 0.15s, background 0.15s;
-    text-align: center;
-    line-height: 1.2;
-    min-height: 36px;
-  }
-  .seg-control button:last-child { border-right: none; }
-  .seg-control button.active {
-    background: #ffffff;
-    color: #000000;
-    font-weight: 500;
-  }
-  .seg-control button:hover:not(.active) { color: var(--text); }
-
-  .seg-control.cols-3 > button:nth-child(-n+3) {
-    border-bottom: 1px solid var(--border);
-  }
-
-  .scale-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .scale-prefix {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.1rem;
-    color: var(--text);
-    white-space: nowrap;
+    font-size: 13px;
     line-height: 1;
-    flex-shrink: 0;
-  }
-  .scale-input {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.1rem;
-    color: var(--text);
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border);
-    outline: none;
-    flex: 1;
-    min-width: 0;
-    padding: 2px 0 4px;
-    -moz-appearance: textfield;
-    transition: border-color 0.15s;
-  }
-  .scale-input::-webkit-inner-spin-button,
-  .scale-input::-webkit-outer-spin-button { display: none; }
-  .scale-input:focus { border-bottom-color: var(--text); }
-
-  .measure-input {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.4rem;
-    color: var(--text);
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--border);
-    outline: none;
-    width: 100%;
-    padding: 4px 0 6px;
-    -moz-appearance: textfield;
-    transition: border-color 0.15s;
-    font-feature-settings: 'tnum' 1;
-    letter-spacing: -0.02em;
-  }
-  .measure-input::-webkit-inner-spin-button,
-  .measure-input::-webkit-outer-spin-button { display: none; }
-  .measure-input:focus { border-bottom-color: var(--text); }
-  .measure-input.driven { color: var(--text-mid); }
-
-  .measure-block { margin-bottom: 32px; }
-  .measure-head-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
-    margin-bottom: 4px;
-  }
-  .measure-source-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--text-muted);
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .measure-source-tag.show { opacity: 1; }
-  .measure-row {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 12px;
     cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s, border-color 0.15s;
   }
-  .measure-row:active .measure-input { opacity: 0.6; }
-  .copy-hint {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--text-muted);
-    letter-spacing: 0.08em;
-    margin-bottom: 8px;
-  }
+  .card-remove.show { display: flex; }
+  .card-remove:hover { color: var(--text); border-color: var(--border); }
 
-  /* Solid bar chart */
-  .bars-wrap { display: flex; flex-direction: column; gap: 22px; }
-  .bars-wrap.hidden { visibility: hidden; }
-  .bar-row { display: flex; flex-direction: column; gap: 8px; }
-  .bar-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
+  .scale-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
   }
-  .bar-name {
+  .scale-table tr { border-bottom: 1px solid var(--border); }
+  .scale-table tr:last-child { border-bottom: none; }
+  .scale-table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    overflow: hidden;
+  }
+  .scale-table .label {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
+    letter-spacing: 0.06em;
     color: var(--text-muted);
-    letter-spacing: 0.1em;
-    text-transform: lowercase;
+    width: 38%;
+    border-right: 1px solid var(--border);
   }
-  .bar-value {
+  .row-real .label { color: var(--clr-real); }
+  .row-plano .label { color: var(--clr-plano); }
+
+  .cell { display: flex; align-items: center; gap: 8px; }
+  .cell-scale { justify-content: flex-end; }
+
+  .ratio-prefix {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
+    font-size: 1rem;
+    color: var(--text-mid);
+    flex-shrink: 0;
+  }
+
+  .num-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
     color: var(--text);
+    background: transparent;
+    border: none;
+    outline: none;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 2px 0;
+    -moz-appearance: textfield;
     font-feature-settings: 'tnum' 1;
   }
-  .bar-track {
-    width: 100%;
-    height: 22px;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .bar-fill {
-    height: 100%;
-    background: var(--text);
-    transition: width 350ms cubic-bezier(0.16,1,0.3,1);
-  }
-  .bar-row--plano .bar-fill { background: rgba(255,255,255,0.65); }
+  .num-input::-webkit-inner-spin-button,
+  .num-input::-webkit-outer-spin-button { display: none; }
+  .num-input.driven { color: var(--text-faint); }
 
-  /* Toast */
-  .toast {
-    position: fixed;
-    bottom: 32px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--text);
-    color: var(--bg);
-    padding: 10px 20px;
-    border-radius: 100px;
-    font-size: 0.82rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.25s;
-    z-index: 999;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .scale-input { text-align: right; max-width: 84px; }
 
-  @media (max-width: 760px) {
-    html, body { overflow: auto; }
-    .page { height: auto; overflow: visible; padding: 24px 20px 0; }
-    .layout { grid-template-columns: 1fr; overflow: visible; }
-    .sidebar { overflow: visible; padding-right: 0; padding-bottom: 0; }
-    .main-area { overflow: visible; padding-bottom: 56px; }
-    .seg-control button { min-height: 44px; }
+  .unit-select {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-mid);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 5px 4px;
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .unit-select:hover, .unit-select:focus { border-color: var(--border); }
+
+  .add-card {
+    width: 340px;
+    max-width: 100%;
+    min-height: 148px;
+    border: 1px dashed var(--border-soft);
+    border-radius: 4px;
+    background: none;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    align-self: stretch;
+  }
+  .add-card:hover { color: var(--text); border-color: var(--border); }
+
+  @media (max-width: 500px) {
+    .card, .add-card { width: 100%; }
+    .scale-table .label { width: 34%; }
+    .scale-table td { padding: 10px 10px; }
+    .unit-select { font-size: 0.66rem; padding: 5px 3px; }
   }
 </style>
 </head>
@@ -313,101 +222,60 @@
     <h1>Escalímetro</h1>
   </header>
 
-  <div class="layout">
-    <aside class="sidebar">
-
-      <div class="section-head"><span class="num-mark">01</span>escala</div>
-      <div class="toggle-block">
-        <div class="scale-row">
-          <span class="scale-prefix">1 :</span>
-          <input type="number" class="scale-input" id="scaleFactor" value="100" placeholder="100" min="1" aria-label="Factor de escala (denominador)">
-        </div>
-        <div class="seg-control cols-3" id="presets">
-          <button data-val="50">1:50</button>
-          <button class="active" data-val="100">1:100</button>
-          <button data-val="200">1:200</button>
-          <button data-val="250">1:250</button>
-          <button data-val="500">1:500</button>
-          <button data-val="1000">1:1000</button>
-        </div>
-      </div>
-
-    </aside>
-
-    <div class="main-area">
-
-      <div class="measure-block">
-        <div class="measure-head-row">
-          <div class="section-head" style="margin-bottom:0"><span class="num-mark">02</span>tamaño real</div>
-          <span class="measure-source-tag" id="realSourceTag">editando</span>
-        </div>
-        <div class="measure-row" id="realRow" title="Clic para copiar">
-          <input type="number" class="measure-input" id="realValue" value="1" step="any" placeholder="0" aria-label="Tamaño real">
-        </div>
-        <div class="seg-control cols-5" id="real-unit-control">
-          <button data-val="km">km</button>
-          <button class="active" data-val="m">m</button>
-          <button data-val="cm">cm</button>
-          <button data-val="mm">mm</button>
-          <button data-val="in">in</button>
-        </div>
-      </div>
-
-      <div class="measure-block">
-        <div class="measure-head-row">
-          <div class="section-head" style="margin-bottom:0"><span class="num-mark">03</span>tamaño en plano</div>
-          <span class="measure-source-tag" id="planoSourceTag">editando</span>
-        </div>
-        <div class="measure-row" id="planoRow" title="Clic para copiar">
-          <input type="number" class="measure-input" id="planoValue" value="" step="any" placeholder="0" aria-label="Tamaño en plano">
-        </div>
-        <div class="seg-control cols-5" id="plano-unit-control">
-          <button data-val="km">km</button>
-          <button data-val="m">m</button>
-          <button data-val="cm">cm</button>
-          <button class="active" data-val="mm">mm</button>
-          <button data-val="in">in</button>
-        </div>
-      </div>
-
-      <div class="section-head" style="margin-top:8px"><span class="num-mark">04</span>proporción</div>
-      <div class="bars-wrap hidden" id="barsWrap" aria-live="polite">
-        <div class="bar-row bar-row--real">
-          <div class="bar-label-row">
-            <span class="bar-name">real</span>
-            <span class="bar-value" id="barRealLabel">—</span>
-          </div>
-          <div class="bar-track"><div class="bar-fill" id="barRealFill" style="width:100%"></div></div>
-        </div>
-        <div class="bar-row bar-row--plano">
-          <div class="bar-label-row">
-            <span class="bar-name">plano</span>
-            <span class="bar-value" id="barPlanoLabel">—</span>
-          </div>
-          <div class="bar-track"><div class="bar-fill" id="barPlanoFill" style="width:100%"></div></div>
-        </div>
-      </div>
-
-    </div>
-  </div>
+  <main>
+    <div class="cards-wrap" id="cardsWrap"></div>
+  </main>
 
 </div>
 
-<div class="toast" id="toast">copiado</div>
+<template id="cardTemplate">
+  <div class="card">
+    <button class="card-remove" aria-label="Eliminar tabla" data-action="remove">×</button>
+    <table class="scale-table">
+      <tr>
+        <td class="label">Relación de escala</td>
+        <td class="cell cell-scale">
+          <span class="ratio-prefix">1&nbsp;:</span>
+          <input type="number" class="num-input scale-input" data-role="scale" value="100" min="1" step="any" aria-label="Factor de escala">
+        </td>
+      </tr>
+      <tr class="row-real">
+        <td class="label">Longitud real</td>
+        <td class="cell">
+          <input type="number" class="num-input" data-role="real" value="1" step="any" placeholder="0" aria-label="Longitud real">
+          <select class="unit-select" data-role="realUnit" aria-label="Unidad de longitud real">
+            <option value="km">kilómetros</option>
+            <option value="m" selected>metros</option>
+            <option value="cm">centímetros</option>
+            <option value="mm">milímetros</option>
+            <option value="in">pulgadas</option>
+          </select>
+        </td>
+      </tr>
+      <tr class="row-plano">
+        <td class="label">Longitud de escala</td>
+        <td class="cell">
+          <input type="number" class="num-input" data-role="plano" value="" step="any" placeholder="0" aria-label="Longitud de escala">
+          <select class="unit-select" data-role="planoUnit" aria-label="Unidad de longitud de escala">
+            <option value="km">kilómetros</option>
+            <option value="m">metros</option>
+            <option value="cm">centímetros</option>
+            <option value="mm" selected>milímetros</option>
+            <option value="in">pulgadas</option>
+          </select>
+        </td>
+      </tr>
+    </table>
+  </div>
+</template>
 
 <script>
   const toM   = { km:1000, m:1, cm:0.01, mm:0.001, in:0.0254 };
   const fromM = { km:0.001, m:1, cm:100, mm:1000, in:39.3701 };
+  const STORAGE_KEY = 'escalimetro_cards_v2';
 
-  let realUnit  = 'm';
-  let planoUnit = 'mm';
-  let lastEdited = 'real';
-
-  const realEl   = document.getElementById('realValue');
-  const planoEl  = document.getElementById('planoValue');
-  const scaleEl  = document.getElementById('scaleFactor');
-  const realTag  = document.getElementById('realSourceTag');
-  const planoTag = document.getElementById('planoSourceTag');
+  const wrap     = document.getElementById('cardsWrap');
+  const template = document.getElementById('cardTemplate');
 
   function formatResult(val) {
     if (!isFinite(val)) return '';
@@ -422,142 +290,109 @@
     return val.toPrecision(4);
   }
 
-  function calc() {
-    const s = parseFloat(scaleEl.value) || 1;
+  function createCard(state) {
+    const node = template.content.firstElementChild.cloneNode(true);
+    const scaleEl  = node.querySelector('[data-role="scale"]');
+    const realEl   = node.querySelector('[data-role="real"]');
+    const planoEl  = node.querySelector('[data-role="plano"]');
+    const realUnitEl  = node.querySelector('[data-role="realUnit"]');
+    const planoUnitEl = node.querySelector('[data-role="planoUnit"]');
+    const removeBtn   = node.querySelector('[data-action="remove"]');
 
-    realEl.classList.toggle('driven',  lastEdited !== 'real');
-    planoEl.classList.toggle('driven', lastEdited !== 'plano');
-    realTag.classList.toggle('show',   lastEdited === 'real');
-    planoTag.classList.toggle('show',  lastEdited === 'plano');
+    let lastEdited = (state && state.lastEdited) || 'real';
 
-    if (lastEdited === 'real') {
-      const v = parseFloat(realEl.value);
-      if (isNaN(v) || v < 0 || s <= 0) { planoEl.value = ''; renderBars(null); return; }
-      const planoVal = (v * toM[realUnit] / s) * fromM[planoUnit];
-      planoEl.value = formatResult(planoVal);
-      renderBars({ realVal: v, planoVal });
-    } else {
-      const v = parseFloat(planoEl.value);
-      if (isNaN(v) || v < 0 || s <= 0) { realEl.value = ''; renderBars(null); return; }
-      const realVal = (v * toM[planoUnit] * s) * fromM[realUnit];
-      realEl.value = formatResult(realVal);
-      renderBars({ realVal, planoVal: v });
-    }
-    saveState();
-  }
-
-  function renderBars(data) {
-    const wrap = document.getElementById('barsWrap');
-    if (!data) { wrap.classList.add('hidden'); return; }
-    const { realVal, planoVal } = data;
-    const realInM  = realVal  * toM[realUnit];
-    const planoInM = planoVal * toM[planoUnit];
-
-    let realPct, planoPct;
-    if (realInM >= planoInM) {
-      realPct  = 100;
-      planoPct = realInM > 0 ? Math.max(2, (planoInM / realInM) * 100) : 100;
-    } else {
-      planoPct = 100;
-      realPct  = planoInM > 0 ? Math.max(2, (realInM / planoInM) * 100) : 100;
+    if (state) {
+      if (state.scale != null) scaleEl.value = state.scale;
+      if (state.realUnit) realUnitEl.value = state.realUnit;
+      if (state.planoUnit) planoUnitEl.value = state.planoUnit;
+      if (state.real != null) realEl.value = state.real;
+      if (state.plano != null) planoEl.value = state.plano;
     }
 
-    document.getElementById('barRealFill').style.width  = realPct  + '%';
-    document.getElementById('barPlanoFill').style.width = planoPct + '%';
-    document.getElementById('barRealLabel').textContent  = formatResult(realVal)  + ' ' + realUnit;
-    document.getElementById('barPlanoLabel').textContent = formatResult(planoVal) + ' ' + planoUnit;
-    wrap.classList.remove('hidden');
-  }
+    function calc() {
+      const s = parseFloat(scaleEl.value) || 1;
+      realEl.classList.toggle('driven',  lastEdited !== 'real');
+      planoEl.classList.toggle('driven', lastEdited !== 'plano');
 
-  function initSegControl(selector, onChange) {
-    const btns = document.querySelectorAll(selector);
-    btns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        btns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        onChange(btn.dataset.val);
-      });
+      if (lastEdited === 'real') {
+        const v = parseFloat(realEl.value);
+        if (isNaN(v) || v < 0 || s <= 0) { planoEl.value = ''; persist(); return; }
+        const planoVal = (v * toM[realUnitEl.value] / s) * fromM[planoUnitEl.value];
+        planoEl.value = formatResult(planoVal);
+      } else {
+        const v = parseFloat(planoEl.value);
+        if (isNaN(v) || v < 0 || s <= 0) { realEl.value = ''; persist(); return; }
+        const realVal = (v * toM[planoUnitEl.value] * s) * fromM[realUnitEl.value];
+        realEl.value = formatResult(realVal);
+      }
+      persist();
+    }
+
+    scaleEl.addEventListener('input', calc);
+    realUnitEl.addEventListener('change', calc);
+    planoUnitEl.addEventListener('change', calc);
+    realEl.addEventListener('input',  () => { lastEdited = 'real';  calc(); });
+    planoEl.addEventListener('input', () => { lastEdited = 'plano'; calc(); });
+    removeBtn.addEventListener('click', () => {
+      node.remove();
+      updateRemoveVisibility();
+      persist();
     });
-  }
 
-  initSegControl('#real-unit-control button',  v => { realUnit  = v; calc(); });
-  initSegControl('#plano-unit-control button', v => { planoUnit = v; calc(); });
-
-  document.querySelectorAll('#presets button').forEach(btn =>
-    btn.addEventListener('click', () => {
-      scaleEl.value = btn.dataset.val;
-      document.querySelectorAll('#presets button').forEach(b =>
-        b.classList.toggle('active', b.dataset.val === btn.dataset.val));
-      calc();
-    }));
-
-  scaleEl.addEventListener('input', () => {
-    const v = scaleEl.value;
-    document.querySelectorAll('#presets button').forEach(b =>
-      b.classList.toggle('active', b.dataset.val == v));
-    calc();
-  });
-
-  realEl.addEventListener('input',  () => { lastEdited = 'real';  calc(); });
-  planoEl.addEventListener('input', () => { lastEdited = 'plano'; calc(); });
-
-  function copyVal(input) {
-    const txt = input.value;
-    if (!txt) return;
-    navigator.clipboard.writeText(txt).catch(() => {
-      const ta = Object.assign(document.createElement('textarea'),
-        { value: txt, style: 'position:fixed;left:-9999px' });
-      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    node._getState = () => ({
+      scale: scaleEl.value,
+      real: realEl.value,
+      plano: planoEl.value,
+      realUnit: realUnitEl.value,
+      planoUnit: planoUnitEl.value,
+      lastEdited
     });
-    const t = document.getElementById('toast');
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1400);
-  }
-  document.getElementById('realRow').addEventListener('dblclick',  () => copyVal(realEl));
-  document.getElementById('planoRow').addEventListener('dblclick', () => copyVal(planoEl));
 
-  function saveState() {
-    try {
-      localStorage.setItem('escalimetro_realUnit',   realUnit);
-      localStorage.setItem('escalimetro_planoUnit',  planoUnit);
-      localStorage.setItem('escalimetro_scale',      scaleEl.value);
-      localStorage.setItem('escalimetro_lastEdited', lastEdited);
-      localStorage.setItem('escalimetro_realValue',  realEl.value);
-      localStorage.setItem('escalimetro_planoValue', planoEl.value);
-    } catch(e) {}
-  }
-
-  function loadState() {
-    try {
-      const sRU    = localStorage.getItem('escalimetro_realUnit');
-      const sPU    = localStorage.getItem('escalimetro_planoUnit');
-      const sScale = localStorage.getItem('escalimetro_scale');
-      const sLast  = localStorage.getItem('escalimetro_lastEdited');
-      const sReal  = localStorage.getItem('escalimetro_realValue');
-      const sPlano = localStorage.getItem('escalimetro_planoValue');
-      if (sRU) {
-        realUnit = sRU;
-        document.querySelectorAll('#real-unit-control button').forEach(b =>
-          b.classList.toggle('active', b.dataset.val === sRU));
-      }
-      if (sPU) {
-        planoUnit = sPU;
-        document.querySelectorAll('#plano-unit-control button').forEach(b =>
-          b.classList.toggle('active', b.dataset.val === sPU));
-      }
-      if (sScale) {
-        scaleEl.value = sScale;
-        document.querySelectorAll('#presets button').forEach(b =>
-          b.classList.toggle('active', b.dataset.val == sScale));
-      }
-      if (sLast === 'real' || sLast === 'plano') lastEdited = sLast;
-      if (lastEdited === 'real'  && sReal  !== null) realEl.value  = sReal;
-      if (lastEdited === 'plano' && sPlano !== null) planoEl.value = sPlano;
-    } catch(e) {}
     calc();
+    return node;
   }
 
-  loadState();
+  function updateRemoveVisibility() {
+    const cards = wrap.querySelectorAll('.card');
+    cards.forEach(c => c.querySelector('.card-remove').classList.toggle('show', cards.length > 1));
+  }
+
+  function persist() {
+    try {
+      const cards = Array.from(wrap.querySelectorAll('.card')).map(c => c._getState());
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    } catch (e) {}
+  }
+
+  function addCard(state) {
+    const node = createCard(state);
+    wrap.insertBefore(node, addBtn);
+    updateRemoveVisibility();
+    return node;
+  }
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-card';
+  addBtn.type = 'button';
+  addBtn.textContent = '+';
+  addBtn.setAttribute('aria-label', 'Agregar nueva tabla de escala');
+  addBtn.addEventListener('click', () => { addCard(); persist(); });
+
+  function init() {
+    wrap.appendChild(addBtn);
+
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+
+    if (Array.isArray(saved) && saved.length) {
+      saved.forEach(s => addCard(s));
+    } else {
+      addCard();
+    }
+  }
+
+  init();
 </script>
 </body>
 </html>
+</content>
