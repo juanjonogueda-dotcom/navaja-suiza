@@ -12,7 +12,11 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 22h4v4H7zM7 16h4v6h6v4H7zM7 10h4v6h6v6h6v4H7z' fill='%23fff'/%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <style>
   :root {
     --bg:           #000000;
@@ -61,7 +65,7 @@
 
   .back-link {
     font-size: clamp(36px, 5vw, 64px);
-    font-weight: 800;
+    font-weight: 400;
     color: var(--text-muted);
     text-decoration: none;
     letter-spacing: -0.04em;
@@ -72,7 +76,7 @@
 
   h1 {
     font-size: clamp(36px, 5vw, 64px);
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: -0.04em;
     line-height: 0.9;
   }
