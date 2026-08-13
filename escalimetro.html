@@ -98,14 +98,13 @@
     position: relative;
     width: 380px;
     max-width: 100%;
-    padding-top: 6px;
   }
 
   .card-remove {
     position: absolute;
-    top: -30px;
-    right: 0;
-    background: none;
+    top: -10px;
+    right: -10px;
+    background: var(--bg);
     border: 1px solid var(--border-soft);
     color: var(--text-faint);
     width: 24px;
@@ -119,6 +118,7 @@
     align-items: center;
     justify-content: center;
     transition: color 0.15s, border-color 0.15s;
+    z-index: 1;
   }
   .card-remove.show { display: flex; }
   .card-remove:hover { color: var(--text); border-color: var(--border); }
@@ -206,6 +206,7 @@
   .add-card:hover { color: var(--text); border-color: var(--border); }
 
   @media (max-width: 500px) {
+    .cards-wrap { gap: 44px; }
     .card, .add-card { width: 100%; }
     .scale-table .label { width: 34%; }
     .scale-table td { padding: 10px 10px; }
