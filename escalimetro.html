@@ -148,7 +148,6 @@
   .row-plano .label { color: var(--clr-plano); }
 
   .cell { display: flex; align-items: center; gap: 8px; }
-  .cell-scale { justify-content: flex-end; }
 
   .ratio-prefix {
     font-family: 'JetBrains Mono', monospace;
@@ -174,7 +173,7 @@
   .num-input::-webkit-outer-spin-button { display: none; }
   .num-input.driven { color: var(--text-faint); }
 
-  .scale-input { text-align: right; max-width: 84px; }
+  .scale-input { flex: 0 1 100px; }
 
   .unit-select {
     font-family: 'JetBrains Mono', monospace;
@@ -234,9 +233,9 @@
     <table class="scale-table">
       <tr>
         <td class="label">Relación de escala</td>
-        <td class="cell cell-scale">
+        <td class="cell">
           <span class="ratio-prefix">1&nbsp;:</span>
-          <input type="number" class="num-input scale-input" data-role="scale" value="100" min="1" step="any" aria-label="Factor de escala">
+          <input type="number" class="num-input scale-input" data-role="scale" value="100" step="any" placeholder="0" aria-label="Factor de escala">
         </td>
       </tr>
       <tr class="row-real">
@@ -279,15 +278,7 @@
 
   function formatResult(val) {
     if (!isFinite(val)) return '';
-    if (val === 0) return '0';
-    const abs = Math.abs(val);
-    if (abs >= 10000) return val.toFixed(0);
-    if (abs >= 1000)  return val.toFixed(1);
-    if (abs >= 100)   return val.toFixed(2);
-    if (abs >= 10)    return val.toFixed(3);
-    if (abs >= 1)     return val.toFixed(4);
-    if (abs >= 0.01)  return val.toFixed(5);
-    return val.toPrecision(4);
+    return val.toFixed(4);
   }
 
   function createCard(state) {
