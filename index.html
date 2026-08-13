@@ -215,9 +215,12 @@ document.addEventListener('DOMContentLoaded', () => {
     el.style.right  = 'auto';
     el.style.bottom = 'auto';
   }
+  // offsetLeft/offsetTop reflect the element's untransformed layout box, unlike
+  // getBoundingClientRect() which includes the rotate() transform. Using the
+  // rect here would bake the rotation's bounding-box skew into left/top on
+  // every click, making shapes jump a little each time they're pressed.
   function getPos(el) {
-    const r = el.getBoundingClientRect();
-    return { left: r.left / window.innerWidth * 100, top: r.top / window.innerHeight * 100 };
+    return { left: el.offsetLeft / window.innerWidth * 100, top: el.offsetTop / window.innerHeight * 100 };
   }
   function applyRot(name) {
     els[name].style.transform = `rotate(${rotation[name]}deg)`;
@@ -236,8 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
   NAMES.forEach(name => {
     const el = els[name];
     applyRot(name);
-    const r = el.getBoundingClientRect();
-    defaults[name] = { left: r.left / window.innerWidth * 100, top: r.top / window.innerHeight * 100 };
+    defaults[name] = { left: el.offsetLeft / window.innerWidth * 100, top: el.offsetTop / window.innerHeight * 100 };
     try {
       const saved = localStorage.getItem(KEYS[name]);
       if (saved) {
@@ -271,9 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
     active = name;
     startX = t.clientX;
     startY = t.clientY;
-    const r = els[name].getBoundingClientRect();
-    origLeft = r.left;
-    origTop  = r.top;
+    origLeft = els[name].offsetLeft;
+    origTop  = els[name].offsetTop;
     hasDragged = false;
     els[name].classList.add('dragging');
     els[name].style.zIndex     = '10';
@@ -302,11 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hasDragged) e.preventDefault();
     if (!hasDragged) return;
     const el = els[active];
-    const r  = el.getBoundingClientRect();
     const vw = window.innerWidth, vh = window.innerHeight;
     const m  = 20;
-    const newLeft = clamp(origLeft + (t.clientX - startX), m, vw - r.width  - m);
-    const newTop  = clamp(origTop  + (t.clientY - startY), m, vh - r.height - m);
+    const newLeft = clamp(origLeft + (t.clientX - startX), m, vw - el.offsetWidth  - m);
+    const newTop  = clamp(origTop  + (t.clientY - startY), m, vh - el.offsetHeight - m);
     el.style.left   = newLeft + 'px';
     el.style.top    = newTop  + 'px';
     el.style.right  = 'auto';
