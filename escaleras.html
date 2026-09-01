@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Escaleras — Navaja Suiza</title>
 <meta name="description" content="Calculadora de escaleras: contrahuella, huella, número de escalones y verificación de la fórmula de Blondel y normativa.">
@@ -411,13 +411,19 @@
     .diagram-head { flex-direction: column; align-items: flex-start; }
     .norm-ref { display: none; }
   }
+
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
 </style>
 </head>
 <body>
 <div class="page">
 
   <header>
-    <a class="back-link" href="index.html">←</a>
+    <a class="back-link" href="index.html" aria-label="Volver al inicio">←</a>
     <h1>Escaleras</h1>
   </header>
 
@@ -519,6 +525,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="assets/js/shared.js"></script>
 <script>
 let tipoEscalera = 'recta';
 let sentidoGiro = 'horario';
@@ -684,7 +691,8 @@ function calcRecta() {
   const norma = getNorma();
   const LRaw = parseFloat(document.getElementById('inp-L').value);
   const LOk = !isNaN(LRaw) && LRaw > 0;
-  const ancho = parseFloat(document.getElementById('inp-ancho').value) || 1.20;
+  const anchoInput = document.getElementById('inp-ancho');
+  const ancho = NSUtils.parseNumberInRange(anchoInput.value, { min: 0.5 });
   const inpH = document.getElementById('inp-h');
   const inpA = document.getElementById('inp-a');
   const unitH = document.getElementById('unit-h');
@@ -700,6 +708,15 @@ function calcRecta() {
   inpL_reset.placeholder = '— calcula auto';
   unitL_reset.className = 'field-unit';
   unitL_reset.textContent = 'm · opcional';
+
+  NSUtils.setFieldError(anchoInput, ancho === null ? 'El ancho debe ser de al menos 0.50 m.' : '');
+  if (ancho === null) {
+    document.getElementById('result-zone').innerHTML = `<div class="result-display fail"><div class="result-tag">error de entrada</div><div class="result-big">—</div><div class="result-line">El ancho debe ser un número de al menos <em>0.50 m</em>.</div></div>`;
+    document.getElementById('hint-zone').innerHTML = '';
+    document.getElementById('diagrams-zone').innerHTML = '';
+    saveState();
+    return;
+  }
 
   if (res.state === 'partial') {
     renderPartial(res, norma);
@@ -862,12 +879,28 @@ function calcHelicoidal() {
   const diamExtRaw = parseFloat(document.getElementById('inp-diam-ext').value);
   const diamIntRaw = parseFloat(document.getElementById('inp-diam-int').value);
   const giroRaw = parseFloat(document.getElementById('inp-giro').value);
-  const diamExt = (!isNaN(diamExtRaw) && diamExtRaw > 0) ? diamExtRaw : 1.20;
-  const diamInt = (!isNaN(diamIntRaw) && diamIntRaw >= 0) ? diamIntRaw : 0;
-  const giroTotalDeg = (!isNaN(giroRaw) && giroRaw > 0) ? giroRaw : 360;
+  const diamExtInput = document.getElementById('inp-diam-ext');
+  const diamIntInput = document.getElementById('inp-diam-int');
+  const giroInput = document.getElementById('inp-giro');
+  const diamExt = NSUtils.parseNumberInRange(diamExtRaw, { min: 0.30 });
+  const diamInt = NSUtils.parseNumberInRange(diamIntRaw, { min: 0 });
+  const giroTotalDeg = NSUtils.parseNumberInRange(giroRaw, { min: 45, max: 1080 });
+  const diamRelationOk = diamExt !== null && diamInt !== null && diamInt < diamExt;
+
+  NSUtils.setFieldError(diamExtInput, diamExt === null ? 'El diámetro exterior debe ser de al menos 0.30 m.' : '');
+  NSUtils.setFieldError(diamIntInput, !diamRelationOk ? 'El diámetro interior debe ser menor que el exterior.' : '');
+  NSUtils.setFieldError(giroInput, giroTotalDeg === null ? 'El giro debe estar entre 45° y 1080°.' : '');
+
+  if (diamExt === null || diamInt === null || giroTotalDeg === null || !diamRelationOk) {
+    document.getElementById('result-zone').innerHTML = `<div class="result-display fail"><div class="result-tag">error de entrada</div><div class="result-big">—</div><div class="result-line">Revisa los diámetros y el ángulo de giro indicados.</div></div>`;
+    document.getElementById('hint-zone').innerHTML = '';
+    document.getElementById('diagrams-zone').innerHTML = '';
+    saveState();
+    return;
+  }
 
   const re = diamExt / 2;
-  const ri = Math.min(Math.max(diamInt / 2, 0), Math.max(re - 0.05, 0));
+  const ri = diamInt / 2;
   const anguloPasoDeg = giroTotalDeg / n;
   const anguloPasoRad = anguloPasoDeg * Math.PI / 180;
   const vueltas = giroTotalDeg / 360;
@@ -1116,7 +1149,7 @@ function renderDiagrams(st) {
         <div class="diagram-title">Perfil <em>en corte</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">escala real</div>
-          <button class="export-btn" onclick="exportSVG('svg-corte','escaleras-perfil-corte')" aria-label="Exportar perfil en corte como PNG">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-corte','escaleras-perfil-corte')" aria-label="Exportar perfil en corte como PNG">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1129,7 +1162,7 @@ function renderDiagrams(st) {
         <div class="diagram-title">Vista <em>en planta</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">${plantaMeta}</div>
-          <button class="export-btn" onclick="exportSVG('svg-planta','escaleras-planta')" aria-label="Exportar vista en planta como PNG">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-planta','escaleras-planta')" aria-label="Exportar vista en planta como PNG">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1141,7 +1174,7 @@ function renderDiagrams(st) {
       <div class="diagram-head">
         <div class="diagram-title">Detalle <em>de escalón</em></div>
         <div class="diagram-head-right">
-          <button class="export-btn" onclick="exportSVG('svg-detalle','escaleras-detalle-escalon')" aria-label="Exportar detalle de escalón como PNG">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-detalle','escaleras-detalle-escalon')" aria-label="Exportar detalle de escalón como PNG">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1165,7 +1198,7 @@ function renderDiagramsHelicoidal(st) {
         <div class="diagram-title">Alzado <em>helicoidal</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">envolvente vista de frente · ${st.vueltas.toFixed(2)} vueltas</div>
-          <button class="export-btn" onclick="exportSVG('svg-corte','escaleras-helicoidal-alzado')" aria-label="Exportar alzado helicoidal como PNG">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-corte','escaleras-helicoidal-alzado')" aria-label="Exportar alzado helicoidal como PNG">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1178,7 +1211,7 @@ function renderDiagramsHelicoidal(st) {
         <div class="diagram-title">Vista <em>en planta</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">radio exterior ${re.toFixed(2)} m</div>
-          <button class="export-btn" onclick="exportSVG('svg-planta','escaleras-helicoidal-planta')" aria-label="Exportar vista en planta como PNG">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-planta','escaleras-helicoidal-planta')" aria-label="Exportar vista en planta como PNG">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1190,7 +1223,7 @@ function renderDiagramsHelicoidal(st) {
       <div class="diagram-head">
         <div class="diagram-title">Detalle <em>de escalón</em></div>
         <div class="diagram-head-right">
-          <button class="export-btn" onclick="exportSVG('svg-detalle','escaleras-detalle-escalon')" aria-label="Exportar detalle de escalón como PNG">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-detalle','escaleras-detalle-escalon')" aria-label="Exportar detalle de escalón como PNG">
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1720,6 +1753,7 @@ function exportSVG(containerId, filename) {
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
       canvas.toBlob(blob => {
+        if (!blob) { showToast('Error al exportar'); return; }
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.png`;

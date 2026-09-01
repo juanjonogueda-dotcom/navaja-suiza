@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Navaja Suiza</title>
 <meta name="description" content="Navaja Suiza: calculadoras simples para arquitectura y construcción — escalímetro, escaleras y rampas.">
@@ -61,6 +61,8 @@
 
   .shape svg {
     display: block;
+    max-width: calc(100vw - 40px);
+    height: auto;
     opacity: 1;
     transition: transform 0.25s ease;
   }
@@ -131,6 +133,12 @@
   @media (hover: none) and (pointer: coarse) {
     #mobileHint { display: block; }
   }
+
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
 </style>
 </head>
 <body>
@@ -191,8 +199,9 @@
   </a>
 
   <span id="mobileHint">arrastra · 2 dedos rotan</span>
-  <button id="resetBtn">reset</button>
+  <button type="button" id="resetBtn">reset</button>
 
+<script src="assets/js/shared.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const NAMES = ['escalimetro', 'rampa', 'escalera'];
@@ -211,7 +220,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let hasDragged = false;
   let rotateState = null;  // { name, startAngle, baseRot }
 
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function clamp(v, lo, hi) { return NSUtils.clamp(v, lo, Math.max(lo, hi)); }
+
+  function confine(el) {
+    const margin = Math.min(20, window.innerWidth * 0.04, window.innerHeight * 0.04);
+    const left = clamp(el.offsetLeft, margin, window.innerWidth - el.offsetWidth - margin);
+    const top = clamp(el.offsetTop, margin, window.innerHeight - el.offsetHeight - margin);
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+  }
 
   function setPos(el, leftPct, topPct) {
     el.style.left   = leftPct + '%';
@@ -248,10 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem(KEYS[name]);
       if (saved) {
         const d = JSON.parse(saved);
-        if (typeof d.left === 'number' && typeof d.top === 'number') setPos(el, d.left, d.top);
-        if (typeof d.rot  === 'number') { rotation[name] = d.rot; applyRot(name); }
+        if (Number.isFinite(d.left) && Number.isFinite(d.top)) setPos(el, d.left, d.top);
+        if (Number.isFinite(d.rot)) { rotation[name] = d.rot; applyRot(name); }
       }
     } catch (e) {}
+    confine(el);
   });
 
   // Drag/rotate start
@@ -357,6 +377,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!wasDragging && name) {
       window.location.href = els[name].getAttribute('href');
     }
+  });
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      NAMES.forEach(name => {
+        confine(els[name]);
+        const pos = getPos(els[name]);
+        setPos(els[name], pos.left, pos.top);
+        save(name);
+      });
+    }, 100);
   });
 
   // Reset

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Escalímetro — Navaja Suiza</title>
 <meta name="description" content="Escalímetro digital: convierte medidas entre tamaño real y tamaño en plano para cualquier escala (1:50, 1:100, 1:200…).">
@@ -209,6 +209,17 @@
   }
   .add-card:hover { color: var(--text); border-color: var(--border); }
 
+  .field-error {
+    display: block;
+    min-height: 1.2em;
+    margin-top: 6px;
+    color: var(--warn);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+  }
+
+  .num-input[aria-invalid="true"] { border-color: var(--warn); }
+
   @media (max-width: 500px) {
     .cards-wrap { gap: 44px; }
     .card, .add-card { width: 100%; }
@@ -216,13 +227,19 @@
     .scale-table td { padding: 10px 10px; }
     .unit-select { font-size: 0.66rem; padding: 5px 3px; }
   }
+
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
 </style>
 </head>
 <body>
 <div class="page">
 
   <header>
-    <a class="back-link" href="index.html">←</a>
+    <a class="back-link" href="index.html" aria-label="Volver al inicio">←</a>
     <h1>Escalímetro</h1>
   </header>
 
@@ -234,13 +251,14 @@
 
 <template id="cardTemplate">
   <div class="card">
-    <button class="card-remove" aria-label="Eliminar tabla" data-action="remove">×</button>
+    <button type="button" class="card-remove" aria-label="Eliminar tabla" data-action="remove">×</button>
     <table class="scale-table">
       <tr>
         <td class="label">Relación de escala</td>
         <td class="cell">
           <span class="ratio-prefix">1&nbsp;:</span>
-          <input type="number" class="num-input scale-input" data-role="scale" value="100" step="any" placeholder="0" aria-label="Factor de escala">
+          <input type="number" class="num-input scale-input" data-role="scale" value="100" min="0.0001" step="any" placeholder="0" aria-label="Factor de escala" aria-errormessage="scale-error">
+          <span class="field-error" id="scale-error" aria-live="polite"></span>
         </td>
       </tr>
       <tr class="row-real">
@@ -273,13 +291,15 @@
   </div>
 </template>
 
+<script src="assets/js/shared.js"></script>
 <script>
   const toM   = { km:1000, m:1, cm:0.01, mm:0.001, in:0.0254 };
-  const fromM = { km:0.001, m:1, cm:100, mm:1000, in:39.3701 };
+  const fromM = { km:0.001, m:1, cm:100, mm:1000, in:39.37007874015748 };
   const STORAGE_KEY = 'escalimetro_cards_v2';
 
   const wrap     = document.getElementById('cardsWrap');
   const template = document.getElementById('cardTemplate');
+  let cardSequence = 0;
 
   function formatResult(val) {
     if (!isFinite(val)) return '';
@@ -294,30 +314,43 @@
     const realUnitEl  = node.querySelector('[data-role="realUnit"]');
     const planoUnitEl = node.querySelector('[data-role="planoUnit"]');
     const removeBtn   = node.querySelector('[data-action="remove"]');
+    const scaleErrorEl = node.querySelector('.field-error');
+    const scaleErrorId = `scale-error-${++cardSequence}`;
+    scaleErrorEl.id = scaleErrorId;
+    scaleEl.setAttribute('aria-errormessage', scaleErrorId);
 
-    let lastEdited = (state && state.lastEdited) || 'real';
+    let lastEdited = state && ['real', 'plano'].includes(state.lastEdited) ? state.lastEdited : 'real';
 
     if (state) {
       if (state.scale != null) scaleEl.value = state.scale;
-      if (state.realUnit) realUnitEl.value = state.realUnit;
-      if (state.planoUnit) planoUnitEl.value = state.planoUnit;
+      if (Object.hasOwn(toM, state.realUnit)) realUnitEl.value = state.realUnit;
+      if (Object.hasOwn(toM, state.planoUnit)) planoUnitEl.value = state.planoUnit;
       if (state.real != null) realEl.value = state.real;
       if (state.plano != null) planoEl.value = state.plano;
     }
 
     function calc() {
-      const s = parseFloat(scaleEl.value) || 1;
+      const s = NSUtils.parseNumberInRange(scaleEl.value, { min: Number.MIN_VALUE });
+      const scaleError = s === null ? 'La escala debe ser mayor que cero.' : '';
+      NSUtils.setFieldError(scaleEl, scaleError);
       realEl.classList.toggle('driven',  lastEdited !== 'real');
       planoEl.classList.toggle('driven', lastEdited !== 'plano');
 
+      if (s === null) {
+        if (lastEdited === 'real') planoEl.value = '';
+        else realEl.value = '';
+        persist();
+        return;
+      }
+
       if (lastEdited === 'real') {
         const v = parseFloat(realEl.value);
-        if (isNaN(v) || v < 0 || s <= 0) { planoEl.value = ''; persist(); return; }
+        if (!Number.isFinite(v) || v < 0) { planoEl.value = ''; persist(); return; }
         const planoVal = (v * toM[realUnitEl.value] / s) * fromM[planoUnitEl.value];
         planoEl.value = formatResult(planoVal);
       } else {
         const v = parseFloat(planoEl.value);
-        if (isNaN(v) || v < 0 || s <= 0) { realEl.value = ''; persist(); return; }
+        if (!Number.isFinite(v) || v < 0) { realEl.value = ''; persist(); return; }
         const realVal = (v * toM[planoUnitEl.value] * s) * fromM[realUnitEl.value];
         realEl.value = formatResult(realVal);
       }
@@ -385,7 +418,7 @@
     try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
 
     if (Array.isArray(saved) && saved.length) {
-      saved.forEach(s => addCard(s));
+      saved.slice(0, 20).filter(s => s && typeof s === 'object').forEach(s => addCard(s));
     } else {
       addCard();
     }
@@ -395,4 +428,3 @@
 </script>
 </body>
 </html>
-</content>
