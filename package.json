@@ -1,0 +1,10 @@
+{
+  "name": "navaja-suiza",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check:js": "node scripts/check-inline-scripts.js",
+    "check:html": "python3 scripts/check-markup.py",
+    "check": "npm run test && npm run check:js && npm run check:html"
+  }
+}

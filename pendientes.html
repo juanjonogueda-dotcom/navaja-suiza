@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Rampa — Navaja Suiza</title>
 <meta name="description" content="Calculadora de rampas y pendientes: verifica o calcula pendiente, longitud y desnivel, con descansos y límites normativos.">
@@ -492,13 +492,19 @@
     .norm-table > div:nth-child(4n+1),
     .norm-table > div:nth-child(4n+4) { display: none; }
   }
+
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
 </style>
 </head>
 <body>
 <div class="page">
 
   <header>
-    <a class="back-link" href="index.html">←</a>
+    <a class="back-link" href="index.html" aria-label="Volver al inicio">←</a>
     <h1>Rampa</h1>
   </header>
 
@@ -508,9 +514,9 @@
       <div class="toggle-block" style="margin-bottom:24px">
         <span class="toggle-label">Modo</span>
         <div class="seg-control" id="modo-calc-control" style="grid-template-columns: repeat(3, 1fr)">
-          <button class="active" data-val="verificar">Longitud</button>
-          <button data-val="calcular">Pendiente</button>
-          <button data-val="libre">Libre</button>
+          <button type="button" class="active" data-val="verificar">Longitud</button>
+          <button type="button" data-val="calcular">Pendiente</button>
+          <button type="button" data-val="libre">Libre</button>
         </div>
       </div>
 
@@ -539,8 +545,8 @@
         <div id="pendiente-obj-block" class="toggle-block" style="display:none">
           <span class="toggle-label">Pendiente objetivo</span>
           <div class="seg-control cols-2" id="pendiente-obj-control">
-            <button class="active" data-val="6">6%</button>
-            <button data-val="8">8%</button>
+            <button type="button" class="active" data-val="6">6%</button>
+            <button type="button" data-val="8">8%</button>
           </div>
           <div class="pct-slider-row" id="pct-slider-wrap">
             <input type="range" id="pendiente-slider" min="0" max="10" step="0.01" value="6" class="pct-slider">
@@ -551,7 +557,7 @@
         <div id="tramos-block" class="toggle-block">
           <span class="toggle-label">Tramos</span>
           <div class="seg-control cols-2" id="tramos-control">
-            <button class="active" data-val="auto">auto</button>
+            <button type="button" class="active" data-val="auto">auto</button>
             <div class="tramos-input-cell">
               <input type="number" id="inp-tramos" min="1" max="10" step="1" placeholder="n.º" class="tramos-input">
             </div>
@@ -561,7 +567,7 @@
         <div id="descanso-block" class="toggle-block">
           <span class="toggle-label">Descanso</span>
           <div class="seg-control cols-2" id="descanso-control">
-            <button class="active" data-val="auto">mínimo</button>
+            <button type="button" class="active" data-val="auto">mínimo</button>
             <div class="tramos-input-cell">
               <input type="number" id="inp-descanso" min="1.20" step="0.05" placeholder="m" class="tramos-input">
             </div>
@@ -572,7 +578,7 @@
         <div id="ancho-block" class="toggle-block">
           <span class="toggle-label">Ancho libre</span>
           <div class="seg-control cols-2" id="ancho-control">
-            <button class="active" data-val="auto">mínimo</button>
+            <button type="button" class="active" data-val="auto">mínimo</button>
             <div class="tramos-input-cell">
               <input type="number" id="inp-ancho" min="1.00" step="0.05" placeholder="m" class="tramos-input">
             </div>
@@ -583,8 +589,8 @@
         <div class="toggle-block">
           <span class="toggle-label">Tipo de proyecto</span>
           <div class="seg-control cols-2" id="tipo-control">
-            <button class="active" data-val="nuevo">Nuevo</button>
-            <button data-val="existente">Existente</button>
+            <button type="button" class="active" data-val="nuevo">Nuevo</button>
+            <button type="button" data-val="existente">Existente</button>
           </div>
           <span class="toggle-note">Existente: +2 pp de tolerancia en pendiente máx.</span>
         </div>
@@ -592,9 +598,9 @@
         <div class="toggle-block">
           <span class="toggle-label">Aplicación</span>
           <div class="seg-control cols-3" id="app-control">
-            <button class="active" data-val="general">General</button>
-            <button data-val="cablebus">Cablebús</button>
-            <button data-val="e17">Exterior E 17</button>
+            <button type="button" class="active" data-val="general">General</button>
+            <button type="button" data-val="cablebus">Cablebús</button>
+            <button type="button" data-val="e17">Exterior E 17</button>
           </div>
           <span class="toggle-note" id="app-note" style="display:none"></span>
           <span class="toggle-note" id="note-cablebus-existente" style="display:none">SEMOVI 2026 no contempla proyectos existentes. Los límites de 8% / 10% aplicados provienen de NTC 2025 §2.2.2.4.1 c), no de los Criterios Cablebús. Requiere justificación ante SEMOVI.</span>
@@ -623,6 +629,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="assets/js/shared.js"></script>
 <script>
 const MAX_TRAMOS = 10;
 let modo = 'auto';
@@ -652,9 +659,11 @@ function onParamInput(name) {
 function initSegControl(selector, onChange) {
   const btns = document.querySelectorAll(selector);
   btns.forEach(btn => {
+    btn.setAttribute('aria-pressed', String(btn.classList.contains('active')));
     btn.addEventListener('click', () => {
-      btns.forEach(b => b.classList.remove('active'));
+      btns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       onChange(btn.dataset.val);
       saveState();
     });
@@ -1181,7 +1190,14 @@ function calc() {
   const dh = parseFloat(document.getElementById('inp-dh').value) || 0;
 
   if (modoCalculo === 'calcular') {
-    if (dh <= 0) return;
+    if (dh <= 0) {
+      estado = null;
+      document.getElementById('result-zone').innerHTML = '';
+      document.getElementById('hint-zone').innerHTML = '';
+      document.getElementById('diagrams-zone').innerHTML = '';
+      document.getElementById('norm-table').innerHTML = '';
+      return;
+    }
     const k = getConstantes();
     const res = calcularLongitudMinima(dh, pendienteObj, k);
     estado = { mode: 'calcular', dh, res };
@@ -1562,7 +1578,7 @@ function renderDiagrams(st) {
         <div class="diagram-title">Perfil <em>en corte</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">esc. vertical 5×</div>
-          <button class="export-btn" onclick="exportSVG('svg-corte', 'rampa-perfil-corte')">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-corte', 'rampa-perfil-corte')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1575,7 +1591,7 @@ function renderDiagrams(st) {
         <div class="diagram-title">Vista <em>en planta</em></div>
         <div class="diagram-head-right">
           <div class="diagram-meta">esc. real · ancho ${c.ancho.toFixed(2)} m</div>
-          <button class="export-btn" onclick="exportSVG('svg-planta', 'rampa-planta')">
+          <button type="button" class="export-btn" onclick="exportSVG('svg-planta', 'rampa-planta')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exportar PNG
           </button>
@@ -1745,8 +1761,8 @@ function svgLibre(L, dh, pendiente, lInclinada) {
       <svg width="100%" viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
         <defs><marker id="arr-libre" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
         <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col.text}" stroke-width="1.4" stroke-linecap="round"/>
-        <line x1="${x2}" y1="${y2}" x2="${xTop}" y2="${yTop}" stroke="${col.text}" stroke-width="1.4" stroke-linecap="round"/>
-        <line class="ramp-seg" x1="${x1}" y1="${y1}" x2="${xTop}" y2="${yTop}" stroke="${col.accent}" stroke-width="1.8" stroke-linecap="round"/>
+        <line class="ramp-seg" x1="${x2}" y1="${y2}" x2="${xTop}" y2="${yTop}" stroke="${col.accent}" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="${x1}" y1="${y1}" x2="${xTop}" y2="${yTop}" stroke="${col.text}" stroke-width="1.4" stroke-linecap="round"/>
         <text x="${(x1+x2)/2}" y="${y1+20}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.mid}">${L.toFixed(2)} m</text>
         <text x="${x2+18}" y="${(y1+yTop)/2+4}" text-anchor="start" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.mid}">${dh.toFixed(3)} m</text>
         <text x="${(x1+xTop)/2 - 18}" y="${(y1+yTop)/2 - 8}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="${col.accent}" transform="rotate(${-Math.atan2(yTop-y1, xTop-x1)*180/Math.PI}, ${(x1+xTop)/2 - 18}, ${(y1+yTop)/2 - 8})">${pendiente.toFixed(2)}%</text>
@@ -1791,6 +1807,7 @@ function exportSVG(containerId, filename) {
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
       canvas.toBlob(blob => {
+        if (!blob) { showToast('Error al exportar'); return; }
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.png`;
