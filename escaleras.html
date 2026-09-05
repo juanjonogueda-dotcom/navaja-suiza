@@ -692,7 +692,11 @@ function calcRecta() {
   const LRaw = parseFloat(document.getElementById('inp-L').value);
   const LOk = !isNaN(LRaw) && LRaw > 0;
   const anchoInput = document.getElementById('inp-ancho');
-  const ancho = NSUtils.parseNumberInRange(anchoInput.value, { min: 0.5 });
+  /* El ancho tiene un valor inicial, pero algunos navegadores/restauradores de
+     formularios pueden dejarlo vacío. No debe bloquear el cálculo geométrico
+     principal: en ese caso recuperamos el valor predeterminado de 1.20 m. */
+  const anchoValue = anchoInput.value.trim() === '' ? '1.20' : anchoInput.value;
+  const ancho = NSUtils.parseNumberInRange(anchoValue, { min: 0.5 });
   const inpH = document.getElementById('inp-h');
   const inpA = document.getElementById('inp-a');
   const unitH = document.getElementById('unit-h');
